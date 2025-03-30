@@ -1,14 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
-  Search, 
-  ShoppingCart, 
   Filter, 
   X,
   Star, 
-  ChevronDown, 
-  SortAsc, 
-  SortDesc 
+  Eye
 } from "lucide-react";
 import { Product } from "@shared/schema";
 
@@ -42,6 +38,13 @@ import {
 } from "@/components/ui/carousel";
 import { formatCurrency } from "@/lib/utils";
 
+// Import custom components
+import { NavigationBar } from "@/components/shop/navigation-bar";
+import { ProductQuickView } from "@/components/shop/product-quick-view";
+import { BulkOrderDialog } from "@/components/shop/bulk-order-form";
+import { NewsletterForm } from "@/components/shop/newsletter-form";
+import { SocialShare } from "@/components/shop/social-share";
+
 interface CartItem extends Product {
   quantity: number;
 }
@@ -52,6 +55,11 @@ export default function ShopPage() {
   const [sortOption, setSortOption] = useState<string>("default");
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
+  
+  const cartSheetRef = useRef<HTMLButtonElement>(null);
   
   // Fetch products from the API
   const { data: products = [], isLoading } = useQuery<Product[]>({
@@ -130,110 +138,118 @@ export default function ShopPage() {
     .sort((a, b) => b.stock - a.stock)
     .slice(0, 4);
   
+  // Handle cart button click
+  const handleCartClick = () => {
+    if (cartSheetRef.current) {
+      cartSheetRef.current.click();
+    }
+  };
+  
+  // Open quick view for a product
+  const openQuickView = (product: Product) => {
+    setQuickViewProduct(product);
+    setQuickViewOpen(true);
+  };
+  
   return (
     <div className="min-h-screen bg-green-50/50">
-      {/* Header with search */}
-      <div className="bg-white shadow-sm border-b border-green-100">
-        <div className="container mx-auto py-4 px-4 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-          <h1 className="text-2xl font-bold text-primary">Farm Shop</h1>
-          
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              type="text"
-              placeholder="Search products..."
-              className="pl-10 pr-4 py-2 border-green-100 focus:border-primary"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="relative">
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  Cart
-                  {cartItems.length > 0 && (
-                    <Badge className="absolute -top-2 -right-2 bg-primary text-white">
-                      {cartItems.reduce((total, item) => total + item.quantity, 0)}
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>Your Cart</SheetTitle>
-                  <SheetDescription>
-                    {cartItems.length === 0 ? (
-                      "Your cart is empty"
-                    ) : (
-                      `${cartItems.reduce((total, item) => total + item.quantity, 0)} items in your cart`
-                    )}
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-6 space-y-4">
-                  {cartItems.map(item => (
-                    <div key={item.id} className="flex items-center justify-between border-b border-gray-100 pb-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="bg-green-100 rounded-md w-16 h-16 flex items-center justify-center">
-                          <span className="text-lg text-primary font-medium">{item.name.substring(0, 2)}</span>
-                        </div>
-                        <div>
-                          <h4 className="font-medium">{item.name}</h4>
-                          <p className="text-sm text-gray-500">{formatCurrency(item.price)} per {item.unit}</p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end space-y-2">
-                        <div className="flex items-center border rounded-md">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-gray-500"
-                            onClick={() => updateQuantity(item.id, -1)}
-                          >
-                            -
-                          </Button>
-                          <span className="w-8 text-center">{item.quantity}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-gray-500"
-                            onClick={() => updateQuantity(item.id, 1)}
-                          >
-                            +
-                          </Button>
-                        </div>
-                        <div className="flex items-center justify-between w-full">
-                          <span className="font-semibold">{formatCurrency(item.price * item.quantity)}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-gray-400 hover:text-red-500"
-                            onClick={() => removeFromCart(item.id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {cartItems.length > 0 && (
-                    <div className="pt-4 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold">Total</span>
-                        <span className="font-bold text-lg">{formatCurrency(cartTotal)}</span>
-                      </div>
-                      <Button className="w-full">Proceed to Checkout</Button>
-                    </div>
-                  )}
+      {/* Navigation Bar */}
+      <NavigationBar 
+        cartItemsCount={cartItems.reduce((total, item) => total + item.quantity, 0)} 
+        onCartClick={handleCartClick}
+        onSearchChange={setSearchQuery}
+        searchQuery={searchQuery}
+      />
+      
+      {/* Product Quick View Dialog */}
+      <ProductQuickView 
+        product={quickViewProduct} 
+        open={quickViewOpen} 
+        onOpenChange={setQuickViewOpen}
+        onAddToCart={addToCart}
+      />
+      
+      {/* Shopping Cart Sheet */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button 
+            ref={cartSheetRef} 
+            variant="outline" 
+            className="hidden"
+          >
+            Cart
+          </Button>
+        </SheetTrigger>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Your Cart</SheetTitle>
+            <SheetDescription>
+              {cartItems.length === 0 ? (
+                "Your cart is empty"
+              ) : (
+                `${cartItems.reduce((total, item) => total + item.quantity, 0)} items in your cart`
+              )}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            {cartItems.map(item => (
+              <div key={item.id} className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-green-100 rounded-md w-16 h-16 flex items-center justify-center">
+                    <span className="text-lg text-primary font-medium">{item.name.substring(0, 2)}</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium">{item.name}</h4>
+                    <p className="text-sm text-gray-500">{formatCurrency(item.price)} per {item.unit}</p>
+                  </div>
                 </div>
-              </SheetContent>
-            </Sheet>
+                <div className="flex flex-col items-end space-y-2">
+                  <div className="flex items-center border rounded-md">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-500"
+                      onClick={() => updateQuantity(item.id, -1)}
+                    >
+                      -
+                    </Button>
+                    <span className="w-8 text-center">{item.quantity}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-500"
+                      onClick={() => updateQuantity(item.id, 1)}
+                    >
+                      +
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-semibold">{formatCurrency(item.price * item.quantity)}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-gray-400 hover:text-red-500"
+                      onClick={() => removeFromCart(item.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {cartItems.length > 0 && (
+              <div className="pt-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Total</span>
+                  <span className="font-bold text-lg">{formatCurrency(cartTotal)}</span>
+                </div>
+                <Button className="w-full">Proceed to Checkout</Button>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
+        </SheetContent>
+      </Sheet>
       
       {/* Hero Banner */}
       <div className="bg-gradient-to-r from-green-600 to-green-700 text-white py-12 px-4">
@@ -394,8 +410,16 @@ export default function ShopPage() {
               ) : (
                 sortedProducts.map(product => (
                   <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                    <div className="bg-green-50 h-40 flex items-center justify-center p-4">
+                    <div className="bg-green-50 h-40 flex items-center justify-center p-4 relative">
                       <span className="text-4xl text-primary font-semibold">{product.name.substring(0, 2)}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/80 hover:bg-white"
+                        onClick={() => openQuickView(product)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                     </div>
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start mb-2">
@@ -407,7 +431,7 @@ export default function ShopPage() {
                         )}
                       </div>
                       <p className="text-sm text-gray-500 mb-2 line-clamp-2">{product.description}</p>
-                      <div className="flex items-center">
+                      <div className="flex items-center justify-between">
                         <div className="flex">
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Star
@@ -420,8 +444,9 @@ export default function ShopPage() {
                             />
                           ))}
                         </div>
-                        <span className="text-xs text-gray-500 ml-2">In Stock: {product.stock}</span>
+                        <SocialShare product={product} className="mt-1" />
                       </div>
+                      <div className="text-xs text-gray-500 mt-1">In Stock: {product.stock}</div>
                     </CardContent>
                     <CardFooter className="flex justify-between items-center p-4 bg-white border-t border-gray-100">
                       <span className="font-bold text-lg">{formatCurrency(product.price)}</span>
@@ -496,9 +521,7 @@ export default function ShopPage() {
         <div className="container mx-auto text-center max-w-3xl">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Planning an Event?</h2>
           <p className="mb-6 text-green-50">Contact us for bulk supplies at wholesale prices.</p>
-          <Button variant="outline" className="bg-white text-primary hover:bg-green-50 border-white">
-            Contact for Bulk Orders
-          </Button>
+          <BulkOrderDialog />
         </div>
       </div>
       
@@ -537,10 +560,7 @@ export default function ShopPage() {
               <p className="text-sm text-gray-500 mb-4">
                 Get updates on new products, seasonal offers, and farming tips.
               </p>
-              <div className="flex">
-                <Input placeholder="Your email" className="rounded-r-none" />
-                <Button className="rounded-l-none">Subscribe</Button>
-              </div>
+              <NewsletterForm />
             </div>
           </div>
           <div className="mt-8 pt-6 border-t border-gray-100 text-center text-sm text-gray-500">
