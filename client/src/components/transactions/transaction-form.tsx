@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -51,6 +51,7 @@ const transactionSchema = z.object({
   }),
   customer: z.string().optional(),
   notes: z.string().optional(),
+  status: z.enum(["pending", "completed", "cancelled"]).default("completed").optional(),
 });
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
@@ -73,6 +74,7 @@ export default function TransactionForm({ products }: TransactionFormProps) {
       date: new Date(),
       customer: "",
       notes: "",
+      status: "completed",
     },
   });
 
@@ -83,11 +85,11 @@ export default function TransactionForm({ products }: TransactionFormProps) {
   );
 
   // Update price when product changes
-  useState(() => {
+  useEffect(() => {
     if (selectedProduct) {
       form.setValue("price", selectedProduct.price);
     }
-  });
+  }, [selectedProduct, form]);
 
   // Create transaction mutation
   const createTransactionMutation = useMutation({
@@ -109,6 +111,7 @@ export default function TransactionForm({ products }: TransactionFormProps) {
         date: new Date(),
         customer: "",
         notes: "",
+        status: "completed",
       });
     },
     onError: (error: Error) => {
@@ -130,6 +133,7 @@ export default function TransactionForm({ products }: TransactionFormProps) {
       date: data.date,
       customer: data.customer || undefined,
       notes: data.notes || undefined,
+      status: data.status || "completed",
     });
   }
 
@@ -171,7 +175,10 @@ export default function TransactionForm({ products }: TransactionFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Product</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+                  <Select 
+                    onValueChange={(value) => field.onChange(parseInt(value))} 
+                    value={field.value?.toString() || ""}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a product" />
@@ -312,6 +319,29 @@ export default function TransactionForm({ products }: TransactionFormProps) {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

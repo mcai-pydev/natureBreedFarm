@@ -2,7 +2,11 @@ import {
   users, type User, type InsertUser,
   products, type Product, type InsertProduct,
   transactions, type Transaction, type InsertTransaction,
-  type TransactionWithProduct
+  newsletters, type Newsletter, type InsertNewsletter,
+  bulkOrders, type BulkOrder, type InsertBulkOrder,
+  socialShares, type SocialShare, type InsertSocialShare,
+  type TransactionWithProduct,
+  searchSchema
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -22,6 +26,9 @@ export interface IStorage {
   
   // Product methods
   getProducts(): Promise<Product[]>;
+  getProductsByCategory(category: string): Promise<Product[]>;
+  getFeaturedProducts(): Promise<Product[]>;
+  searchProducts(query: string, filters?: any): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
@@ -29,10 +36,40 @@ export interface IStorage {
   
   // Transaction methods
   getTransactions(): Promise<TransactionWithProduct[]>;
+  getTransactionsByType(type: string): Promise<TransactionWithProduct[]>;
+  getTransactionsByDate(startDate: Date, endDate: Date): Promise<TransactionWithProduct[]>;
   getTransaction(id: number): Promise<Transaction | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   updateTransaction(id: number, transaction: Partial<InsertTransaction>): Promise<Transaction | undefined>;
   deleteTransaction(id: number): Promise<boolean>;
+  
+  // Newsletter methods
+  getNewsletterSubscribers(): Promise<Newsletter[]>;
+  getNewsletterSubscriber(email: string): Promise<Newsletter | undefined>;
+  createNewsletterSubscriber(subscriber: InsertNewsletter): Promise<Newsletter>;
+  updateNewsletterSubscriber(id: number, subscriber: Partial<InsertNewsletter>): Promise<Newsletter | undefined>;
+  deleteNewsletterSubscriber(id: number): Promise<boolean>;
+  
+  // Bulk order methods
+  getBulkOrders(): Promise<BulkOrder[]>;
+  getBulkOrder(id: number): Promise<BulkOrder | undefined>;
+  createBulkOrder(order: InsertBulkOrder): Promise<BulkOrder>;
+  updateBulkOrder(id: number, order: Partial<InsertBulkOrder>): Promise<BulkOrder | undefined>;
+  deleteBulkOrder(id: number): Promise<boolean>;
+  
+  // Social share methods
+  getSocialShares(productId: number): Promise<SocialShare[]>;
+  createSocialShare(share: InsertSocialShare): Promise<SocialShare>;
+  updateSocialShare(id: number, share: Partial<InsertSocialShare>): Promise<SocialShare | undefined>;
+  
+  // Analytics methods
+  getProductDistribution(): Promise<{ category: string, count: number }[]>;
+  getTransactionSummary(startDate: Date, endDate: Date): Promise<{ 
+    totalSales: number, 
+    totalPurchases: number, 
+    totalOrders: number,
+    totalAuctions: number
+  }>;
   
   // Session store
   sessionStore: SessionStore;
@@ -43,18 +80,34 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private products: Map<number, Product>;
   private transactions: Map<number, Transaction>;
+  private newsletters: Map<number, Newsletter>;
+  private bulkOrders: Map<number, BulkOrder>;
+  private socialShares: Map<number, SocialShare>;
+  
   currentUserId: number;
   currentProductId: number;
   currentTransactionId: number;
+  currentNewsletterId: number;
+  currentBulkOrderId: number;
+  currentSocialShareId: number;
+  
   sessionStore: SessionStore;
 
   constructor() {
     this.users = new Map();
     this.products = new Map();
     this.transactions = new Map();
+    this.newsletters = new Map();
+    this.bulkOrders = new Map();
+    this.socialShares = new Map();
+    
     this.currentUserId = 1;
     this.currentProductId = 1;
     this.currentTransactionId = 1;
+    this.currentNewsletterId = 1;
+    this.currentBulkOrderId = 1;
+    this.currentSocialShareId = 1;
+    
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h
     });
@@ -100,6 +153,47 @@ export class MemStorage implements IStorage {
     return Array.from(this.products.values());
   }
 
+  async getProductsByCategory(category: string): Promise<Product[]> {
+    return Array.from(this.products.values())
+      .filter(product => product.category === category);
+  }
+
+  async getFeaturedProducts(): Promise<Product[]> {
+    return Array.from(this.products.values())
+      .filter(product => product.featured);
+  }
+
+  async searchProducts(query: string, filters?: any): Promise<Product[]> {
+    const searchTerm = query.toLowerCase();
+    let results = Array.from(this.products.values()).filter(product => 
+      product.name.toLowerCase().includes(searchTerm) || 
+      (product.description && product.description.toLowerCase().includes(searchTerm))
+    );
+    
+    // Apply filters if provided
+    if (filters) {
+      if (filters.category) {
+        results = results.filter(p => p.category === filters.category);
+      }
+      
+      if (filters.minPrice !== undefined) {
+        results = results.filter(p => p.price >= filters.minPrice);
+      }
+      
+      if (filters.maxPrice !== undefined) {
+        results = results.filter(p => p.price <= filters.maxPrice);
+      }
+      
+      if (filters.inStock !== undefined) {
+        results = filters.inStock 
+          ? results.filter(p => p.stock > 0)
+          : results.filter(p => p.stock === 0);
+      }
+    }
+    
+    return results;
+  }
+
   async getProduct(id: number): Promise<Product | undefined> {
     return this.products.get(id);
   }
@@ -111,7 +205,9 @@ export class MemStorage implements IStorage {
       id,
       description: insertProduct.description || null,
       imageUrl: insertProduct.imageUrl || null,
-      category: insertProduct.category || null
+      category: insertProduct.category || null,
+      featured: insertProduct.featured || false,
+      location: insertProduct.location || null
     };
     this.products.set(id, product);
     return product;
@@ -143,6 +239,17 @@ export class MemStorage implements IStorage {
       };
     });
   }
+  
+  async getTransactionsByType(type: string): Promise<TransactionWithProduct[]> {
+    return (await this.getTransactions()).filter(transaction => transaction.type === type);
+  }
+  
+  async getTransactionsByDate(startDate: Date, endDate: Date): Promise<TransactionWithProduct[]> {
+    return (await this.getTransactions()).filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      return transactionDate >= startDate && transactionDate <= endDate;
+    });
+  }
 
   async getTransaction(id: number): Promise<Transaction | undefined> {
     return this.transactions.get(id);
@@ -166,7 +273,8 @@ export class MemStorage implements IStorage {
       id,
       date: transactionDate,
       customer: insertTransaction.customer || null,
-      notes: insertTransaction.notes || null
+      notes: insertTransaction.notes || null,
+      status: insertTransaction.status || "completed"
     };
     this.transactions.set(id, transaction);
     
@@ -237,6 +345,139 @@ export class MemStorage implements IStorage {
     }
     
     return this.transactions.delete(id);
+  }
+  
+  // Newsletter methods
+  async getNewsletterSubscribers(): Promise<Newsletter[]> {
+    return Array.from(this.newsletters.values());
+  }
+  
+  async getNewsletterSubscriber(email: string): Promise<Newsletter | undefined> {
+    return Array.from(this.newsletters.values()).find(sub => sub.email === email);
+  }
+  
+  async createNewsletterSubscriber(subscriber: InsertNewsletter): Promise<Newsletter> {
+    const id = this.currentNewsletterId++;
+    const newSubscriber: Newsletter = {
+      ...subscriber,
+      id,
+      name: subscriber.name || null,
+      subscribed: subscriber.subscribed || true,
+      createdAt: new Date()
+    };
+    this.newsletters.set(id, newSubscriber);
+    return newSubscriber;
+  }
+  
+  async updateNewsletterSubscriber(id: number, subscriber: Partial<InsertNewsletter>): Promise<Newsletter | undefined> {
+    const existing = this.newsletters.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...subscriber };
+    this.newsletters.set(id, updated);
+    return updated;
+  }
+  
+  async deleteNewsletterSubscriber(id: number): Promise<boolean> {
+    return this.newsletters.delete(id);
+  }
+  
+  // Bulk order methods
+  async getBulkOrders(): Promise<BulkOrder[]> {
+    return Array.from(this.bulkOrders.values());
+  }
+  
+  async getBulkOrder(id: number): Promise<BulkOrder | undefined> {
+    return this.bulkOrders.get(id);
+  }
+  
+  async createBulkOrder(order: InsertBulkOrder): Promise<BulkOrder> {
+    const id = this.currentBulkOrderId++;
+    const newOrder: BulkOrder = {
+      ...order,
+      id,
+      phone: order.phone || null,
+      productId: order.productId || null,
+      quantity: order.quantity || null,
+      status: "new",
+      createdAt: new Date()
+    };
+    this.bulkOrders.set(id, newOrder);
+    return newOrder;
+  }
+  
+  async updateBulkOrder(id: number, order: Partial<InsertBulkOrder>): Promise<BulkOrder | undefined> {
+    const existing = this.bulkOrders.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...order };
+    this.bulkOrders.set(id, updated);
+    return updated;
+  }
+  
+  async deleteBulkOrder(id: number): Promise<boolean> {
+    return this.bulkOrders.delete(id);
+  }
+  
+  // Social share methods
+  async getSocialShares(productId: number): Promise<SocialShare[]> {
+    return Array.from(this.socialShares.values())
+      .filter(share => share.productId === productId);
+  }
+  
+  async createSocialShare(share: InsertSocialShare): Promise<SocialShare> {
+    const id = this.currentSocialShareId++;
+    const newShare: SocialShare = {
+      id,
+      productId: share.productId !== undefined ? share.productId : null,
+      platform: share.platform,
+      shareCount: share.shareCount || 1,
+      lastShared: new Date()
+    };
+    this.socialShares.set(id, newShare);
+    return newShare;
+  }
+  
+  async updateSocialShare(id: number, share: Partial<InsertSocialShare>): Promise<SocialShare | undefined> {
+    const existing = this.socialShares.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...share, lastShared: new Date() };
+    this.socialShares.set(id, updated);
+    return updated;
+  }
+  
+  // Analytics methods
+  async getProductDistribution(): Promise<{ category: string, count: number }[]> {
+    const products = Array.from(this.products.values());
+    const categoryCount = new Map<string, number>();
+    
+    products.forEach(product => {
+      const category = product.category || 'uncategorized';
+      const count = categoryCount.get(category) || 0;
+      categoryCount.set(category, count + 1);
+    });
+    
+    return Array.from(categoryCount.entries()).map(([category, count]) => ({
+      category,
+      count
+    }));
+  }
+  
+  async getTransactionSummary(startDate: Date, endDate: Date): Promise<{ 
+    totalSales: number, 
+    totalPurchases: number, 
+    totalOrders: number,
+    totalAuctions: number
+  }> {
+    const transactions = await this.getTransactionsByDate(startDate, endDate);
+    
+    return {
+      totalSales: transactions.filter(t => t.type === 'sale').reduce((sum, t) => sum + t.price * t.quantity, 0),
+      totalPurchases: transactions.filter(t => t.type === 'purchase').reduce((sum, t) => sum + t.price * t.quantity, 0),
+      totalOrders: transactions.filter(t => t.type === 'order').reduce((sum, t) => sum + t.price * t.quantity, 0),
+      totalAuctions: transactions.filter(t => t.type === 'auction').reduce((sum, t) => sum + t.price * t.quantity, 0)
+    };
   }
 
   // Initialize sample data for testing
