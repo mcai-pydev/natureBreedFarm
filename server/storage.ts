@@ -7,8 +7,10 @@ import {
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
+// Create MemoryStore for session storage
 const MemoryStore = createMemoryStore(session);
-type SessionStore = ReturnType<typeof createMemoryStore>;
+// Define the type of session store to be used in IStorage
+type SessionStore = session.Store;
 
 // Define the storage interface
 export interface IStorage {
@@ -16,6 +18,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   
   // Product methods
   getProducts(): Promise<Product[]>;
@@ -83,6 +86,15 @@ export class MemStorage implements IStorage {
     return user;
   }
 
+  async updateUser(id: number, userUpdate: Partial<InsertUser>): Promise<User | undefined> {
+    const existingUser = this.users.get(id);
+    if (!existingUser) return undefined;
+    
+    const updatedUser = { ...existingUser, ...userUpdate };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
   // Product methods
   async getProducts(): Promise<Product[]> {
     return Array.from(this.products.values());
@@ -98,7 +110,8 @@ export class MemStorage implements IStorage {
       ...insertProduct, 
       id,
       description: insertProduct.description || null,
-      imageUrl: insertProduct.imageUrl || null
+      imageUrl: insertProduct.imageUrl || null,
+      category: insertProduct.category || null
     };
     this.products.set(id, product);
     return product;
@@ -137,10 +150,21 @@ export class MemStorage implements IStorage {
 
   async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
     const id = this.currentTransactionId++;
+    
+    // Ensure date is always a Date object
+    let transactionDate: Date;
+    if (insertTransaction.date instanceof Date) {
+      transactionDate = insertTransaction.date;
+    } else if (typeof insertTransaction.date === 'string') {
+      transactionDate = new Date(insertTransaction.date);
+    } else {
+      transactionDate = new Date();
+    }
+    
     const transaction: Transaction = { 
       ...insertTransaction, 
       id,
-      date: insertTransaction.date || new Date(),
+      date: transactionDate,
       customer: insertTransaction.customer || null,
       notes: insertTransaction.notes || null
     };
@@ -224,6 +248,7 @@ export class MemStorage implements IStorage {
       price: 4.50,
       unit: "kg",
       stock: 120,
+      category: "produce",
       imageUrl: "https://images.unsplash.com/photo-1597362925123-77861d3fbac7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
@@ -233,6 +258,7 @@ export class MemStorage implements IStorage {
       price: 6.00,
       unit: "dozen",
       stock: 45,
+      category: "dairy",
       imageUrl: "https://images.unsplash.com/photo-1573246123716-6b1782bfc499?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
@@ -242,6 +268,7 @@ export class MemStorage implements IStorage {
       price: 3.25,
       unit: "head",
       stock: 78,
+      category: "produce",
       imageUrl: "https://images.unsplash.com/photo-1610348725531-843dff563e2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
@@ -251,16 +278,18 @@ export class MemStorage implements IStorage {
       price: 12.00,
       unit: "jar",
       stock: 32,
+      category: "specialty",
       imageUrl: "https://images.unsplash.com/photo-1528825871115-3581a5387919?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
-    // New animal products
+    // Animal products
     await this.createProduct({
       name: "Goat",
       description: "Healthy farm-raised goats",
       price: 250.00,
       unit: "head",
       stock: 15,
+      category: "livestock",
       imageUrl: "https://images.unsplash.com/photo-1560468660-6c11a19d7330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
@@ -270,6 +299,7 @@ export class MemStorage implements IStorage {
       price: 8.50,
       unit: "kg",
       stock: 85,
+      category: "seafood",
       imageUrl: "https://images.unsplash.com/photo-1534177616072-ef7dc120449d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
@@ -279,6 +309,7 @@ export class MemStorage implements IStorage {
       price: 22.00,
       unit: "head",
       stock: 28,
+      category: "poultry",
       imageUrl: "https://images.unsplash.com/photo-1597207047705-52b3d6741136?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
@@ -288,6 +319,7 @@ export class MemStorage implements IStorage {
       price: 15.00,
       unit: "head",
       stock: 45,
+      category: "poultry",
       imageUrl: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
   }

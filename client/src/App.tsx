@@ -9,6 +9,7 @@ import ProductsPage from "@/pages/products-page";
 import TransactionsPage from "@/pages/transactions-page";
 import ReportsPage from "@/pages/reports-page";
 import SettingsPage from "@/pages/settings-page";
+import ShopPage from "@/pages/shop-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 
@@ -20,6 +21,7 @@ function Router() {
       <ProtectedRoute path="/products" component={ProductsPage} />
       <ProtectedRoute path="/transactions" component={TransactionsPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
+      <ProtectedRoute path="/shop" component={ShopPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>

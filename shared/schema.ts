@@ -28,6 +28,7 @@ export const products = pgTable("products", {
   price: real("price").notNull(),
   unit: text("unit").notNull(),
   stock: real("stock").notNull(),
+  category: text("category").default("general"),
   imageUrl: text("image_url"),
 });
 
@@ -37,6 +38,7 @@ export const insertProductSchema = createInsertSchema(products).pick({
   price: true,
   unit: true,
   stock: true,
+  category: true,
   imageUrl: true,
 });
 

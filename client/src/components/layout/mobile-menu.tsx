@@ -10,7 +10,9 @@ import {
   BarChart, 
   Settings, 
   LogOut,
-  Leaf
+  Leaf,
+  Wheat,
+  ShoppingCart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,7 @@ export default function MobileMenu() {
     { href: "/products", label: "Products", icon: ShoppingBag },
     { href: "/transactions", label: "Transactions", icon: DollarSign },
     { href: "/reports", label: "Reports", icon: BarChart },
+    { href: "/shop", label: "Shop", icon: ShoppingCart },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 
@@ -36,41 +39,45 @@ export default function MobileMenu() {
   };
 
   return (
-    <div className="md:hidden bg-white border-b border-gray-200 p-4">
+    <div className="md:hidden bg-white border-b border-green-100 p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <Leaf className="h-8 w-8 text-primary" />
-          <span className="font-semibold text-lg text-gray-900">FarmManager</span>
+          <div className="bg-primary/10 p-1.5 rounded-full">
+            <Wheat className="h-6 w-6 text-primary" />
+          </div>
+          <span className="font-semibold text-lg text-gray-900">Nature Breed</span>
         </div>
         
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="p-2">
+            <Button variant="ghost" size="icon" className="p-2 text-primary hover:bg-primary/10">
               <Menu className="h-6 w-6" />
               <span className="sr-only">Open menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-72">
-            <div className="p-4 border-b border-gray-200">
+          <SheetContent side="left" className="p-0 w-72 border-r-green-100">
+            <div className="p-5 border-b border-green-100 bg-gradient-to-r from-green-50 to-white">
               <div className="flex items-center space-x-3">
-                <Leaf className="h-8 w-8 text-primary" />
-                <span className="font-semibold text-lg text-gray-900">FarmManager</span>
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <Wheat className="h-6 w-6 text-primary" />
+                </div>
+                <span className="font-semibold text-lg text-gray-900">Nature Breed</span>
               </div>
             </div>
             
-            <div className="p-4">
-              <div className="flex items-center mb-6">
-                <Avatar className="h-10 w-10">
+            <div className="p-4 bg-gradient-to-b from-green-50 to-white h-full">
+              <div className="flex items-center p-3 mb-6 bg-white rounded-lg border border-green-100">
+                <Avatar className="h-10 w-10 ring-2 ring-primary/20">
                   <AvatarImage src={user?.avatar || ""} alt={user?.name} />
-                  <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+                  <AvatarFallback className="bg-primary/10 text-primary">{user?.name?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-gray-500">{user?.role}</p>
+                  <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
+                  <p className="text-xs text-primary/80">{user?.role}</p>
                 </div>
               </div>
               
-              <nav className="space-y-1">
+              <nav className="space-y-1.5">
                 {navItems.map((item) => {
                   const isActive = location === item.href;
                   const Icon = item.icon;
@@ -82,12 +89,12 @@ export default function MobileMenu() {
                       onClick={() => setOpen(false)}
                     >
                       <a className={cn(
-                        "flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                        "flex items-center px-4 py-2.5 text-sm font-medium rounded-md transition-all",
                         isActive 
-                          ? "text-primary bg-primary/10" 
-                          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                          ? "text-white bg-primary shadow-sm" 
+                          : "text-gray-700 hover:bg-primary/10 hover:text-primary"
                       )}>
-                        <Icon className="h-5 w-5 mr-3" />
+                        <Icon className={cn("h-5 w-5 mr-3", isActive ? "text-white" : "text-primary")} />
                         {item.label}
                       </a>
                     </Link>
@@ -96,7 +103,7 @@ export default function MobileMenu() {
                 
                 <Button 
                   variant="outline" 
-                  className="w-full mt-4 text-gray-500 hover:text-gray-700 justify-start"
+                  className="w-full mt-6 border-green-200 text-primary hover:text-white hover:bg-primary justify-start"
                   onClick={handleLogout}
                 >
                   <LogOut className="h-4 w-4 mr-2" />

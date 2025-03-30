@@ -187,7 +187,23 @@ export default function ReportsPage() {
               <div className="bg-white rounded-lg shadow mb-6">
                 <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                   <h2 className="font-semibold text-lg text-gray-900">{getReportTitle()}</h2>
-                  <Button variant="default" size="sm">
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    onClick={() => {
+                      // Import dynamically to avoid loading jsPDF on initial page load
+                      import('@/lib/pdf-export').then(({ generatePDF }) => {
+                        generatePDF(
+                          getReportTitle(),
+                          reportType,
+                          startDate,
+                          endDate,
+                          summary,
+                          reportTransactions || []
+                        );
+                      });
+                    }}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Export PDF
                   </Button>

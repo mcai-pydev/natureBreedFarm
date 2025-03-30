@@ -19,11 +19,27 @@ export function formatCurrency(amount: number): string {
 
 /**
  * Format a date in a readable format
+ * @param date Date object or date string to format
+ * @returns Formatted date string
  */
-export function formatDate(date: Date): string {
+export function formatDate(date: Date | string): string {
+  if (!date) return '';
+  
+  let dateObj: Date;
+  try {
+    dateObj = date instanceof Date ? date : new Date(date);
+    // Check if valid date
+    if (isNaN(dateObj.getTime())) {
+      return 'Invalid date';
+    }
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return 'Invalid date';
+  }
+  
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  }).format(date)
+  }).format(dateObj)
 }

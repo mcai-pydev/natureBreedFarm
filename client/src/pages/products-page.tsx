@@ -37,6 +37,7 @@ const productSchema = z.object({
   price: z.coerce.number().positive("Price must be positive"),
   unit: z.string().min(1, "Unit is required"),
   stock: z.coerce.number().nonnegative("Stock cannot be negative"),
+  category: z.string().min(1, "Category is required"),
   imageUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
 });
 
@@ -46,7 +47,7 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: products, isLoading } = useQuery({
+  const { data: products = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/products"],
   });
 
@@ -58,6 +59,7 @@ export default function ProductsPage() {
       price: 0,
       unit: "",
       stock: 0,
+      category: "general",
       imageUrl: "",
     },
   });
@@ -92,6 +94,7 @@ export default function ProductsPage() {
       price: data.price,
       unit: data.unit,
       stock: data.stock,
+      category: data.category,
       imageUrl: data.imageUrl || undefined,
     });
   }
@@ -206,6 +209,31 @@ export default function ProductsPage() {
                                 placeholder="0" 
                                 {...field} 
                               />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <FormControl>
+                              <select 
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                {...field}
+                              >
+                                <option value="general">General</option>
+                                <option value="produce">Produce</option>
+                                <option value="dairy">Dairy</option>
+                                <option value="poultry">Poultry</option>
+                                <option value="livestock">Livestock</option>
+                                <option value="seafood">Seafood</option>
+                                <option value="specialty">Specialty</option>
+                              </select>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
