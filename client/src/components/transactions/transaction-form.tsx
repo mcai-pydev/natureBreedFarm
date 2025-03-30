@@ -38,7 +38,7 @@ import { cn } from "@/lib/utils";
 
 // Form validation schema
 const transactionSchema = z.object({
-  type: z.enum(["sale", "purchase", "order"], {
+  type: z.enum(["sale", "purchase", "order", "auction"], {
     required_error: "Please select a transaction type",
   }),
   productId: z.coerce.number({
@@ -157,6 +157,7 @@ export default function TransactionForm({ products }: TransactionFormProps) {
                       <SelectItem value="sale">Sale</SelectItem>
                       <SelectItem value="purchase">Purchase</SelectItem>
                       <SelectItem value="order">Order</SelectItem>
+                      <SelectItem value="auction">Auction</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

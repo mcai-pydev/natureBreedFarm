@@ -71,7 +71,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { username, password, name, role } = req.body;
+      const { username, password, name, role, avatar } = req.body;
       
       if (!username || !password || !name) {
         return res.status(400).json({ message: "Username, password, and name are required" });
@@ -86,7 +86,8 @@ export function setupAuth(app: Express) {
         username,
         password: await hashPassword(password),
         name,
-        role: role || "User"
+        role: role || "User",
+        avatar
       });
 
       // Remove password from response
@@ -138,8 +139,9 @@ export function setupAuth(app: Express) {
       await storage.createUser({
         username: "admin",
         password: await hashPassword("admin123"),
-        name: "Admin User",
-        role: "Admin"
+        name: "Chief Ijeh",
+        role: "Admin",
+        avatar: "/chief_ijeh.jpg"
       });
       console.log("Created initial admin user: admin / admin123");
     }

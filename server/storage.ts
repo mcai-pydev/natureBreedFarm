@@ -8,6 +8,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 
 const MemoryStore = createMemoryStore(session);
+type SessionStore = ReturnType<typeof createMemoryStore>;
 
 // Define the storage interface
 export interface IStorage {
@@ -31,7 +32,7 @@ export interface IStorage {
   deleteTransaction(id: number): Promise<boolean>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: SessionStore;
 }
 
 // Implement in-memory storage
@@ -42,7 +43,7 @@ export class MemStorage implements IStorage {
   currentUserId: number;
   currentProductId: number;
   currentTransactionId: number;
-  sessionStore: session.SessionStore;
+  sessionStore: SessionStore;
 
   constructor() {
     this.users = new Map();
@@ -72,7 +73,12 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      ...insertUser, 
+      id,
+      role: insertUser.role || null,
+      avatar: insertUser.avatar || null
+    };
     this.users.set(id, user);
     return user;
   }
@@ -88,7 +94,12 @@ export class MemStorage implements IStorage {
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const id = this.currentProductId++;
-    const product: Product = { ...insertProduct, id };
+    const product: Product = { 
+      ...insertProduct, 
+      id,
+      description: insertProduct.description || null,
+      imageUrl: insertProduct.imageUrl || null
+    };
     this.products.set(id, product);
     return product;
   }
@@ -126,7 +137,13 @@ export class MemStorage implements IStorage {
 
   async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
     const id = this.currentTransactionId++;
-    const transaction: Transaction = { ...insertTransaction, id };
+    const transaction: Transaction = { 
+      ...insertTransaction, 
+      id,
+      date: insertTransaction.date || new Date(),
+      customer: insertTransaction.customer || null,
+      notes: insertTransaction.notes || null
+    };
     this.transactions.set(id, transaction);
     
     // Update product stock based on transaction type
@@ -235,6 +252,43 @@ export class MemStorage implements IStorage {
       unit: "jar",
       stock: 32,
       imageUrl: "https://images.unsplash.com/photo-1528825871115-3581a5387919?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+    });
+    
+    // New animal products
+    await this.createProduct({
+      name: "Goat",
+      description: "Healthy farm-raised goats",
+      price: 250.00,
+      unit: "head",
+      stock: 15,
+      imageUrl: "https://images.unsplash.com/photo-1560468660-6c11a19d7330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+    });
+    
+    await this.createProduct({
+      name: "Fish",
+      description: "Fresh farm-raised tilapia",
+      price: 8.50,
+      unit: "kg",
+      stock: 85,
+      imageUrl: "https://images.unsplash.com/photo-1534177616072-ef7dc120449d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+    });
+    
+    await this.createProduct({
+      name: "Duck",
+      description: "Free-range farm ducks",
+      price: 22.00,
+      unit: "head",
+      stock: 28,
+      imageUrl: "https://images.unsplash.com/photo-1597207047705-52b3d6741136?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+    });
+    
+    await this.createProduct({
+      name: "Chicken",
+      description: "Free-range broiler chickens",
+      price: 15.00,
+      unit: "head",
+      stock: 45,
+      imageUrl: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
   }
 }

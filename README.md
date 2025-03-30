@@ -1,4 +1,4 @@
-# Farm Management System
+# Nature Breed Farm Management System
 
 A comprehensive farm management application for farmers to track products, manage transactions, and generate statistical reports.
 
@@ -30,8 +30,8 @@ A comprehensive farm management application for farmers to track products, manag
 
 1. Clone the repository:
    ```
-   git clone https://github.com/mcai-pydev/farm-management-system.git
-   cd farm-management-system
+   git clone https://github.com/mcai-pydev/natureBreedFarm.git
+   cd natureBreedFarm
    ```
 
 2. Install dependencies:

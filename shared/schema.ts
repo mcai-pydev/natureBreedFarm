@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name").notNull(),
   role: text("role").default("User"),
+  avatar: text("avatar"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -16,6 +17,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
   name: true,
   role: true,
+  avatar: true,
 });
 
 // Products table for farm products
@@ -43,7 +45,7 @@ export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
   date: timestamp("date").notNull().defaultNow(),
   productId: integer("product_id").notNull(),
-  type: text("type").notNull(), // "sale", "purchase", "order"
+  type: text("type").notNull(), // "sale", "purchase", "order", "auction"
   quantity: real("quantity").notNull(),
   price: real("price").notNull(),
   customer: text("customer"),

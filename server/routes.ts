@@ -1,11 +1,16 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
+import path from "path";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertProductSchema, insertTransactionSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup static files middleware
+  app.use(express.static(path.join(process.cwd(), "client/src/assets")));
+  
   // Setup authentication routes
   setupAuth(app);
 
