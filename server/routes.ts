@@ -162,7 +162,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/transactions", async (req, res) => {
     try {
-      const transactionData = insertTransactionSchema.parse(req.body);
+      // Pre-process date field if it's a string
+      const requestData = { ...req.body };
+      if (requestData.date && typeof requestData.date === 'string') {
+        requestData.date = new Date(requestData.date);
+      }
+      
+      // Parse with schema validation
+      const transactionData = insertTransactionSchema.parse(requestData);
       
       // Check if product exists
       const product = await storage.getProduct(transactionData.productId);
@@ -182,6 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
+      console.error("Transaction creation error:", error);
       res.status(500).json({ error: "Failed to create transaction" });
     }
   });
@@ -193,7 +201,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid ID format" });
       }
       
-      const transactionData = insertTransactionSchema.partial().parse(req.body);
+      // Pre-process date field if it's a string
+      const requestData = { ...req.body };
+      if (requestData.date && typeof requestData.date === 'string') {
+        requestData.date = new Date(requestData.date);
+      }
+      
+      const transactionData = insertTransactionSchema.partial().parse(requestData);
       
       // If changing product or quantity, check if we have enough stock
       if (transactionData.productId || transactionData.quantity) {

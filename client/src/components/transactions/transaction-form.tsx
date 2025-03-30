@@ -125,12 +125,15 @@ export default function TransactionForm({ products }: TransactionFormProps) {
 
   // Form submission handler
   function onSubmit(data: TransactionFormValues) {
+    // Ensure date is a proper Date object
+    const formattedDate = new Date(data.date);
+
     createTransactionMutation.mutate({
       type: data.type,
       productId: data.productId,
       quantity: data.quantity,
       price: data.price,
-      date: data.date,
+      date: formattedDate,
       customer: data.customer || undefined,
       notes: data.notes || undefined,
       status: data.status || "completed",

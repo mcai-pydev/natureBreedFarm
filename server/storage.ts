@@ -482,6 +482,15 @@ export class MemStorage implements IStorage {
 
   // Initialize sample data for testing
   private async initSampleData() {
+    // Add admin user with Chief Ijeh avatar
+    await this.createUser({
+      username: "admin",
+      password: "$2b$10$OPevsXMRwVcEzrAl.gXWcetUaiTFRQXrQRQYG.KAb3KrKi32xM6bq", // "admin123"
+      name: "Chief Ijeh",
+      role: "Admin",
+      avatar: "/assets/chief-ijeh.jpg"
+    });
+    
     // Sample products
     await this.createProduct({
       name: "Organic Tomatoes",
