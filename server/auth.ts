@@ -5,6 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
+import { emailService } from "./email";
 import { User as SelectUser } from "@shared/schema";
 
 declare global {
@@ -92,10 +93,18 @@ export function setupAuth(app: Express) {
 
       // Remove password from response
       const { password: _, ...userWithoutPassword } = user;
+      
+      // Send registration confirmation email if email service is ready and username is an email
+      if (emailService.isReady() && username.includes('@')) {
+        await emailService.sendRegistrationConfirmation(username, name);
+      }
 
       req.login(user, (err) => {
         if (err) return next(err);
-        res.status(201).json(userWithoutPassword);
+        res.status(201).json({
+          ...userWithoutPassword,
+          emailSent: username.includes('@') && emailService.isReady()
+        });
       });
     } catch (error) {
       next(error);

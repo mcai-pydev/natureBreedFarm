@@ -18,10 +18,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Email form schema
 const emailFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
+  name: z.string().optional(),
 });
 
 type EmailFormValues = z.infer<typeof emailFormSchema>;
@@ -33,12 +35,16 @@ interface ProductEmailFormProps {
 
 export function ProductEmailForm({ productId, productName }: ProductEmailFormProps) {
   const { toast } = useToast();
+  const [emailSent, setEmailSent] = React.useState(false);
+  const [referenceNumber, setReferenceNumber] = React.useState<string | null>(null);
+  const [isSubscriber, setIsSubscriber] = React.useState(false);
 
   // Form definition
   const form = useForm<EmailFormValues>({
     resolver: zodResolver(emailFormSchema),
     defaultValues: {
       email: "",
+      name: "",
     },
   });
 
@@ -47,10 +53,19 @@ export function ProductEmailForm({ productId, productName }: ProductEmailFormPro
     mutationFn: async (data: EmailFormValues) => {
       const response = await apiRequest("POST", `/api/products/${productId}/send-info`, {
         email: data.email,
+        name: data.name,
       });
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setEmailSent(true);
+      if (data.referenceNumber) {
+        setReferenceNumber(data.referenceNumber);
+      }
+      if (data.isSubscriber !== undefined) {
+        setIsSubscriber(data.isSubscriber);
+      }
+      
       toast({
         title: "Email sent!",
         description: `Information about ${productName} has been sent to your email.`,
@@ -73,14 +88,47 @@ export function ProductEmailForm({ productId, productName }: ProductEmailFormPro
 
   return (
     <div className="mt-2">
+      {emailSent ? (
+        <Alert className="bg-green-50 border-green-200 mb-4">
+          <AlertDescription>
+            <p className="font-medium">Information sent!</p>
+            <p className="text-sm mt-1">
+              We've sent detailed information about {productName} to your email.
+              {referenceNumber && (
+                <span className="block mt-1 text-xs">Reference: {referenceNumber}</span>
+              )}
+            </p>
+            {!isSubscriber && (
+              <p className="text-sm mt-2">
+                Don't forget to subscribe to our newsletter for updates on new products and exclusive offers!
+              </p>
+            )}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Your Name (Optional)</FormLabel>
+                <FormControl>
+                  <Input placeholder="Your name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email product information</FormLabel>
+                <FormLabel>Email Address</FormLabel>
                 <div className="flex items-start gap-2">
                   <FormControl>
                     <Input placeholder="your@email.com" {...field} />

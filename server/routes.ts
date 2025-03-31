@@ -3,7 +3,6 @@ import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
 import { emailService } from "./email";
 import { 
   insertProductSchema, 
@@ -17,6 +16,9 @@ import {
   type InsertNewsletter
 } from "@shared/schema";
 import { z } from "zod";
+
+// Import setupAuth from auth.ts after all other imports to prevent circular dependency
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup static files middleware
@@ -608,6 +610,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: data.message
       });
       
+      // Get product name for the confirmation email
+      const productId = Number(data.productId);
+      const product = await storage.getProduct(productId);
+      
+      // Generate a reference number for the order
+      const referenceNumber = `BO-${order.id}-${Date.now().toString().slice(-6)}`;
+      
+      // Send confirmation email if email service is ready and product exists
+      if (emailService.isReady() && product) {
+        await emailService.sendBulkOrderConfirmation(
+          data.email,
+          data.name,
+          {
+            productName: product.name,
+            quantity: Number(data.quantity),
+            referenceNumber
+          }
+        );
+        
+        return res.status(201).json({
+          ...order,
+          emailSent: true,
+          message: "Bulk order received. A confirmation email has been sent to your inbox."
+        });
+      }
+      
       res.status(201).json(order);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -693,7 +721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid ID format" });
       }
       
-      const { email } = req.body;
+      const { email, name } = req.body;
       if (!email) {
         return res.status(400).json({ error: "Email is required" });
       }
@@ -712,19 +740,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Try to get the newsletter subscriber info for personalization
+      const subscriber = await storage.getNewsletterSubscriber(email);
+      const customerName = name || (subscriber?.name || "Valued Customer");
+      
+      // Create a reference number for tracking
+      const referenceNumber = `PI-${Date.now().toString().slice(-6)}`;
+      
       // Send the product information email
       const success = await emailService.sendProductInfo(email, product.name, {
         imageUrl: product.imageUrl,
         price: product.price,
         unit: product.unit,
         category: product.category,
-        description: product.description
+        description: product.description,
+        customerName,
+        referenceNumber
       });
       
       if (success) {
+        // If they're not already a newsletter subscriber, suggest they sign up
+        const isSubscriber = subscriber && subscriber.subscribed;
+        
         res.json({ 
           success: true, 
-          message: "Product information has been sent to your email" 
+          message: "Product information has been sent to your email",
+          isSubscriber,
+          referenceNumber
         });
       } else {
         res.status(500).json({ error: "Failed to send product information" });

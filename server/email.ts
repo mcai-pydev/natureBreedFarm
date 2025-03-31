@@ -234,24 +234,136 @@ class EmailService {
       throw new Error('Email service is not configured');
     }
 
-    const { price, description, category, quantity, unit } = productDetails;
+    const { 
+      price, 
+      description, 
+      category, 
+      quantity, 
+      unit, 
+      customerName = "Valued Customer",
+      referenceNumber = `PI-${Date.now().toString().slice(-6)}`
+    } = productDetails;
 
     return await this.sendEmail({
       to: email,
-      subject: `Information about ${productName}`,
+      subject: `Information about ${productName} - Ref #${referenceNumber}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 5px;">
           <h2 style="color: #333; text-align: center;">${productName}</h2>
+          <p>Dear ${customerName},</p>
+          <p>Thank you for your interest in our ${productName.toLowerCase()}. Here is the information you requested:</p>
+          
           <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <p><strong>Category:</strong> ${category}</p>
             <p><strong>Price:</strong> $${price.toFixed(2)} per ${unit}</p>
             <p><strong>Available:</strong> ${quantity} ${unit}</p>
             <p><strong>Description:</strong> ${description}</p>
+            <p><strong>Reference Number:</strong> ${referenceNumber}</p>
           </div>
+          
           <div style="text-align: center; margin: 25px 0;">
             <a href="#" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">Visit Our Shop</a>
           </div>
-          <p>Thank you for your interest in our products. If you'd like to place a bulk order or have any questions, please reply to this email or call us at (555) 123-4567.</p>
+          
+          <p>If you'd like to place a bulk order or have any questions, please reply to this email or call us at (555) 123-4567.</p>
+          
+          <div style="background-color: #effaf3; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #4CAF50;">
+            <p style="margin: 0;"><strong>Want to stay updated?</strong></p>
+            <p style="margin: 10px 0 0;">Subscribe to our newsletter to receive updates on new products, seasonal offerings, and exclusive deals.</p>
+          </div>
+          
+          <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            &copy; ${new Date().getFullYear()} Nature Breed Farm. All rights reserved.
+          </p>
+        </div>
+      `,
+    });
+  }
+  
+  /**
+   * Send bulk order confirmation email
+   */
+  async sendBulkOrderConfirmation(
+    email: string, 
+    name: string, 
+    orderDetails: {
+      productName: string;
+      quantity: number;
+      referenceNumber: string;
+    }
+  ): Promise<boolean> {
+    if (!this.isConfigured) {
+      throw new Error('Email service is not configured');
+    }
+
+    const { productName, quantity, referenceNumber } = orderDetails;
+
+    return await this.sendEmail({
+      to: email,
+      subject: `Your Bulk Order Request - Ref #${referenceNumber}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 5px;">
+          <h2 style="color: #333; text-align: center;">Bulk Order Request Received</h2>
+          <p>Dear ${name},</p>
+          <p>Thank you for your interest in bulk purchasing from Nature Breed Farm! We have received your request for:</p>
+          
+          <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p><strong>Product:</strong> ${productName}</p>
+            <p><strong>Quantity:</strong> ${quantity}</p>
+            <p><strong>Reference Number:</strong> ${referenceNumber}</p>
+          </div>
+          
+          <p>Our team will review your request and get back to you within 1-2 business days with pricing and availability information. If you need immediate assistance, please contact us at (555) 123-4567.</p>
+          
+          <div style="text-align: center; margin: 25px 0;">
+            <a href="#" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">View Our Products</a>
+          </div>
+          
+          <p>Thank you for choosing Nature Breed Farm for your bulk purchase needs!</p>
+          
+          <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            &copy; ${new Date().getFullYear()} Nature Breed Farm. All rights reserved.
+          </p>
+        </div>
+      `,
+    });
+  }
+  
+  /**
+   * Send registration confirmation email
+   */
+  async sendRegistrationConfirmation(email: string, name: string): Promise<boolean> {
+    if (!this.isConfigured) {
+      throw new Error('Email service is not configured');
+    }
+
+    return await this.sendEmail({
+      to: email,
+      subject: 'Welcome to Nature Breed Farm',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 5px;">
+          <h2 style="color: #333; text-align: center;">Welcome to Nature Breed Farm</h2>
+          <p>Dear ${name},</p>
+          <p>Thank you for registering with Nature Breed Farm! Your account has been successfully created.</p>
+          
+          <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p>As a registered user, you can now:</p>
+            <ul>
+              <li>Access your account dashboard</li>
+              <li>Track your orders</li>
+              <li>Receive exclusive offers</li>
+              <li>Get updates on new products</li>
+            </ul>
+          </div>
+          
+          <div style="text-align: center; margin: 25px 0;">
+            <a href="#" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">Visit Your Dashboard</a>
+          </div>
+          
+          <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+          
           <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;">
           <p style="color: #999; font-size: 12px; text-align: center;">
             &copy; ${new Date().getFullYear()} Nature Breed Farm. All rights reserved.
