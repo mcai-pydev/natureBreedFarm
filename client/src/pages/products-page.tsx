@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 export default function ProductsPage() {
   const { user } = useAuth();
+  const isAuthenticated = !!user;
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -326,20 +327,22 @@ export default function ProductsPage() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
-          <DialogTrigger asChild onClick={() => {
-            resetForm();
-            setIsAddDialogOpen(true);
-          }}>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Product
-            </Button>
-          </DialogTrigger>
+          {isAuthenticated && (
+            <DialogTrigger asChild onClick={() => {
+              resetForm();
+              setIsAddDialogOpen(true);
+            }}>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Product
+              </Button>
+            </DialogTrigger>
+          )}
         </div>
       </div>
       
-      {/* Inventory status summary */}
-      {lowStockProducts && lowStockProducts.length > 0 && (
+      {/* Inventory status summary - only show for authenticated users */}
+      {isAuthenticated && lowStockProducts && lowStockProducts.length > 0 && (
         <Card className="bg-amber-50 border-amber-200">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-amber-800">
@@ -440,31 +443,59 @@ export default function ProductsPage() {
                   </div>
                 </div>
                 
-                <InventoryManagement 
-                  product={product} 
-                  onUpdate={() => queryClient.invalidateQueries({ queryKey: ["/api/products"] })}
-                />
+                {isAuthenticated ? (
+                  <InventoryManagement 
+                    product={product} 
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["/api/products"] })}
+                  />
+                ) : (
+                  <div className="flex flex-col gap-2 justify-center">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={product.stock <= 0 ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}>
+                        {product.stock <= 0 ? "Out of Stock" : "In Stock"}
+                      </Badge>
+                      
+                      <span className="text-sm font-medium">
+                        {product.stock} {product.unit}{product.stock !== 1 ? 's' : ''} available
+                      </span>
+                    </div>
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="border-t pt-4">
                 <div className="flex gap-2 w-full">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1 gap-1"
-                    onClick={() => handleEditClick(product)}
-                  >
-                    <Edit className="h-3.5 w-3.5" />
-                    Edit
-                  </Button>
-                  {user?.role === "Admin" && (
+                  {isAuthenticated ? (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 gap-1"
+                        onClick={() => handleEditClick(product)}
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                        Edit
+                      </Button>
+                      {user?.role === "Admin" && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1 gap-1 border-red-200 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => handleDeleteProduct(product)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </Button>
+                      )}
+                    </>
+                  ) : (
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="flex-1 gap-1 border-red-200 hover:bg-red-50 hover:text-red-600"
-                      onClick={() => handleDeleteProduct(product)}
+                      className="flex-1 gap-1"
+                      onClick={() => window.location.href = '/auth'}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete
+                      <ShoppingCart className="h-3.5 w-3.5" />
+                      Buy Now
                     </Button>
                   )}
                 </div>
@@ -508,24 +539,37 @@ export default function ProductsPage() {
                 <TableCell>{getStockStatusBadge(product)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex gap-2 justify-end">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleEditClick(product)}
-                    >
-                      <Edit className="h-3.5 w-3.5 mr-1" />
-                      Edit
-                    </Button>
-                    
-                    {user?.role === "Admin" && (
+                    {isAuthenticated ? (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleEditClick(product)}
+                        >
+                          <Edit className="h-3.5 w-3.5 mr-1" />
+                          Edit
+                        </Button>
+                        
+                        {user?.role === "Admin" && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="border-red-200 hover:bg-red-50 hover:text-red-600"
+                            onClick={() => handleDeleteProduct(product)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1" />
+                            Delete
+                          </Button>
+                        )}
+                      </>
+                    ) : (
                       <Button 
                         variant="outline" 
-                        size="sm" 
-                        className="border-red-200 hover:bg-red-50 hover:text-red-600"
-                        onClick={() => handleDeleteProduct(product)}
+                        size="sm"
+                        onClick={() => window.location.href = '/auth'}
                       >
-                        <Trash2 className="h-3.5 w-3.5 mr-1" />
-                        Delete
+                        <ShoppingCart className="h-3.5 w-3.5 mr-1" />
+                        Buy
                       </Button>
                     )}
                   </div>
