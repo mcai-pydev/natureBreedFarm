@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
 import { emailService } from "./email";
+import { openaiService } from "./openai-service";
 
 // Helper function for AI chat responses when no API key is available
 function getFallbackResponse(message: string, history: any[] = []): string {
@@ -1185,23 +1186,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Message is required" });
       }
       
-      // Check if we have an API key
-      const apiKey = process.env.OPENAI_API_KEY;
-      
-      if (!apiKey) {
+      // Check if OpenAI service is configured
+      if (!openaiService.isReady()) {
         // If no API key, return a generic response for testing
         return res.json({
-          response: getFallbackResponse(message, history)
+          response: openaiService.getFallbackResponse(message)
         });
       }
       
-      // Here we would normally call the OpenAI API or another AI service
-      // For now, we'll return a sample response
-      setTimeout(() => {
-        res.json({
-          response: getFallbackResponse(message, history)
-        });
-      }, 1000); // Simulate API delay
+      // Get a response from the OpenAI service using knowledge base
+      const response = await openaiService.getFarmAnswer(message);
+      
+      res.json({
+        response
+      });
       
     } catch (error) {
       console.error("Error processing chat message:", error);

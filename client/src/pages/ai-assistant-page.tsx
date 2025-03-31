@@ -2,8 +2,9 @@ import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Leaf, Bot, HelpCircle, Sprout, CloudRain, Thermometer, Bug } from 'lucide-react';
+import { Leaf, Bot, HelpCircle, Sprout, CloudRain, Thermometer, Bug, Brain, Globe, MessageSquare } from 'lucide-react';
 import { FarmAIChat } from '@/components/chat/farm-ai-chat';
+import { Badge } from '@/components/ui/badge';
 
 export default function AIAssistantPage() {
   return (
@@ -198,28 +199,75 @@ export default function AIAssistantPage() {
             </div>
             
             <div>
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Bot className="mr-2 h-5 w-5 text-primary" />
-                    Start a Conversation
-                  </CardTitle>
-                  <CardDescription>
-                    Ask your farming questions directly here
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col items-center justify-center h-[300px] space-y-4 border-2 border-dashed rounded-lg p-8 text-center">
-                    <Bot className="h-10 w-10 text-primary/50" />
-                    <div>
-                      <h3 className="font-medium">Farm Companion AI</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Click the chat button in the corner to start getting agricultural advice
-                      </p>
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="flex items-center">
+                        <Bot className="mr-2 h-5 w-5 text-primary" />
+                        Start a Conversation
+                      </CardTitle>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">New</Badge>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    <CardDescription>
+                      Ask your farming questions directly here
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center justify-center h-[180px] space-y-4 border-2 border-dashed rounded-lg p-6 text-center">
+                      <Bot className="h-10 w-10 text-primary/50" />
+                      <div>
+                        <h3 className="font-medium">Farm Companion AI</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Click the chat button in the corner to start getting agricultural advice
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="overflow-hidden border-green-200">
+                  <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 pb-2">
+                    <CardTitle className="text-base flex items-center text-green-800">
+                      <Brain className="mr-2 h-5 w-5 text-green-600" />
+                      Advanced RAG Capabilities
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-2">
+                        <Globe className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <span className="font-medium text-sm">Web Knowledge</span>
+                          <p className="text-xs text-muted-foreground">
+                            Accesses trusted agricultural resources for up-to-date information
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-2">
+                        <MessageSquare className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <span className="font-medium text-sm">Contextual Understanding</span>
+                          <p className="text-xs text-muted-foreground">
+                            Intelligently processes farming questions with specialized knowledge
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-2">
+                        <HelpCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <span className="font-medium text-sm">Honest Responses</span>
+                          <p className="text-xs text-muted-foreground">
+                            Admits knowledge limitations when appropriate rather than providing incorrect information
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>

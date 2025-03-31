@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, X, Minimize, Maximize } from "lucide-react";
+import { Send, Bot, User, Loader2, X, Minimize, Maximize, Brain, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 
 interface Message {
   role: "user" | "assistant";
@@ -18,7 +19,7 @@ export function FarmAIChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hello! I'm your Nature Breed Farm assistant. How can I help you with agricultural advice today?",
+      content: "Hello! I'm your Nature Breed Farm AI assistant, powered by advanced RAG technology with OpenAI integration. I can provide expert agricultural advice by combining our farm knowledge base with up-to-date information from trusted sources. How can I help you today?",
       timestamp: new Date()
     }
   ]);
@@ -114,7 +115,7 @@ export function FarmAIChat() {
     setMessages([
       {
         role: "assistant",
-        content: "Hello! I'm your Nature Breed Farm assistant. How can I help you with agricultural advice today?",
+        content: "Hello! I'm your Nature Breed Farm AI assistant, powered by advanced RAG technology with OpenAI integration. I can provide expert agricultural advice by combining our farm knowledge base with up-to-date information from trusted sources. How can I help you today?",
         timestamp: new Date()
       }
     ]);
@@ -142,10 +143,22 @@ export function FarmAIChat() {
       isExpanded ? "w-[90vw] h-[80vh] sm:w-[600px] sm:h-[700px]" : "w-[90vw] sm:w-[350px] h-[500px]"
     }`}>
       <CardHeader className="bg-gradient-to-r from-green-600 to-green-700 text-white py-2 px-4 flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-lg font-medium flex items-center">
-          <Bot className="mr-2 h-5 w-5" />
-          Farm Companion AI
-        </CardTitle>
+        <div className="flex flex-col">
+          <CardTitle className="text-lg font-medium flex items-center">
+            <Bot className="mr-2 h-5 w-5" />
+            Farm Companion AI
+          </CardTitle>
+          <div className="flex items-center mt-1">
+            <Badge variant="outline" className="bg-[#10a37f]/10 text-[#10a37f] border-[#10a37f]/20 text-xs">
+              <Brain className="h-3 w-3 mr-1" />
+              OpenAI powered
+            </Badge>
+            <Badge variant="outline" className="ml-2 bg-black/10 text-white border-white/20 text-xs">
+              <Globe className="h-3 w-3 mr-1" />
+              RAG enhanced
+            </Badge>
+          </div>
+        </div>
         <div className="flex items-center space-x-1">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-green-600" onClick={toggleMinimize}>
             <Minimize className="h-4 w-4" />
