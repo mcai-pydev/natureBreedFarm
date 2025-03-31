@@ -219,6 +219,11 @@ export class MemStorage implements IStorage {
         const animal = this.animals.get(animalId);
         if (!animal) return [];
         
+        // Only work with rabbits for now
+        if (animal.type.toLowerCase() !== "rabbit") {
+          return [];
+        }
+        
         // Get animals of the opposite gender and same type
         return Array.from(this.animals.values()).filter(potential => {
           // Must be active and the opposite gender
@@ -226,8 +231,8 @@ export class MemStorage implements IStorage {
             return false;
           }
           
-          // Must be the same type (same species)
-          if (potential.type !== animal.type) {
+          // Must be rabbit (we're only focusing on rabbits for breeding)
+          if (potential.type.toLowerCase() !== "rabbit") {
             return false;
           }
           
@@ -235,6 +240,7 @@ export class MemStorage implements IStorage {
           const checkInbreedingRiskSync = (maleId: number, femaleId: number): {
             isRisky: boolean;
             relationshipType?: string;
+            relationshipDegree?: number;
           } => {
             const male = this.animals.get(maleId);
             const female = this.animals.get(femaleId);
@@ -242,7 +248,7 @@ export class MemStorage implements IStorage {
             if (!male || !female) {
               return { isRisky: false };
             }
-            
+
             // Check if they're siblings or half-siblings
             if ((male.fatherId && male.fatherId === female.fatherId) ||
                 (male.motherId && male.motherId === female.motherId)) {
@@ -250,13 +256,89 @@ export class MemStorage implements IStorage {
                 isRisky: true, 
                 relationshipType: (male.fatherId === female.fatherId && male.motherId === female.motherId) 
                   ? "siblings" 
-                  : "half-siblings" 
+                  : "half-siblings",
+                relationshipDegree: 1
               };
             }
             
             // Check if one is the parent of the other
             if (male.id === female.fatherId || female.id === male.motherId) {
-              return { isRisky: true, relationshipType: "parent-child" };
+              return { isRisky: true, relationshipType: "parent-child", relationshipDegree: 1 };
+            }
+            
+            // Check for grandparent relationship (2nd degree)
+            // Father's parents
+            if (male.fatherId) {
+              const maleFather = this.animals.get(male.fatherId);
+              if (maleFather) {
+                if (maleFather.id === female.id) {
+                  return { isRisky: true, relationshipType: "grandmother-grandson", relationshipDegree: 2 };
+                }
+                if (maleFather.fatherId === female.id || maleFather.motherId === female.id) {
+                  return { isRisky: true, relationshipType: "great-grandmother-great-grandson", relationshipDegree: 3 };
+                }
+              }
+            }
+            
+            // Mother's parents
+            if (male.motherId) {
+              const maleMother = this.animals.get(male.motherId);
+              if (maleMother) {
+                if (maleMother.id === female.id) {
+                  return { isRisky: true, relationshipType: "grandmother-grandson", relationshipDegree: 2 };
+                }
+                if (maleMother.fatherId === female.id || maleMother.motherId === female.id) {
+                  return { isRisky: true, relationshipType: "great-grandmother-great-grandson", relationshipDegree: 3 };
+                }
+              }
+            }
+            
+            // Check female's ancestors
+            if (female.fatherId) {
+              const femaleFather = this.animals.get(female.fatherId);
+              if (femaleFather) {
+                if (femaleFather.id === male.id) {
+                  return { isRisky: true, relationshipType: "grandfather-granddaughter", relationshipDegree: 2 };
+                }
+                if (femaleFather.fatherId === male.id || femaleFather.motherId === male.id) {
+                  return { isRisky: true, relationshipType: "great-grandfather-great-granddaughter", relationshipDegree: 3 };
+                }
+              }
+            }
+            
+            if (female.motherId) {
+              const femaleMother = this.animals.get(female.motherId);
+              if (femaleMother) {
+                if (femaleMother.id === male.id) {
+                  return { isRisky: true, relationshipType: "grandfather-granddaughter", relationshipDegree: 2 };
+                }
+                if (femaleMother.fatherId === male.id || femaleMother.motherId === male.id) {
+                  return { isRisky: true, relationshipType: "great-grandfather-great-granddaughter", relationshipDegree: 3 };
+                }
+              }
+            }
+            
+            // Check for uncle/aunt relationships (cousins)
+            if (male.fatherId && female.fatherId && male.fatherId !== female.fatherId) {
+              const maleFather = this.animals.get(male.fatherId);
+              const femaleFather = this.animals.get(female.fatherId);
+              
+              if (maleFather && femaleFather && 
+                 ((maleFather.fatherId && maleFather.fatherId === femaleFather.fatherId) ||
+                  (maleFather.motherId && maleFather.motherId === femaleFather.motherId))) {
+                return { isRisky: true, relationshipType: "cousins", relationshipDegree: 2 };
+              }
+            }
+            
+            if (male.motherId && female.motherId && male.motherId !== female.motherId) {
+              const maleMother = this.animals.get(male.motherId);
+              const femaleMother = this.animals.get(female.motherId);
+              
+              if (maleMother && femaleMother && 
+                 ((maleMother.fatherId && maleMother.fatherId === femaleMother.fatherId) ||
+                  (maleMother.motherId && maleMother.motherId === femaleMother.motherId))) {
+                return { isRisky: true, relationshipType: "cousins", relationshipDegree: 2 };
+              }
             }
             
             return { isRisky: false };
@@ -279,6 +361,11 @@ export class MemStorage implements IStorage {
           return { isRisky: false };
         }
         
+        // Only work with rabbits for now
+        if (male.type.toLowerCase() !== "rabbit" || female.type.toLowerCase() !== "rabbit") {
+          return { isRisky: false, message: "Inbreeding check is only available for rabbits" };
+        }
+
         // Check if they're siblings or half-siblings
         if ((male.fatherId && male.fatherId === female.fatherId) ||
             (male.motherId && male.motherId === female.motherId)) {
@@ -286,16 +373,151 @@ export class MemStorage implements IStorage {
             isRisky: true, 
             relationshipType: (male.fatherId === female.fatherId && male.motherId === female.motherId) 
               ? "siblings" 
-              : "half-siblings" 
+              : "half-siblings",
+            relationshipDegree: 1,
+            message: "These rabbits share one or both parents - breeding will result in genetic abnormalities"
           };
         }
         
         // Check if one is the parent of the other
         if (male.id === female.fatherId || female.id === male.motherId) {
-          return { isRisky: true, relationshipType: "parent-child" };
+          return { 
+            isRisky: true, 
+            relationshipType: "parent-child", 
+            relationshipDegree: 1,
+            message: "This is a direct parent-child relationship - breeding will result in genetic abnormalities" 
+          };
         }
         
-        return { isRisky: false };
+        // Check for grandparent relationship (2nd degree)
+        // Father's parents
+        if (male.fatherId) {
+          const maleFather = this.animals.get(male.fatherId);
+          if (maleFather) {
+            if (maleFather.id === female.id) {
+              return { 
+                isRisky: true, 
+                relationshipType: "grandmother-grandson", 
+                relationshipDegree: 2,
+                message: "Grandmother-grandson relationship detected - breeding is not recommended" 
+              };
+            }
+            if (maleFather.fatherId === female.id || maleFather.motherId === female.id) {
+              return { 
+                isRisky: true, 
+                relationshipType: "great-grandmother-great-grandson", 
+                relationshipDegree: 3,
+                message: "Great-grandmother relationship detected - breeding may result in reduced vigor" 
+              };
+            }
+          }
+        }
+        
+        // Mother's parents
+        if (male.motherId) {
+          const maleMother = this.animals.get(male.motherId);
+          if (maleMother) {
+            if (maleMother.id === female.id) {
+              return { 
+                isRisky: true, 
+                relationshipType: "grandmother-grandson", 
+                relationshipDegree: 2,
+                message: "Grandmother-grandson relationship detected - breeding is not recommended" 
+              };
+            }
+            if (maleMother.fatherId === female.id || maleMother.motherId === female.id) {
+              return { 
+                isRisky: true, 
+                relationshipType: "great-grandmother-great-grandson", 
+                relationshipDegree: 3,
+                message: "Great-grandmother relationship detected - breeding may result in reduced vigor" 
+              };
+            }
+          }
+        }
+        
+        // Check female's ancestors
+        if (female.fatherId) {
+          const femaleFather = this.animals.get(female.fatherId);
+          if (femaleFather) {
+            if (femaleFather.id === male.id) {
+              return { 
+                isRisky: true, 
+                relationshipType: "grandfather-granddaughter", 
+                relationshipDegree: 2,
+                message: "Grandfather-granddaughter relationship detected - breeding is not recommended" 
+              };
+            }
+            if (femaleFather.fatherId === male.id || femaleFather.motherId === male.id) {
+              return { 
+                isRisky: true, 
+                relationshipType: "great-grandfather-great-granddaughter", 
+                relationshipDegree: 3,
+                message: "Great-grandfather relationship detected - breeding may result in reduced vigor" 
+              };
+            }
+          }
+        }
+        
+        if (female.motherId) {
+          const femaleMother = this.animals.get(female.motherId);
+          if (femaleMother) {
+            if (femaleMother.id === male.id) {
+              return { 
+                isRisky: true, 
+                relationshipType: "grandfather-granddaughter", 
+                relationshipDegree: 2,
+                message: "Grandfather-granddaughter relationship detected - breeding is not recommended" 
+              };
+            }
+            if (femaleMother.fatherId === male.id || femaleMother.motherId === male.id) {
+              return { 
+                isRisky: true, 
+                relationshipType: "great-grandfather-great-granddaughter", 
+                relationshipDegree: 3,
+                message: "Great-grandfather relationship detected - breeding may result in reduced vigor" 
+              };
+            }
+          }
+        }
+        
+        // Check for uncle/aunt relationships (cousins)
+        if (male.fatherId && female.fatherId && male.fatherId !== female.fatherId) {
+          const maleFather = this.animals.get(male.fatherId);
+          const femaleFather = this.animals.get(female.fatherId);
+          
+          if (maleFather && femaleFather && 
+             ((maleFather.fatherId && maleFather.fatherId === femaleFather.fatherId) ||
+              (maleFather.motherId && maleFather.motherId === femaleFather.motherId))) {
+            return { 
+              isRisky: true, 
+              relationshipType: "cousins", 
+              relationshipDegree: 2,
+              message: "These rabbits are cousins - breeding may result in reduced genetic diversity" 
+            };
+          }
+        }
+        
+        if (male.motherId && female.motherId && male.motherId !== female.motherId) {
+          const maleMother = this.animals.get(male.motherId);
+          const femaleMother = this.animals.get(female.motherId);
+          
+          if (maleMother && femaleMother && 
+             ((maleMother.fatherId && maleMother.fatherId === femaleMother.fatherId) ||
+              (maleMother.motherId && maleMother.motherId === femaleMother.motherId))) {
+            return { 
+              isRisky: true, 
+              relationshipType: "cousins", 
+              relationshipDegree: 2,
+              message: "These rabbits are cousins - breeding may result in reduced genetic diversity" 
+            };
+          }
+        }
+        
+        return { 
+          isRisky: false,
+          message: "No close family relationship detected - breeding is safe from an inbreeding perspective" 
+        };
       },
       getBreedingEvents: async () => Array.from(this.breedingEvents.values()),
       getBreedingEvent: async (id: number) => this.breedingEvents.get(id),
@@ -400,39 +622,151 @@ export class MemStorage implements IStorage {
       }
     };
     
-    // Initialize with sample breeding data
+    // Initialize with sample breeding data - create a full rabbit family tree
     const initBreedingSampleData = async () => {
-      // Create some sample animals for testing
-      const rabbit1 = await this.animalBreedingService.createAnimal({
-        name: "Fluffy",
+      // Create first generation - original breeding pair
+      const grandfather = await this.animalBreedingService.createAnimal({
+        name: "Max",
         type: "rabbit",
-        breed: "Dutch",
-        gender: "female",
+        breed: "New Zealand White",
+        gender: "male",
         status: "active",
-        dateOfBirth: new Date("2024-09-15"),
-        notes: "Healthy female rabbit"
+        dateOfBirth: new Date("2023-01-05"),
+        notes: "Original patriarch of the rabbit family"
       });
       
-      const rabbit2 = await this.animalBreedingService.createAnimal({
-        name: "Hopper",
+      const grandmother = await this.animalBreedingService.createAnimal({
+        name: "Ruby",
         type: "rabbit",
-        breed: "Dutch",
+        breed: "Rex",
+        gender: "female",
+        status: "active",
+        dateOfBirth: new Date("2023-02-10"),
+        notes: "Original matriarch of the rabbit family"
+      });
+      
+      // Second generation - first breeding result
+      const father1 = await this.animalBreedingService.createAnimal({
+        name: "Jack",
+        type: "rabbit",
+        breed: "New Zealand/Rex Mix",
+        gender: "male",
+        status: "active",
+        dateOfBirth: new Date("2023-06-15"),
+        fatherId: grandfather.id,
+        motherId: grandmother.id,
+        notes: "First generation offspring, now a breeding male"
+      });
+      
+      const mother1 = await this.animalBreedingService.createAnimal({
+        name: "Daisy",
+        type: "rabbit",
+        breed: "New Zealand/Rex Mix",
+        gender: "female",
+        status: "active",
+        dateOfBirth: new Date("2023-06-15"),
+        fatherId: grandfather.id,
+        motherId: grandmother.id,
+        notes: "First generation offspring, now a breeding female"
+      });
+      
+      // Unrelated rabbits to allow non-incestuous breeding
+      const unrelatedMale = await this.animalBreedingService.createAnimal({
+        name: "Thunder",
+        type: "rabbit",
+        breed: "Californian",
+        gender: "male",
+        status: "active",
+        dateOfBirth: new Date("2023-07-10"),
+        notes: "Unrelated male for outcrossing"
+      });
+      
+      const unrelatedFemale = await this.animalBreedingService.createAnimal({
+        name: "Snowflake",
+        type: "rabbit",
+        breed: "Himalayan",
+        gender: "female",
+        status: "active",
+        dateOfBirth: new Date("2023-08-05"),
+        notes: "Unrelated female for outcrossing"
+      });
+      
+      // Breeding with unrelated animals
+      const father2 = await this.animalBreedingService.createAnimal({
+        name: "Oreo",
+        type: "rabbit",
+        breed: "Californian/Rex Mix",
+        gender: "male",
+        status: "active", 
+        dateOfBirth: new Date("2024-01-10"),
+        fatherId: unrelatedMale.id,
+        motherId: mother1.id,
+        notes: "Second generation offspring through outcrossing"
+      });
+      
+      const mother2 = await this.animalBreedingService.createAnimal({
+        name: "Coco",
+        type: "rabbit",
+        breed: "New Zealand/Himalayan Mix",
+        gender: "female",
+        status: "active",
+        dateOfBirth: new Date("2024-02-15"),
+        fatherId: father1.id,
+        motherId: unrelatedFemale.id,
+        notes: "Second generation offspring through outcrossing"
+      });
+      
+      // Create third generation
+      const youngMale = await this.animalBreedingService.createAnimal({
+        name: "Peanut",
+        type: "rabbit",
+        breed: "Mixed",
+        gender: "male",
+        status: "active",
+        dateOfBirth: new Date("2024-09-01"),
+        fatherId: father2.id,
+        motherId: mother2.id,
+        notes: "Third generation offspring"
+      });
+      
+      const youngFemale = await this.animalBreedingService.createAnimal({
+        name: "Luna",
+        type: "rabbit",
+        breed: "Mixed",
+        gender: "female",
+        status: "active",
+        dateOfBirth: new Date("2024-09-01"),
+        fatherId: father2.id,
+        motherId: mother2.id,
+        notes: "Third generation offspring"
+      });
+      
+      // Current breeding pair - should be safe from inbreeding
+      const currentMale = await this.animalBreedingService.createAnimal({
+        name: "Apollo",
+        type: "rabbit",
+        breed: "Californian/Rex Mix",
         gender: "male",
         status: "active",
         dateOfBirth: new Date("2024-08-10"),
-        notes: "Active breeding male"
+        fatherId: unrelatedMale.id,
+        motherId: unrelatedFemale.id,
+        notes: "Current breeding male - unrelated to other family lines"
       });
       
-      const rabbit3 = await this.animalBreedingService.createAnimal({
-        name: "Cotton",
+      const currentFemale = await this.animalBreedingService.createAnimal({
+        name: "Willow",
         type: "rabbit",
-        breed: "Angora",
+        breed: "New Zealand/Himalayan Mix",
         gender: "female",
         status: "active",
         dateOfBirth: new Date("2024-07-20"),
-        notes: "Purebred Angora, good for breeding"
+        fatherId: father1.id,
+        motherId: unrelatedFemale.id,
+        notes: "Current breeding female"
       });
       
+      // Add some non-rabbit animals
       const goat1 = await this.animalBreedingService.createAnimal({
         name: "Billy",
         type: "goat",
@@ -440,7 +774,7 @@ export class MemStorage implements IStorage {
         gender: "male",
         status: "active",
         dateOfBirth: new Date("2023-05-10"),
-        notes: "Healthy breeding male"
+        notes: "Healthy breeding male goat"
       });
       
       const goat2 = await this.animalBreedingService.createAnimal({
@@ -450,24 +784,56 @@ export class MemStorage implements IStorage {
         gender: "female",
         status: "active",
         dateOfBirth: new Date("2023-06-15"),
-        notes: "Good milk producer"
+        notes: "Good milk producer goat"
       });
       
-      // Create some breeding events
-      await this.animalBreedingService.createBreedingEvent({
-        maleId: rabbit2.id,
-        femaleId: rabbit3.id,
+      // Create some breeding events - historical
+      const pastBreeding1 = await this.animalBreedingService.createBreedingEvent({
+        maleId: grandfather.id,
+        femaleId: grandmother.id,
+        breedingDate: new Date("2023-05-15"),
+        status: "completed",
+        actualBirthDate: new Date("2023-06-15"),
+        offspringCount: 6,
+        notes: "First generation breeding - produced 6 healthy kits"
+      });
+      
+      const pastBreeding2 = await this.animalBreedingService.createBreedingEvent({
+        maleId: unrelatedMale.id,
+        femaleId: mother1.id,
+        breedingDate: new Date("2023-12-10"),
+        status: "completed",
+        actualBirthDate: new Date("2024-01-10"),
+        offspringCount: 5,
+        notes: "Second generation outcross breeding"
+      });
+      
+      const pastBreeding3 = await this.animalBreedingService.createBreedingEvent({
+        maleId: father1.id,
+        femaleId: unrelatedFemale.id,
+        breedingDate: new Date("2024-01-15"),
+        status: "completed",
+        actualBirthDate: new Date("2024-02-15"),
+        offspringCount: 7,
+        notes: "Second generation outcross breeding"
+      });
+      
+      // Create current breeding event - pending
+      const currentBreeding = await this.animalBreedingService.createBreedingEvent({
+        maleId: currentMale.id,
+        femaleId: currentFemale.id,
         breedingDate: new Date("2025-03-15"),
         status: "pending",
-        notes: "First breeding attempt"
+        notes: "Current breeding attempt - healthy unrelated pair"
       });
       
+      // Add non-rabbit breeding
       await this.animalBreedingService.createBreedingEvent({
         maleId: goat1.id,
         femaleId: goat2.id,
         breedingDate: new Date("2025-04-01"),
         status: "pending",
-        notes: "Seasonal breeding"
+        notes: "Seasonal goat breeding"
       });
     };
     
