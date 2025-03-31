@@ -3,17 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileMenu from "@/components/layout/mobile-menu";
 import ReportFilters from "@/components/reports/report-filters";
-import ReportCharts from "@/components/reports/report-charts";
+import ReportDashboard from "@/components/reports/report-dashboard";
 import { Product, TransactionWithProduct } from "@shared/schema";
 import { formatCurrency } from "@/lib/utils";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 
@@ -209,87 +201,16 @@ export default function ReportsPage() {
                   </Button>
                 </div>
                 
-                {/* Charts */}
-                <ReportCharts 
-                  reportType={reportType}
-                  transactions={reportTransactions || []}
-                  products={products || []}
-                  startDate={startDate}
-                  endDate={endDate}
-                />
-                
-                {/* Summary Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 border-t border-gray-200">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">
-                      {reportType === "sales" ? "Total Sales" : 
-                       reportType === "purchases" ? "Total Purchases" : 
-                       reportType === "profit" ? "Net Profit" : "Total Value"}
-                    </h4>
-                    <p className="text-2xl font-semibold text-gray-900">{formatCurrency(summary.totalAmount)}</p>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">Total Quantity</h4>
-                    <p className="text-2xl font-semibold text-gray-900">{summary.totalQuantity.toFixed(2)} units</p>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">
-                      {reportType === "inventory" ? "Stock Value" : "Avg. Transaction Value"}
-                    </h4>
-                    <p className="text-2xl font-semibold text-gray-900">{formatCurrency(summary.avgOrderValue)}</p>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">Number of Transactions</h4>
-                    <p className="text-2xl font-semibold text-gray-900">{summary.orderCount}</p>
-                  </div>
-                </div>
-                
-                {/* Detailed Data Table */}
-                <div className="p-6 border-t border-gray-200">
-                  <h3 className="font-semibold text-base text-gray-900 mb-4">
-                    {reportType === "sales" ? "Sales by Product" : 
-                     reportType === "purchases" ? "Purchases by Product" : 
-                     reportType === "profit" ? "Profit by Product" : "Inventory Value by Product"}
-                  </h3>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Product</TableHead>
-                          <TableHead>Quantity</TableHead>
-                          <TableHead>
-                            {reportType === "sales" ? "Revenue" : 
-                             reportType === "purchases" ? "Cost" : 
-                             reportType === "profit" ? "Profit/Loss" : "Value"}
-                          </TableHead>
-                          <TableHead>% of Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {summary.productSummary.length > 0 ? (
-                          summary.productSummary.map((product, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{product.name}</TableCell>
-                              <TableCell>{product.quantity.toFixed(2)}</TableCell>
-                              <TableCell className={reportType === "profit" && product.revenue < 0 ? "text-red-600" : ""}>
-                                {formatCurrency(product.revenue)}
-                              </TableCell>
-                              <TableCell>{product.percentOfTotal.toFixed(1)}%</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center py-4 text-gray-500">
-                              No data available for the selected period.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                {/* Enhanced Report Dashboard */}
+                <div className="p-6">
+                  <ReportDashboard
+                    reportType={reportType}
+                    transactions={reportTransactions || []}
+                    products={products || []}
+                    startDate={startDate}
+                    endDate={endDate}
+                    summary={summary}
+                  />
                 </div>
               </div>
             )}
