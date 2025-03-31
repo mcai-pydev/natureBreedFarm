@@ -1,147 +1,111 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { Minus, Plus } from "lucide-react";
+import { MinusIcon, PlusIcon } from "lucide-react";
+import { Input } from "./input";
+import { Button } from "./button";
 
 interface QuantitySelectorProps {
   initialValue?: number;
   min?: number;
   max?: number;
   step?: number;
-  onChange?: (value: number) => void;
-  disabled?: boolean;
-  className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "default" | "sm" | "lg";
   allowManualInput?: boolean;
-  unit?: string;
+  disabled?: boolean;
+  onChange?: (value: number) => void;
 }
 
 export function QuantitySelector({
   initialValue = 1,
   min = 1,
-  max = 100,
+  max = 99,
   step = 1,
-  onChange,
-  disabled = false,
-  className,
-  size = "md",
+  size = "default",
   allowManualInput = true,
-  unit,
+  disabled = false,
+  onChange
 }: QuantitySelectorProps) {
-  const [quantity, setQuantity] = useState(initialValue);
-
+  const [value, setValue] = useState(initialValue);
+  
+  // Sync with initialValue if it changes externally
   useEffect(() => {
-    // Update internal state if initialValue changes externally
-    setQuantity(initialValue);
+    setValue(initialValue);
   }, [initialValue]);
-
-  const sizes = {
-    sm: {
-      container: "h-8",
-      button: "h-8 w-8 p-0",
-      input: "h-8 text-sm",
-      icon: "h-3 w-3",
-    },
-    md: {
-      container: "h-10",
-      button: "h-10 w-10 p-0",
-      input: "h-10 text-base",
-      icon: "h-4 w-4",
-    },
-    lg: {
-      container: "h-12",
-      button: "h-12 w-12 p-0",
-      input: "h-12 text-lg",
-      icon: "h-5 w-5",
-    },
+  
+  const updateValue = (newValue: number) => {
+    // Ensure value is within bounds
+    newValue = Math.max(min, Math.min(max, newValue));
+    setValue(newValue);
+    onChange?.(newValue);
   };
-
-  const decrement = () => {
-    if (quantity > min) {
-      const newValue = Math.max(min, quantity - step);
-      setQuantity(newValue);
-      onChange?.(newValue);
-    }
-  };
-
+  
   const increment = () => {
-    if (quantity < max) {
-      const newValue = Math.min(max, quantity + step);
-      setQuantity(newValue);
-      onChange?.(newValue);
+    if (value + step <= max) {
+      updateValue(value + step);
     }
   };
-
+  
+  const decrement = () => {
+    if (value - step >= min) {
+      updateValue(value - step);
+    }
+  };
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value)) {
-      const newValue = Math.min(max, Math.max(min, value));
-      setQuantity(newValue);
-      onChange?.(newValue);
+    const inputValue = parseInt(e.target.value);
+    if (!isNaN(inputValue)) {
+      updateValue(inputValue);
     }
   };
-
+  
+  // Size variants
+  const buttonSizeClass = 
+    size === "sm" ? "h-7 w-7" : 
+    size === "lg" ? "h-10 w-10" : 
+    "h-9 w-9";
+  
+  const inputSizeClass = 
+    size === "sm" ? "h-7 w-12 text-sm" : 
+    size === "lg" ? "h-10 w-16 text-lg" : 
+    "h-9 w-14 text-base";
+  
   return (
-    <div
-      className={cn(
-        "flex items-center border rounded-md overflow-hidden",
-        sizes[size].container,
-        disabled ? "opacity-50 cursor-not-allowed" : "",
-        className
-      )}
-    >
+    <div className="flex items-center">
       <Button
-        variant="ghost"
-        className={cn(
-          "rounded-none border-r",
-          sizes[size].button
-        )}
+        variant="outline"
+        size="icon"
+        className={buttonSizeClass}
         onClick={decrement}
-        disabled={disabled || quantity <= min}
-        tabIndex={disabled ? -1 : 0}
-        aria-label="Decrease quantity"
+        disabled={disabled || value <= min}
+        type="button"
       >
-        <Minus className={sizes[size].icon} />
+        <MinusIcon className="h-3 w-3" />
       </Button>
-
+      
       {allowManualInput ? (
         <Input
-          type="number"
-          value={quantity}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={value}
           onChange={handleInputChange}
-          className={cn(
-            "border-0 text-center flex-1 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0",
-            sizes[size].input
-          )}
+          className={`mx-1 text-center px-1 ${inputSizeClass}`}
           disabled={disabled}
-          min={min}
-          max={max}
-          step={step}
-          aria-label="Quantity"
         />
       ) : (
-        <div className={cn(
-          "flex-1 flex items-center justify-center text-center",
-          sizes[size].input
-        )}>
-          <span>{quantity}</span>
-          {unit && <span className="ml-1 text-muted-foreground text-sm">{unit}</span>}
+        <div className={`mx-1 flex items-center justify-center ${inputSizeClass} border rounded-md bg-background`}>
+          <span className="font-medium">{value}</span>
         </div>
       )}
-
+      
       <Button
-        variant="ghost"
-        className={cn(
-          "rounded-none border-l",
-          sizes[size].button
-        )}
+        variant="outline"
+        size="icon"
+        className={buttonSizeClass}
         onClick={increment}
-        disabled={disabled || quantity >= max}
-        tabIndex={disabled ? -1 : 0}
-        aria-label="Increase quantity"
+        disabled={disabled || value >= max}
+        type="button"
       >
-        <Plus className={sizes[size].icon} />
+        <PlusIcon className="h-3 w-3" />
       </Button>
     </div>
   );

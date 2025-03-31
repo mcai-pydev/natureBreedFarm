@@ -1,178 +1,257 @@
 import { useState } from "react";
-import { Link } from "wouter";
-import { Menu, X, Search, ShoppingCart, User } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Link, useLocation } from "wouter";
+import { 
+  Menu, 
+  Search, 
+  ShoppingCart, 
+  User, 
+  X,
+  ArrowLeft,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
-  Sheet, 
-  SheetContent, 
+  Sheet,
+  SheetContent,
   SheetTrigger,
-  SheetClose
+  SheetClose,
 } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
 
 interface NavigationBarProps {
-  cartItemsCount: number;
-  onCartClick: () => void;
-  onSearchChange: (query: string) => void;
-  searchQuery: string;
+  cartItemsCount?: number;
+  onCartClick?: () => void;
+  onSearchChange?: (query: string) => void;
+  searchQuery?: string;
 }
 
-export function NavigationBar({ 
-  cartItemsCount, 
-  onCartClick, 
+export function NavigationBar({
+  cartItemsCount = 0,
+  onCartClick,
   onSearchChange,
-  searchQuery
+  searchQuery = ""
 }: NavigationBarProps) {
+  const [location] = useLocation();
+  const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const { user, logoutMutation } = useAuth();
+  
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
   
   const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "Shop", href: "/shop" },
-    { name: "Products", href: "/products" },
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "About", href: "/about" },
-    { name: "Contact", href: "/contact" },
+    { title: "Home", path: "/" },
+    { title: "Shop", path: "/shop" },
+    { title: "Products", path: "/products" },
+    { title: "Transactions", path: "/transactions" },
+    { title: "Reports", path: "/reports" },
+    { title: "Policy", path: "/policies" }
   ];
   
+  // Render mobile search view
+  if (searchOpen && isMobile) {
+    return (
+      <div className="w-full bg-background border-b sticky top-0 z-50 flex items-center px-4 py-3">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="mr-2"
+          onClick={() => setSearchOpen(false)}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            className="pl-9 w-full"
+            autoFocus
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 h-full"
+              onClick={() => onSearchChange?.("")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <div className="bg-white shadow-sm border-b border-green-100">
-      <div className="container mx-auto py-4 px-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
+    <div className="w-full bg-background border-b sticky top-0 z-50">
+      <div className="container mx-auto px-4 flex items-center justify-between h-16">
+        {/* Logo */}
+        <div className="flex items-center">
           <Link href="/">
-            <a className="text-2xl font-bold text-primary flex items-center">
-              <span className="text-green-600">🌱</span>
-              <span className="ml-2">Nature Breed Farm</span>
+            <a className="flex items-center">
+              <span className="text-primary font-bold text-xl">Nature Breed Farm</span>
             </a>
           </Link>
-          
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex space-x-6">
-            {navLinks.map((link) => (
-              <Link key={link.name} href={link.href}>
-                <a className="text-gray-600 hover:text-primary">{link.name}</a>
-              </Link>
-            ))}
+        </div>
+        
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-6">
+          {navLinks.map((link) => (
+            <Link key={link.path} href={link.path}>
+              <a className={`text-sm font-medium transition-colors hover:text-primary ${
+                location === link.path ? "text-primary" : "text-foreground/80"
+              }`}>
+                {link.title}
+              </a>
+            </Link>
+          ))}
+        </div>
+        
+        {/* Search, Cart, Account (Desktop) */}
+        <div className="hidden md:flex items-center space-x-2">
+          <div className="relative w-60">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              className="pl-9 w-full"
+            />
           </div>
           
-          {/* Search and Cart */}
-          <div className="flex items-center space-x-4">
-            <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search products..."
-                className="pl-10 pr-4 w-[250px]"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-              />
-            </div>
-            
-            <Button 
-              variant="outline" 
-              className="relative"
-              onClick={onCartClick}
-            >
-              <ShoppingCart className="h-5 w-5 mr-2" />
-              Cart
-              {cartItemsCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 bg-primary text-white">
-                  {cartItemsCount}
-                </Badge>
-              )}
-            </Button>
-            
-            {user ? (
-              <Link href="/settings">
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
-                </Button>
-              </Link>
-            ) : (
-              <Link href="/auth">
-                <Button size="sm">Sign In</Button>
-              </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={onCartClick}
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cartItemsCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-2 -right-2 px-1 py-px text-[10px] min-w-[16px] h-[16px] flex items-center justify-center">
+                {cartItemsCount > 99 ? "99+" : cartItemsCount}
+              </Badge>
             )}
-            
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent>
-                  <div className="flex flex-col h-full">
-                    <div className="flex justify-between items-center mb-6">
-                      <span className="text-lg font-bold text-primary">Menu</span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <X className="h-5 w-5" />
-                      </Button>
-                    </div>
-                    
-                    <div className="relative mb-6">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                      <Input
-                        type="text"
-                        placeholder="Search products..."
-                        className="pl-10 pr-4"
-                        value={searchQuery}
-                        onChange={(e) => {
-                          onSearchChange(e.target.value);
-                          // Don't close menu on search
-                        }}
-                      />
-                    </div>
-                    
-                    <div className="space-y-4">
-                      {navLinks.map((link) => (
-                        <Link key={link.name} href={link.href}>
-                          <a 
-                            className="block py-2 text-gray-600 hover:text-primary" 
-                            onClick={() => setMobileMenuOpen(false)}
-                          >
-                            {link.name}
-                          </a>
-                        </Link>
-                      ))}
-                    </div>
-                    
-                    <div className="mt-auto pt-6 border-t border-gray-100">
-                      {user ? (
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium">{user.name}</p>
-                            <p className="text-sm text-gray-500">{user.role}</p>
-                          </div>
-                          <Link href="/settings">
-                            <Button variant="outline" size="sm" onClick={() => setMobileMenuOpen(false)}>
-                              Settings
-                            </Button>
-                          </Link>
-                        </div>
+          </Button>
+          
+          <div className="relative">
+            {user ? (
+              <div className="flex items-center space-x-2">
+                <Link href="/settings">
+                  <a className="flex items-center space-x-1">
+                    <div className="bg-primary/10 h-9 w-9 rounded-full flex items-center justify-center overflow-hidden">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.name || user.username} className="h-full w-full object-cover" />
                       ) : (
-                        <div className="flex flex-col space-y-2">
-                          <Link href="/auth">
-                            <Button className="w-full" onClick={() => setMobileMenuOpen(false)}>
-                              Sign In
-                            </Button>
-                          </Link>
-                        </div>
+                        <User className="h-5 w-5 text-primary" />
                       )}
                     </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
+                    <span className="text-sm font-medium">{user.name || user.username}</span>
+                  </a>
+                </Link>
+                <Button variant="ghost" size="sm" onClick={handleLogout}>Logout</Button>
+              </div>
+            ) : (
+              <Button asChild variant="default" size="sm">
+                <Link href="/auth">
+                  <a>Login</a>
+                </Link>
+              </Button>
+            )}
           </div>
+        </div>
+        
+        {/* Mobile Navigation */}
+        <div className="md:hidden flex items-center space-x-3">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setSearchOpen(true)}
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={onCartClick}
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cartItemsCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-2 -right-2 px-1 py-px text-[10px] min-w-[16px] h-[16px] flex items-center justify-center">
+                {cartItemsCount > 99 ? "99+" : cartItemsCount}
+              </Badge>
+            )}
+          </Button>
+          
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="overflow-y-auto">
+              <div className="flex flex-col space-y-6 py-4">
+                {user ? (
+                  <div className="flex flex-col items-center space-y-3 pb-6 border-b">
+                    <div className="bg-primary/10 h-16 w-16 rounded-full flex items-center justify-center overflow-hidden">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.name || user.username} className="h-full w-full object-cover" />
+                      ) : (
+                        <User className="h-6 w-6 text-primary" />
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <div className="font-medium">{user.name || user.username}</div>
+                      <div className="text-sm text-muted-foreground">{user.role || "User"}</div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button asChild size="sm" variant="outline">
+                        <Link href="/settings">
+                          <a>Profile</a>
+                        </Link>
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={handleLogout}>
+                        Logout
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-center pb-6 border-b">
+                    <Button asChild>
+                      <Link href="/auth">
+                        <a>Login / Register</a>
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+                
+                <nav className="space-y-1">
+                  {navLinks.map((link) => (
+                    <SheetClose asChild key={link.path}>
+                      <Link href={link.path}>
+                        <a className={`flex items-center py-2 px-3 rounded-md ${
+                          location === link.path 
+                            ? "bg-primary/10 text-primary font-medium" 
+                            : "text-foreground/80 hover:bg-accent"
+                        }`}>
+                          {link.title}
+                        </a>
+                      </Link>
+                    </SheetClose>
+                  ))}
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </div>

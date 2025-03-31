@@ -9,7 +9,7 @@ import ProductsPage from "@/pages/products-page";
 import TransactionsPage from "@/pages/transactions-page";
 import ReportsPage from "@/pages/reports-page";
 import SettingsPage from "@/pages/settings-page";
-import ShopPage from "@/pages/shop-page";
+import ShopPage from "@/pages/shop-page-updated";
 import PolicyPage from "@/pages/policy-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";

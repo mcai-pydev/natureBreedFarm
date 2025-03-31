@@ -26,24 +26,36 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   description: text("description"),
   price: real("price").notNull(),
+  salePrice: real("sale_price"),
   unit: text("unit").notNull(),
   stock: real("stock").notNull(),
+  stockQuantity: real("stock_quantity").notNull().default(0),
   category: text("category").default("general"),
   imageUrl: text("image_url"),
   featured: boolean("featured").default(false),
+  isFeatured: boolean("is_featured").default(false),
+  isNew: boolean("is_new").default(false),
+  supplierName: text("supplier_name"),
   location: text("location"), // For product distribution tracking
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertProductSchema = createInsertSchema(products).pick({
   name: true,
   description: true,
   price: true,
+  salePrice: true,
   unit: true,
   stock: true,
+  stockQuantity: true,
   category: true,
   imageUrl: true,
   featured: true,
+  isFeatured: true,
+  isNew: true,
+  supplierName: true,
   location: true,
+  createdAt: true,
 });
 
 // Transactions table for purchases, sales, and orders

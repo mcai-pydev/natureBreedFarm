@@ -1,165 +1,184 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { 
-  Book, 
-  HelpCircle, 
-  Phone, 
-  Mail, 
-  Heart, 
-  Truck, 
-  RotateCcw, 
-  Shield, 
-  Store, 
-  User,
-  MessageSquare
+  ShoppingCart, 
+  BarChart2, 
+  ShoppingBag, 
+  FileText, 
+  Settings, 
+  Home, 
+  ChevronLeft, 
+  ChevronRight 
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-interface QuickLinkProps {
-  href: string;
+interface QuickLink {
+  name: string;
+  path: string;
   icon: React.ReactNode;
-  label: string;
-  className?: string;
-  onClick?: () => void;
-}
-
-function QuickLink({ href, icon, label, className, onClick }: QuickLinkProps) {
-  return (
-    <Link 
-      href={href} 
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors",
-        className
-      )}
-    >
-      {icon}
-      <span>{label}</span>
-    </Link>
-  );
+  description: string;
+  roles?: string[];
 }
 
 interface QuickLinksProps {
-  variant?: "horizontal" | "vertical";
-  size?: "sm" | "md" | "lg";
   className?: string;
+  variant?: "vertical" | "horizontal";
+  expanded?: boolean;
 }
 
-export function QuickLinks({ 
-  variant = "horizontal",
-  size = "md",
-  className
+export function QuickLinks({
+  className = "",
+  variant = "vertical",
+  expanded: initialExpanded = false,
 }: QuickLinksProps) {
+  const [expanded, setExpanded] = useState(initialExpanded);
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   
-  const iconSize = {
-    sm: "h-3.5 w-3.5",
-    md: "h-4 w-4",
-    lg: "h-5 w-5",
-  }[size];
-  
-  const containerClass = variant === "horizontal" 
-    ? "flex flex-wrap gap-4 md:gap-6" 
-    : "flex flex-col gap-3";
-    
-  const helpLinks = [
+  // Define all quick links
+  const allLinks: QuickLink[] = [
     {
-      href: "/policies/terms",
-      icon: <Book className={iconSize} />,
-      label: "Terms of Service",
+      name: "Home",
+      path: "/",
+      icon: <Home className="h-5 w-5" />,
+      description: "Dashboard and overview",
     },
     {
-      href: "/policies/privacy",
-      icon: <Shield className={iconSize} />,
-      label: "Privacy Policy",
+      name: "Shop",
+      path: "/shop",
+      icon: <ShoppingCart className="h-5 w-5" />,
+      description: "Browse and purchase products",
     },
     {
-      href: "/policies/shipping",
-      icon: <Truck className={iconSize} />,
-      label: "Shipping Policy",
+      name: "Products",
+      path: "/products",
+      icon: <ShoppingBag className="h-5 w-5" />,
+      description: "Manage farm products",
+      roles: ["admin", "manager"],
     },
     {
-      href: "/policies/returns",
-      icon: <RotateCcw className={iconSize} />,
-      label: "Returns Policy",
+      name: "Transactions",
+      path: "/transactions",
+      icon: <FileText className="h-5 w-5" />,
+      description: "View and manage transactions",
+      roles: ["admin", "manager"],
     },
     {
-      href: "/help",
-      icon: <HelpCircle className={iconSize} />,
-      label: "Help & FAQ",
+      name: "Reports",
+      path: "/reports",
+      icon: <BarChart2 className="h-5 w-5" />,
+      description: "Analytics and reporting",
+      roles: ["admin", "manager"],
+    },
+    {
+      name: "Settings",
+      path: "/settings",
+      icon: <Settings className="h-5 w-5" />,
+      description: "Account and app settings",
     },
   ];
   
-  const contactLinks = [
-    {
-      href: "tel:+2347012345678",
-      icon: <Phone className={iconSize} />,
-      label: "+234 701 234 5678",
-    },
-    {
-      href: "mailto:info@naturebreed.farm",
-      icon: <Mail className={iconSize} />,
-      label: "info@naturebreed.farm",
-    },
-    {
-      href: "/contact",
-      icon: <MessageSquare className={iconSize} />,
-      label: "Contact Us",
-    },
-  ];
+  // Filter links based on user role
+  const filteredLinks = allLinks.filter(link => 
+    !link.roles || 
+    !user || 
+    link.roles.includes(user.role)
+  );
   
-  const shopLinks = [
-    {
-      href: "/shop",
-      icon: <Store className={iconSize} />,
-      label: "Shop",
-    },
-    {
-      href: user ? "/account/favorites" : "/auth",
-      icon: <Heart className={iconSize} />,
-      label: "Favorites",
-    },
-    {
-      href: user ? "/account" : "/auth",
-      icon: <User className={iconSize} />,
-      label: user ? "My Account" : "Login / Register",
-    },
-  ];
+  // Decide if we should render compact or expanded view
+  const shouldRenderExpanded = expanded && !isMobile;
   
+  // Vertical layout
+  if (variant === "vertical") {
+    return (
+      <div className={cn(
+        "flex flex-col border-r bg-background transition-all", 
+        shouldRenderExpanded ? "w-56" : "w-16",
+        className
+      )}>
+        <div className="flex items-center justify-between p-2">
+          {shouldRenderExpanded && (
+            <span className="text-sm font-medium">Quick Links</span>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setExpanded(!expanded)}
+            aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
+            className="ml-auto"
+          >
+            {expanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </Button>
+        </div>
+        
+        <TooltipProvider>
+          <nav className="flex flex-col gap-1 p-2">
+            {filteredLinks.map((link) => (
+              <Tooltip key={link.path} delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Link href={link.path}>
+                    <a className={cn(
+                      "flex items-center gap-2 rounded-md px-3 py-2 hover:bg-muted transition-colors",
+                      "text-muted-foreground hover:text-foreground",
+                      shouldRenderExpanded ? "justify-start" : "justify-center"
+                    )}>
+                      {link.icon}
+                      {shouldRenderExpanded && (
+                        <span className="text-sm">{link.name}</span>
+                      )}
+                    </a>
+                  </Link>
+                </TooltipTrigger>
+                {!shouldRenderExpanded && (
+                  <TooltipContent side="right">
+                    <div>
+                      <p className="font-medium">{link.name}</p>
+                      <p className="text-xs text-muted-foreground">{link.description}</p>
+                    </div>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            ))}
+          </nav>
+        </TooltipProvider>
+      </div>
+    );
+  }
+  
+  // Horizontal layout
   return (
-    <div className={cn(containerClass, className)}>
-      <div className={containerClass}>
-        {shopLinks.map(link => (
-          <QuickLink 
-            key={link.label}
-            href={link.href}
-            icon={link.icon}
-            label={link.label}
-          />
-        ))}
-      </div>
-      
-      <div className={containerClass}>
-        {contactLinks.map(link => (
-          <QuickLink 
-            key={link.label}
-            href={link.href}
-            icon={link.icon}
-            label={link.label}
-          />
-        ))}
-      </div>
-      
-      <div className={containerClass}>
-        {helpLinks.map(link => (
-          <QuickLink 
-            key={link.label}
-            href={link.href}
-            icon={link.icon}
-            label={link.label}
-          />
-        ))}
-      </div>
+    <div className={cn("border-b bg-background p-2", className)}>
+      <TooltipProvider>
+        <nav className="flex items-center gap-1">
+          {filteredLinks.map((link) => (
+            <Tooltip key={link.path}>
+              <TooltipTrigger asChild>
+                <Link href={link.path}>
+                  <a className={cn(
+                    "flex items-center gap-2 rounded-md px-3 py-2 hover:bg-muted transition-colors",
+                    "text-muted-foreground hover:text-foreground"
+                  )}>
+                    {link.icon}
+                    <span className="text-sm hidden md:inline">{link.name}</span>
+                  </a>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">{link.description}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </nav>
+      </TooltipProvider>
     </div>
   );
 }

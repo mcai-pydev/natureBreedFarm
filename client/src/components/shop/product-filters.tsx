@@ -1,56 +1,44 @@
 import { useState, useEffect } from "react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Filter, X, Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetDescription, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger 
-} from "@/components/ui/sheet";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils";
-import { SlidersHorizontal, X } from "lucide-react";
 
-export type ProductCategory = string;
-
-export interface PriceRange {
+export type PriceRange = {
   min: number;
   max: number;
-}
+};
 
-export interface StockStatus {
+export type StockStatus = {
   inStock: boolean;
   lowStock: boolean;
   outOfStock: boolean;
-}
+};
 
-export interface ProductFilters {
-  categories: ProductCategory[];
+export type ProductFilters = {
+  categories: string[];
   priceRange: PriceRange;
   stockStatus: StockStatus;
   sortBy: string;
-}
+};
 
 interface ProductFiltersProps {
-  availableCategories: ProductCategory[];
+  availableCategories: string[];
   maxPrice: number;
   minPrice: number;
-  initialFilters?: Partial<ProductFilters>;
+  initialFilters: ProductFilters;
   onFilterChange: (filters: ProductFilters) => void;
   isMobile?: boolean;
 }
@@ -61,189 +49,366 @@ export function ProductFilters({
   minPrice,
   initialFilters,
   onFilterChange,
-  isMobile = false,
+  isMobile = false
 }: ProductFiltersProps) {
-  const [filters, setFilters] = useState<ProductFilters>({
-    categories: initialFilters?.categories || [],
-    priceRange: initialFilters?.priceRange || { min: minPrice, max: maxPrice },
-    stockStatus: initialFilters?.stockStatus || { inStock: true, lowStock: true, outOfStock: false },
-    sortBy: initialFilters?.sortBy || "featured",
-  });
+  const [isOpen, setIsOpen] = useState(false);
+  const [filters, setFilters] = useState<ProductFilters>(initialFilters);
+  const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   
-  // Update external state when filters change
+  // Calculate active filters count
   useEffect(() => {
+    let count = 0;
+    if (filters.categories.length > 0) count++;
+    if (filters.priceRange.min > minPrice || filters.priceRange.max < maxPrice) count++;
+    const stockStatusCount = Object.values(filters.stockStatus).filter(v => !v).length;
+    if (stockStatusCount > 0) count++;
+    if (filters.sortBy !== "featured") count++;
+    setActiveFiltersCount(count);
+  }, [filters, minPrice, maxPrice]);
+  
+  // When the initialFilters prop changes, update the internal state
+  useEffect(() => {
+    setFilters(initialFilters);
+  }, [initialFilters]);
+  
+  // Apply filters
+  const applyFilters = () => {
     onFilterChange(filters);
-  }, [filters, onFilterChange]);
-  
-  const handleCategoryChange = (category: string, checked: boolean) => {
-    setFilters(prev => {
-      if (checked) {
-        return { ...prev, categories: [...prev.categories, category] };
-      } else {
-        return { ...prev, categories: prev.categories.filter(c => c !== category) };
-      }
-    });
+    if (isMobile) {
+      setIsOpen(false);
+    }
   };
   
-  const handlePriceChange = (value: number[]) => {
-    setFilters(prev => ({
-      ...prev,
-      priceRange: { min: value[0], max: value[1] },
-    }));
-  };
-  
-  const handleStockStatusChange = (status: keyof StockStatus, checked: boolean) => {
-    setFilters(prev => ({
-      ...prev,
-      stockStatus: { ...prev.stockStatus, [status]: checked },
-    }));
-  };
-  
-  const handleSortChange = (value: string) => {
-    setFilters(prev => ({ ...prev, sortBy: value }));
-  };
-  
+  // Reset filters
   const resetFilters = () => {
-    setFilters({
+    const defaultFilters: ProductFilters = {
       categories: [],
       priceRange: { min: minPrice, max: maxPrice },
       stockStatus: { inStock: true, lowStock: true, outOfStock: false },
-      sortBy: "featured",
+      sortBy: "featured"
+    };
+    setFilters(defaultFilters);
+    onFilterChange(defaultFilters);
+    if (isMobile) {
+      setIsOpen(false);
+    }
+  };
+  
+  // Toggle category selection
+  const toggleCategory = (category: string) => {
+    setFilters(prev => {
+      const newCategories = prev.categories.includes(category)
+        ? prev.categories.filter(c => c !== category)
+        : [...prev.categories, category];
+      return { ...prev, categories: newCategories };
     });
   };
   
-  const hasActiveFilters = () => {
-    return (
-      filters.categories.length > 0 ||
-      filters.priceRange.min > minPrice ||
-      filters.priceRange.max < maxPrice ||
-      !filters.stockStatus.inStock ||
-      !filters.stockStatus.lowStock ||
-      filters.stockStatus.outOfStock ||
-      filters.sortBy !== "featured"
-    );
+  // Update price range
+  const updatePriceRange = (values: number[]) => {
+    setFilters(prev => ({
+      ...prev,
+      priceRange: { min: values[0], max: values[1] }
+    }));
   };
   
-  const filtersContent = (
+  // Toggle stock status
+  const toggleStockStatus = (key: keyof StockStatus) => {
+    setFilters(prev => ({
+      ...prev,
+      stockStatus: {
+        ...prev.stockStatus,
+        [key]: !prev.stockStatus[key]
+      }
+    }));
+  };
+  
+  // Update sort option
+  const updateSortOption = (value: string) => {
+    setFilters(prev => ({ ...prev, sortBy: value }));
+  };
+  
+  // Mobile filter trigger
+  if (isMobile) {
+    return (
+      <div className="mb-4 flex items-center justify-between">
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="gap-1">
+              <Filter className="h-4 w-4" />
+              <span>Filters</span>
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary" className="ml-1 px-1 py-0 h-5 min-w-5">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-full max-w-sm overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="flex items-center justify-between">
+                <span>Filters</span>
+                <Button variant="ghost" size="sm" onClick={resetFilters}>Reset</Button>
+              </SheetTitle>
+            </SheetHeader>
+            
+            <div className="mt-6 space-y-6">
+              {/* Categories */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Categories</h3>
+                <div className="space-y-2">
+                  {availableCategories.map(category => (
+                    <div key={category} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`category-${category}`} 
+                        checked={filters.categories.includes(category)}
+                        onCheckedChange={() => toggleCategory(category)}
+                      />
+                      <Label 
+                        htmlFor={`category-${category}`}
+                        className="capitalize"
+                      >
+                        {category}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <Separator />
+              
+              {/* Price Range */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Price Range</h3>
+                <div className="px-2">
+                  <Slider
+                    defaultValue={[filters.priceRange.min, filters.priceRange.max]}
+                    min={minPrice}
+                    max={maxPrice}
+                    step={1}
+                    value={[filters.priceRange.min, filters.priceRange.max]}
+                    onValueChange={updatePriceRange}
+                    className="mb-4"
+                  />
+                  <div className="flex items-center justify-between text-sm">
+                    <span>{formatCurrency(filters.priceRange.min)}</span>
+                    <span>{formatCurrency(filters.priceRange.max)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              {/* Stock Status */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Stock Status</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="inStock" 
+                      checked={filters.stockStatus.inStock}
+                      onCheckedChange={() => toggleStockStatus('inStock')}
+                    />
+                    <Label htmlFor="inStock">In Stock</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="lowStock" 
+                      checked={filters.stockStatus.lowStock}
+                      onCheckedChange={() => toggleStockStatus('lowStock')}
+                    />
+                    <Label htmlFor="lowStock">Low Stock</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="outOfStock" 
+                      checked={filters.stockStatus.outOfStock}
+                      onCheckedChange={() => toggleStockStatus('outOfStock')}
+                    />
+                    <Label htmlFor="outOfStock">Out of Stock</Label>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              {/* Sort Options */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Sort By</h3>
+                <Select 
+                  value={filters.sortBy} 
+                  onValueChange={updateSortOption}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Featured" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="featured">Featured</SelectItem>
+                    <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                    <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                    <SelectItem value="name-asc">Name: A to Z</SelectItem>
+                    <SelectItem value="name-desc">Name: Z to A</SelectItem>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="mt-8">
+              <Button className="w-full" onClick={applyFilters}>
+                Apply Filters
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+        
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-muted-foreground">Sort By:</span>
+          <Select 
+            value={filters.sortBy} 
+            onValueChange={(value) => {
+              updateSortOption(value);
+              applyFilters();
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Featured" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="featured">Featured</SelectItem>
+              <SelectItem value="price-asc">Price: Low to High</SelectItem>
+              <SelectItem value="price-desc">Price: High to Low</SelectItem>
+              <SelectItem value="name-asc">Name: A to Z</SelectItem>
+              <SelectItem value="name-desc">Name: Z to A</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    );
+  }
+  
+  // Desktop filter panel
+  return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Filters</h3>
-        {hasActiveFilters() && (
-          <Button variant="ghost" size="sm" className="h-8 px-2" onClick={resetFilters}>
-            <X className="mr-2 h-4 w-4" />
+        <h3 className="font-medium">Filters</h3>
+        {activeFiltersCount > 0 && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={resetFilters} 
+            className="h-8 px-2 text-xs"
+          >
             Reset All
           </Button>
         )}
       </div>
       
-      <Accordion type="multiple" defaultValue={["categories", "price", "stock"]}>
-        <AccordionItem value="categories">
-          <AccordionTrigger>Categories</AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-2">
-              {availableCategories.map(category => (
-                <div key={category} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`category-${category}`}
-                    checked={filters.categories.includes(category)}
-                    onCheckedChange={(checked) => 
-                      handleCategoryChange(category, checked === true)
-                    }
-                  />
-                  <label 
-                    htmlFor={`category-${category}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {category}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-        
-        <AccordionItem value="price">
-          <AccordionTrigger>Price Range</AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-4">
-              <Slider 
-                defaultValue={[filters.priceRange.min, filters.priceRange.max]}
-                min={minPrice}
-                max={maxPrice}
-                step={1}
-                onValueChange={handlePriceChange}
+      {/* Categories */}
+      <div>
+        <h3 className="text-sm font-medium mb-3">Categories</h3>
+        <div className="space-y-2">
+          {availableCategories.map(category => (
+            <div key={category} className="flex items-center space-x-2">
+              <Checkbox 
+                id={`desktop-category-${category}`} 
+                checked={filters.categories.includes(category)}
+                onCheckedChange={() => {
+                  toggleCategory(category);
+                  applyFilters();
+                }}
               />
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{formatCurrency(filters.priceRange.min)}</span>
-                <span className="text-sm">{formatCurrency(filters.priceRange.max)}</span>
-              </div>
+              <Label 
+                htmlFor={`desktop-category-${category}`}
+                className="capitalize"
+              >
+                {category}
+              </Label>
             </div>
-          </AccordionContent>
-        </AccordionItem>
-        
-        <AccordionItem value="stock">
-          <AccordionTrigger>Stock Status</AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="in-stock"
-                  checked={filters.stockStatus.inStock}
-                  onCheckedChange={(checked) => 
-                    handleStockStatusChange("inStock", checked === true)
-                  }
-                />
-                <label 
-                  htmlFor="in-stock"
-                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  In Stock
-                </label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="low-stock"
-                  checked={filters.stockStatus.lowStock}
-                  onCheckedChange={(checked) => 
-                    handleStockStatusChange("lowStock", checked === true)
-                  }
-                />
-                <label 
-                  htmlFor="low-stock"
-                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Low Stock
-                </label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="out-of-stock"
-                  checked={filters.stockStatus.outOfStock}
-                  onCheckedChange={(checked) => 
-                    handleStockStatusChange("outOfStock", checked === true)
-                  }
-                />
-                <label 
-                  htmlFor="out-of-stock"
-                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Out of Stock
-                </label>
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+          ))}
+        </div>
+      </div>
       
-      <div className="space-y-2">
-        <label htmlFor="sort-select" className="text-sm font-medium">
-          Sort By
-        </label>
-        <Select value={filters.sortBy} onValueChange={handleSortChange}>
-          <SelectTrigger id="sort-select">
-            <SelectValue placeholder="Sort by" />
+      <Separator />
+      
+      {/* Price Range */}
+      <div>
+        <h3 className="text-sm font-medium mb-3">Price Range</h3>
+        <div className="px-2">
+          <Slider
+            defaultValue={[filters.priceRange.min, filters.priceRange.max]}
+            min={minPrice}
+            max={maxPrice}
+            step={1}
+            value={[filters.priceRange.min, filters.priceRange.max]}
+            onValueChange={updatePriceRange}
+            onValueCommit={applyFilters}
+            className="mb-4"
+          />
+          <div className="flex items-center justify-between text-sm">
+            <span>{formatCurrency(filters.priceRange.min)}</span>
+            <span>{formatCurrency(filters.priceRange.max)}</span>
+          </div>
+        </div>
+      </div>
+      
+      <Separator />
+      
+      {/* Stock Status */}
+      <div>
+        <h3 className="text-sm font-medium mb-3">Stock Status</h3>
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="desktop-inStock" 
+              checked={filters.stockStatus.inStock}
+              onCheckedChange={() => {
+                toggleStockStatus('inStock');
+                applyFilters();
+              }}
+            />
+            <Label htmlFor="desktop-inStock">In Stock</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="desktop-lowStock" 
+              checked={filters.stockStatus.lowStock}
+              onCheckedChange={() => {
+                toggleStockStatus('lowStock');
+                applyFilters();
+              }}
+            />
+            <Label htmlFor="desktop-lowStock">Low Stock</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="desktop-outOfStock" 
+              checked={filters.stockStatus.outOfStock}
+              onCheckedChange={() => {
+                toggleStockStatus('outOfStock');
+                applyFilters();
+              }}
+            />
+            <Label htmlFor="desktop-outOfStock">Out of Stock</Label>
+          </div>
+        </div>
+      </div>
+      
+      <Separator />
+      
+      {/* Sort Options */}
+      <div>
+        <h3 className="text-sm font-medium mb-3">Sort By</h3>
+        <Select 
+          value={filters.sortBy} 
+          onValueChange={(value) => {
+            updateSortOption(value);
+            applyFilters();
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Featured" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="featured">Featured</SelectItem>
@@ -257,54 +422,4 @@ export function ProductFilters({
       </div>
     </div>
   );
-  
-  if (isMobile) {
-    return (
-      <div className="flex items-center justify-between mb-4">
-        <Select value={filters.sortBy} onValueChange={handleSortChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="featured">Featured</SelectItem>
-            <SelectItem value="price-asc">Price: Low to High</SelectItem>
-            <SelectItem value="price-desc">Price: High to Low</SelectItem>
-            <SelectItem value="name-asc">Name: A to Z</SelectItem>
-            <SelectItem value="name-desc">Name: Z to A</SelectItem>
-            <SelectItem value="newest">Newest First</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
-              {hasActiveFilters() && (
-                <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                  {filters.categories.length +
-                    (filters.priceRange.min > minPrice || filters.priceRange.max < maxPrice ? 1 : 0) +
-                    (filters.stockStatus.inStock !== true || 
-                     filters.stockStatus.lowStock !== true || 
-                     filters.stockStatus.outOfStock !== false ? 1 : 0)
-                  }
-                </span>
-              )}
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-            <SheetHeader>
-              <SheetTitle>Filters</SheetTitle>
-              <SheetDescription>
-                Filter and sort products by category, price, and availability
-              </SheetDescription>
-            </SheetHeader>
-            <div className="mt-6">{filtersContent}</div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    );
-  }
-  
-  return <div className="w-full">{filtersContent}</div>;
 }

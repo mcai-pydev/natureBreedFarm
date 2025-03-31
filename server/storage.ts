@@ -217,10 +217,16 @@ export class MemStorage implements IStorage {
       ...insertProduct, 
       id,
       description: insertProduct.description || null,
+      salePrice: insertProduct.salePrice || null,
+      stockQuantity: insertProduct.stockQuantity || insertProduct.stock,
       imageUrl: insertProduct.imageUrl || null,
       category: insertProduct.category || null,
       featured: insertProduct.featured || false,
-      location: insertProduct.location || null
+      isFeatured: insertProduct.isFeatured || false,
+      isNew: insertProduct.isNew || false,
+      supplierName: insertProduct.supplierName || null,
+      location: insertProduct.location || null,
+      createdAt: insertProduct.createdAt || new Date()
     };
     this.products.set(id, product);
     return product;

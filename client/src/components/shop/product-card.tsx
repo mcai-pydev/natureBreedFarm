@@ -1,31 +1,20 @@
 import { useState } from "react";
-import { Link } from "wouter";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { QuantitySelector } from "@/components/ui/quantity-selector";
-import { ProductActionButton } from "@/components/ui/product-action-button";
-import { ShareButtons } from "@/components/social/social-media-links";
-import { formatCurrency } from "@/lib/utils";
+import { Heart, ShoppingCart, Eye, Star } from "lucide-react";
 import { Product } from "@shared/schema";
-import { ShoppingCart, Heart, Eye, BarChart2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
+import { QuantitySelector } from "@/components/ui/quantity-selector";
 
 interface ProductCardProps {
   product: Product;
-  variant?: "default" | "horizontal" | "compact";
+  variant?: "default" | "compact" | "featured";
   onAddToCart?: (product: Product, quantity: number) => void;
   onBuyNow?: (product: Product, quantity: number) => void;
   onToggleFavorite?: (product: Product) => void;
+  onQuickView?: (product: Product) => void;
   isFavorite?: boolean;
-  className?: string;
-  showActions?: boolean;
 }
 
 export function ProductCard({
@@ -34,354 +23,246 @@ export function ProductCard({
   onAddToCart,
   onBuyNow,
   onToggleFavorite,
-  isFavorite = false,
-  className = "",
-  showActions = true,
+  onQuickView,
+  isFavorite = false
 }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1);
-  const [showQuantity, setShowQuantity] = useState(false);
+  const isCompact = variant === "compact";
+  const isFeatured = variant === "featured";
   
-  // Placeholder image if no image is provided
-  const imageSrc = product.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image';
+  // Determine stock status
+  const stockStatus = () => {
+    const stock = product.stockQuantity ?? product.stock;
+    if (stock <= 0) return { text: "Out of Stock", color: "destructive" };
+    if (stock <= 10) return { text: "Low Stock", color: "warning" };
+    return { text: "In Stock", color: "success" };
+  };
   
-  // Check if product is in stock
-  const isInStock = product.stockQuantity > 0;
-  
-  // Calculate discount percentage if there's a sale price
-  const discountPercentage = product.salePrice && product.price 
+  // Calculate discount percentage if both price and salePrice exist
+  const discountPercentage = product.salePrice && product.price > product.salePrice
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : null;
+
+  // Current price to display (sale price or regular price)
+  const currentPrice = product.salePrice && product.salePrice < product.price 
+    ? product.salePrice 
+    : product.price;
   
-  // Product price to display (sale price if available, otherwise regular price)
-  const displayPrice = product.salePrice || product.price;
-  
-  const handleAddToCart = () => {
-    onAddToCart?.(product, quantity);
-    setShowQuantity(false);
-  };
-  
-  const handleBuyNow = () => {
-    onBuyNow?.(product, quantity);
-    setShowQuantity(false);
-  };
-  
-  const renderStockBadge = () => {
-    if (product.stockQuantity > 20) {
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">In Stock</Badge>;
-    } else if (product.stockQuantity > 0) {
-      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Low Stock: {product.stockQuantity} left</Badge>;
-    } else {
-      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Out of Stock</Badge>;
-    }
-  };
-  
-  const renderProductImage = () => (
-    <div className="relative overflow-hidden rounded-t-lg">
-      {discountPercentage && (
-        <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-600">
-          {discountPercentage}% OFF
-        </Badge>
-      )}
-      
-      {product.isNew && (
-        <Badge className="absolute top-2 right-2 bg-blue-500 hover:bg-blue-600">
-          NEW
-        </Badge>
-      )}
-      
-      <Link href={`/shop/products/${product.id}`}>
-        <img 
-          src={imageSrc} 
-          alt={product.name} 
-          className="w-full h-48 object-cover transition-transform duration-300 hover:scale-105"
-        />
-      </Link>
-    </div>
-  );
-  
-  const renderPrice = () => (
-    <div className="flex items-center gap-2">
-      <span className={`text-lg font-bold ${product.salePrice ? 'text-red-600' : 'text-primary'}`}>
-        {formatCurrency(displayPrice)}
-      </span>
-      
-      {product.salePrice && (
-        <span className="text-sm text-muted-foreground line-through">
-          {formatCurrency(product.price)}
-        </span>
-      )}
-    </div>
-  );
-  
-  const renderActions = () => (
-    showActions && (
-      <div className="mt-4 space-y-3">
-        {showQuantity ? (
-          <div className="space-y-3">
-            <QuantitySelector 
-              initialValue={quantity}
-              min={1}
-              max={Math.min(10, product.stockQuantity || 10)}
-              onChange={setQuantity}
-              disabled={!isInStock}
-              unit={product.unit}
+  // Card layout varies based on variant
+  if (isCompact) {
+    return (
+      <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
+        <div className="relative">
+          {product.imageUrl ? (
+            <img 
+              src={product.imageUrl} 
+              alt={product.name} 
+              className="w-full h-32 object-cover"
             />
-            
-            <div className="grid grid-cols-2 gap-2">
-              <ProductActionButton
-                variant="outline"
-                label="Add to Cart"
-                icon={<ShoppingCart className="h-4 w-4" />}
-                onClick={handleAddToCart}
-                disabled={!isInStock}
-                fullWidth
-              />
-              
-              <ProductActionButton
-                label="Buy Now"
-                onClick={handleBuyNow}
-                disabled={!isInStock}
-                fullWidth
-              />
+          ) : (
+            <div className="w-full h-32 bg-primary/10 flex items-center justify-center">
+              <span className="text-2xl font-semibold text-primary">{product.name.substring(0, 2)}</span>
             </div>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="w-full text-muted-foreground"
-              onClick={() => setShowQuantity(false)}
-            >
-              Cancel
-            </Button>
+          )}
+          
+          {/* Product badges */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {product.isNew && (
+              <Badge className="bg-primary">New</Badge>
+            )}
+            {discountPercentage && (
+              <Badge variant="outline" className="bg-orange-500 text-white border-none">
+                {discountPercentage}% OFF
+              </Badge>
+            )}
           </div>
+          
+          {/* Favorite button */}
+          {onToggleFavorite && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`absolute top-2 right-2 h-8 w-8 rounded-full bg-background/80 
+                         ${isFavorite ? 'text-red-500' : 'text-gray-500'}`}
+              onClick={() => onToggleFavorite(product)}
+            >
+              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+            </Button>
+          )}
+        </div>
+        
+        <CardContent className="p-3">
+          <h3 className="font-medium text-sm truncate">{product.name}</h3>
+          <div className="flex items-baseline mt-1 gap-1">
+            <span className="font-semibold text-base">
+              {formatCurrency(currentPrice)}
+            </span>
+            {product.salePrice && product.salePrice < product.price && (
+              <span className="text-xs text-muted-foreground line-through">
+                {formatCurrency(product.price)}
+              </span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
+      <div className="relative">
+        {product.imageUrl ? (
+          <img 
+            src={product.imageUrl} 
+            alt={product.name} 
+            className={`w-full ${isFeatured ? 'h-40' : 'h-48'} object-cover`}
+          />
         ) : (
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              <ProductActionButton
-                variant="outline"
-                label="Add to Cart"
-                icon={<ShoppingCart className="h-4 w-4" />}
-                onClick={() => setShowQuantity(true)}
-                disabled={!isInStock}
-                fullWidth
-              />
-              
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => onToggleFavorite?.(product)}
-                className={isFavorite ? "text-red-500 border-red-200" : ""}
-                aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-              >
-                <Heart className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
-              </Button>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="flex-1"
-                asChild
-              >
-                <Link href={`/shop/products/${product.id}`}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  View Details
-                </Link>
-              </Button>
-              
-              <Button 
-                variant="ghost" 
-                size="icon"
-                asChild
-              >
-                <Link href={`/reports/products/${product.id}`}>
-                  <BarChart2 className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
+          <div className={`w-full ${isFeatured ? 'h-40' : 'h-48'} bg-primary/10 flex items-center justify-center`}>
+            <span className="text-3xl font-semibold text-primary">{product.name.substring(0, 2)}</span>
           </div>
         )}
+        
+        {/* Product badges */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {product.isNew && (
+            <Badge className="bg-primary">New</Badge>
+          )}
+          {discountPercentage && (
+            <Badge variant="outline" className="bg-orange-500 text-white border-none">
+              {discountPercentage}% OFF
+            </Badge>
+          )}
+          <Badge 
+            variant={stockStatus().color as "default" | "secondary" | "destructive" | "outline"}
+            className="capitalize"
+          >
+            {stockStatus().text}
+          </Badge>
+        </div>
+        
+        {/* Quick actions */}
+        <div className="absolute top-2 right-2 flex flex-col gap-1">
+          {onToggleFavorite && (
+            <Button
+              variant="outline"
+              size="icon"
+              className={`h-8 w-8 rounded-full bg-background/80 
+                         ${isFavorite ? 'text-red-500 border-red-500' : 'text-muted-foreground'}`}
+              onClick={() => onToggleFavorite(product)}
+            >
+              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+            </Button>
+          )}
+          
+          {onQuickView && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-background/80 text-muted-foreground"
+              onClick={() => onQuickView(product)}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
-    )
-  );
-  
-  if (variant === "compact") {
-    return (
-      <Card className={`overflow-hidden h-full ${className}`}>
-        <div className="flex h-full">
-          <div className="w-24 h-full">
-            <img 
-              src={imageSrc} 
-              alt={product.name} 
-              className="w-full h-full object-cover"
+      
+      <CardContent className={`px-4 pt-4 ${isFeatured ? 'pb-2' : 'pb-3'}`}>
+        <div className="flex items-center gap-1 mb-1">
+          <Badge variant="outline" className="text-xs capitalize">
+            {product.category || "General"}
+          </Badge>
+          {product.supplierName && (
+            <span className="text-xs text-muted-foreground truncate">
+              by {product.supplierName}
+            </span>
+          )}
+        </div>
+      
+        <h3 className="font-medium text-lg mb-1 truncate">{product.name}</h3>
+        
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+          {product.description || `Fresh ${product.name} from Nature Breed Farm.`}
+        </p>
+        
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-baseline gap-1">
+            <span className="font-semibold text-lg">
+              {formatCurrency(currentPrice)}
+            </span>
+            {product.salePrice && product.salePrice < product.price && (
+              <span className="text-sm text-muted-foreground line-through">
+                {formatCurrency(product.price)}
+              </span>
+            )}
+          </div>
+          <span className="text-sm text-muted-foreground">
+            per {product.unit}
+          </span>
+        </div>
+        
+        {!isFeatured && (
+          <div className="mt-3">
+            <div className="font-medium text-sm mb-1">Quantity:</div>
+            <QuantitySelector
+              initialValue={quantity}
+              onChange={setQuantity}
+              min={1}
+              max={Math.max(1, product.stockQuantity || product.stock)}
+              disabled={product.stockQuantity === 0 || product.stock === 0}
             />
           </div>
-          
-          <div className="flex-1 flex flex-col p-3">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>
-                <p className="text-xs text-muted-foreground">{product.category}</p>
-              </div>
-              {renderPrice()}
-            </div>
-            
-            <div className="mt-auto flex justify-between items-center">
-              {renderStockBadge()}
-              
-              <ProductActionButton
-                size="sm"
-                variant="outline"
-                label=""
-                showTooltip
-                tooltipContent="Add to Cart"
-                icon={<ShoppingCart className="h-3.5 w-3.5" />}
-                onClick={() => onAddToCart?.(product, 1)}
-                disabled={!isInStock}
-              />
-            </div>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-  
-  if (variant === "horizontal") {
-    return (
-      <Card className={`overflow-hidden ${className}`}>
-        <div className="flex flex-col sm:flex-row">
-          <div className="sm:w-1/3">
-            {renderProductImage()}
-          </div>
-          
-          <div className="flex-1 p-4">
-            <div className="flex justify-between mb-2">
-              <Badge variant="outline">{product.category}</Badge>
-              {renderStockBadge()}
-            </div>
-            
-            <Link href={`/shop/products/${product.id}`}>
-              <h3 className="text-xl font-semibold hover:text-primary transition-colors line-clamp-1">{product.name}</h3>
-            </Link>
-            
-            <p className="text-muted-foreground line-clamp-2 my-2">{product.description}</p>
-            
-            <div className="flex justify-between items-end mt-4">
-              <div>
-                {renderPrice()}
-                <p className="text-sm mt-1">
-                  {product.unit && <span>{product.unit} • </span>}
-                  {product.supplierName && <span>By {product.supplierName}</span>}
-                </p>
-              </div>
-              
-              <div className="flex gap-2">
-                <ProductActionButton
-                  variant="outline"
-                  label="Add to Cart"
-                  icon={<ShoppingCart className="h-4 w-4" />}
-                  onClick={() => setShowQuantity(prev => !prev)}
-                  disabled={!isInStock}
-                />
-                
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={() => onToggleFavorite?.(product)}
-                  className={isFavorite ? "text-red-500 border-red-200" : ""}
-                >
-                  <Heart className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
-                </Button>
-              </div>
-            </div>
-            
-            {showQuantity && (
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
-                <QuantitySelector 
-                  initialValue={quantity}
-                  min={1}
-                  max={Math.min(10, product.stockQuantity || 10)}
-                  onChange={setQuantity}
-                  disabled={!isInStock}
-                  unit={product.unit}
-                />
-                
-                <ProductActionButton
-                  label="Add to Cart"
-                  icon={<ShoppingCart className="h-4 w-4" />}
-                  onClick={handleAddToCart}
-                  disabled={!isInStock}
-                  fullWidth
-                />
-                
-                <ProductActionButton
-                  label="Buy Now"
-                  onClick={handleBuyNow}
-                  disabled={!isInStock}
-                  fullWidth
-                />
-              </div>
-            )}
-            
-            <div className="mt-4 flex justify-between items-center">
-              <ShareButtons 
-                compact 
-                url={`/shop/products/${product.id}`} 
-                title={product.name} 
-                description={product.description}
-                imageUrl={product.imageUrl}
-              />
-              
-              <Button 
-                variant="ghost" 
-                size="sm"
-                asChild
-              >
-                <Link href={`/shop/products/${product.id}`}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  View Details
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-  
-  // Default card view
-  return (
-    <Card className={`overflow-hidden h-full ${className}`}>
-      {renderProductImage()}
-      
-      <CardHeader className="p-4 pb-2">
-        <div className="flex justify-between">
-          <Badge variant="outline">{product.category}</Badge>
-          {renderStockBadge()}
-        </div>
-        
-        <Link href={`/shop/products/${product.id}`}>
-          <CardTitle className="text-lg mt-2 hover:text-primary transition-colors line-clamp-1">
-            {product.name}
-          </CardTitle>
-        </Link>
-        
-        <CardDescription className="line-clamp-2">
-          {product.description}
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="p-4 pt-0">
-        {renderPrice()}
-        <p className="text-sm mt-1 text-muted-foreground">
-          {product.unit && <span>{product.unit}</span>}
-          {product.supplierName && <span> • By {product.supplierName}</span>}
-        </p>
+        )}
       </CardContent>
       
-      <CardFooter className="p-4 pt-0">
-        {renderActions()}
+      <CardFooter className={`px-4 pt-0 pb-4 gap-2 ${isFeatured ? 'flex-col' : 'flex-row'}`}>
+        {isFeatured ? (
+          <>
+            <Button 
+              variant="outline"
+              className="w-full"
+              onClick={() => onQuickView && onQuickView(product)}
+              disabled={product.stockQuantity === 0 || product.stock === 0}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Quick View
+            </Button>
+            {onAddToCart && (
+              <Button 
+                className="w-full"
+                onClick={() => onAddToCart(product, 1)}
+                disabled={product.stockQuantity === 0 || product.stock === 0}
+              >
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                Add to Cart
+              </Button>
+            )}
+          </>
+        ) : (
+          <>
+            {onAddToCart && (
+              <Button 
+                variant="outline"
+                className="flex-1"
+                onClick={() => onAddToCart(product, quantity)}
+                disabled={product.stockQuantity === 0 || product.stock === 0}
+              >
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                Add to Cart
+              </Button>
+            )}
+            {onBuyNow && (
+              <Button 
+                className="flex-1"
+                onClick={() => onBuyNow(product, quantity)}
+                disabled={product.stockQuantity === 0 || product.stock === 0}
+              >
+                Buy Now
+              </Button>
+            )}
+          </>
+        )}
       </CardFooter>
     </Card>
   );

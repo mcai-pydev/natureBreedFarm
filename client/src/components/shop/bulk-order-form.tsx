@@ -1,18 +1,25 @@
 import { useState } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { bulkOrderFormSchema, Product } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Product } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -25,231 +32,258 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
-type BulkOrderFormValues = z.infer<typeof bulkOrderFormSchema>;
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  phone: z.string().optional(),
+  productId: z.number().optional(),
+  quantity: z.number().min(1, {
+    message: "Quantity must be at least 1.",
+  }).optional(),
+  message: z.string().min(10, {
+    message: "Message must be at least 10 characters.",
+  }),
+});
 
-export function BulkOrderDialog() {
-  const [open, setOpen] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  
+type FormValues = z.infer<typeof formSchema>;
+
+interface BulkOrderDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  preselectedProductId?: number;
+}
+
+export function BulkOrderDialog({ 
+  open, 
+  onOpenChange,
+  preselectedProductId
+}: BulkOrderDialogProps) {
   const { toast } = useToast();
+  const [submittingOrder, setSubmittingOrder] = useState(false);
   
+  // Fetch products for dropdown
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
-    enabled: open
+    enabled: open, // Only fetch when dialog is open
   });
   
-  const form = useForm<BulkOrderFormValues>({
-    resolver: zodResolver(bulkOrderFormSchema),
+  // Form definition
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       email: "",
       phone: "",
-      productId: undefined,
-      quantity: 10,
-      message: ""
+      productId: preselectedProductId,
+      quantity: undefined,
+      message: "",
+    },
+  });
+  
+  // Reset form when dialog opens/closes
+  useState(() => {
+    if (open) {
+      form.reset({
+        name: "",
+        email: "",
+        phone: "",
+        productId: preselectedProductId,
+        quantity: undefined,
+        message: "",
+      });
     }
   });
-
-  const mutation = useMutation({
-    mutationFn: async (data: BulkOrderFormValues) => {
-      const res = await apiRequest("POST", "/api/bulk-orders", data);
-      return await res.json();
+  
+  // Submit mutation
+  const submitMutation = useMutation({
+    mutationFn: async (data: FormValues) => {
+      const response = await apiRequest("POST", "/api/bulk-orders", data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to submit bulk order request");
+      }
+      return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Bulk order request submitted",
-        description: "We'll contact you soon to discuss your order.",
+        title: "Order Request Submitted",
+        description: "We've received your bulk order request and will contact you shortly.",
       });
-      setSubmitted(true);
-      form.reset();
+      onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/bulk-orders"] });
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast({
-        title: "Submission failed",
+        title: "Submission Failed",
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
-
-  function onSubmit(data: BulkOrderFormValues) {
-    mutation.mutate(data);
-  }
   
-  // Reset form when dialog opens
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    if (!newOpen) {
-      // When closing
-      setTimeout(() => {
-        setSubmitted(false);
-        form.reset();
-      }, 300); // Small delay to ensure animation completes
+  // Form submission handler
+  const onSubmit = async (values: FormValues) => {
+    setSubmittingOrder(true);
+    try {
+      await submitMutation.mutateAsync(values);
+    } finally {
+      setSubmittingOrder(false);
     }
   };
-
+  
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button size="lg" className="px-8">Inquire About Bulk Orders</Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Bulk Order Request</DialogTitle>
+          <DialogTitle>Request Bulk Order</DialogTitle>
           <DialogDescription>
-            Fill out this form to inquire about bulk orders. We'll get back to you with pricing and availability.
+            Fill out this form to request special pricing for bulk orders. Our team will contact you shortly.
           </DialogDescription>
         </DialogHeader>
         
-        {submitted ? (
-          <div className="py-6 text-center">
-            <h3 className="font-medium text-lg mb-2">Thank you for your interest!</h3>
-            <p className="text-gray-600 mb-6">
-              We've received your bulk order request and will contact you within 1-2 business days to discuss details.
-            </p>
-            <Button 
-              variant="outline" 
-              onClick={() => setOpen(false)}
-            >
-              Close
-            </Button>
-          </div>
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter your name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your full name" {...field} />
+                      <Input type="email" placeholder="your@email.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your phone number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="productId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Product (Optional)</FormLabel>
+                    <Select
+                      onValueChange={(value) => field.onChange(parseInt(value))}
+                      defaultValue={field.value?.toString()}
+                    >
                       <FormControl>
-                        <Input type="email" placeholder="you@example.com" {...field} />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a product" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your phone number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="productId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Product</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                        defaultValue={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a product" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {products.map((product) => (
-                            <SelectItem key={product.id} value={product.id.toString()}>
-                              {product.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quantity</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          min={10}
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value))} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                      <SelectContent>
+                        {products.map((product) => (
+                          <SelectItem 
+                            key={product.id} 
+                            value={product.id.toString()}
+                          >
+                            {product.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Select the product you're interested in
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <FormField
                 control={form.control}
-                name="message"
+                name="quantity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Additional Information</FormLabel>
+                    <FormLabel>Quantity (Optional)</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="Tell us about your requirements, timeline, or any special requests"
-                        className="resize-none"
-                        rows={3}
+                      <Input 
+                        type="number" 
+                        placeholder="Estimated quantity"
                         {...field}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === "" ? undefined : parseInt(value));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
-              <DialogFooter>
-                <Button 
-                  type="submit" 
-                  disabled={mutation.isPending}
-                >
-                  {mutation.isPending ? "Submitting..." : "Submit Request"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        )}
+            </div>
+            
+            <FormField
+              control={form.control}
+              name="message"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Message</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Please provide details about your bulk order requirements..." 
+                      rows={4}
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <DialogFooter>
+              <Button 
+                type="submit" 
+                disabled={submittingOrder}
+                className="w-full"
+              >
+                {submittingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Submit Request
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
