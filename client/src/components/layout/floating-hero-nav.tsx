@@ -7,10 +7,14 @@ import {
   FileText, 
   BarChart2, 
   FileQuestion,
-  Bot
+  Bot,
+  PawPrint
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+// Use PawPrint icon for the rabbit breeding section
+const Rabbit = PawPrint;
 
 interface NavItem {
   title: string;
@@ -28,6 +32,7 @@ export function FloatingHeroNav() {
     { title: "Transactions", path: "/transactions", icon: <FileText className="h-5 w-5" /> },
     { title: "Reports", path: "/reports", icon: <BarChart2 className="h-5 w-5" /> },
     { title: "AI Assistant", path: "/ai-assistant", icon: <Bot className="h-5 w-5" /> },
+    { title: "Rabbit Breeding", path: "/rabbit-breeding", icon: <Rabbit className="h-5 w-5" /> },
     { title: "Policies", path: "/policies", icon: <FileQuestion className="h-5 w-5" /> },
   ];
 
@@ -72,6 +77,7 @@ export function FloatingHeroNavMobile() {
     { title: "Transactions", path: "/transactions", icon: <FileText className="h-5 w-5" /> },
     { title: "Reports", path: "/reports", icon: <BarChart2 className="h-5 w-5" /> },
     { title: "AI Assistant", path: "/ai-assistant", icon: <Bot className="h-5 w-5" /> },
+    { title: "Rabbit Breeding", path: "/rabbit-breeding", icon: <Rabbit className="h-5 w-5" /> },
   ];
 
   return (

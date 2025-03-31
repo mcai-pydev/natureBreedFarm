@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { CircleAlert, CheckCircle, Info, X, ChevronDown, ChevronUp, Search, Plus, Calendar, ArrowRight, CalendarDays } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -243,6 +244,37 @@ function PageShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+// ROI prediction type
+type ROIPrediction = {
+  maleId: number;
+  femaleId: number;
+  healthFactor: number;
+  expectedOffspring: number;
+  investment: number;
+  expectedReturn: number;
+  netProfit: number;
+  roiMultiplier: number;
+  compatibilityScore: number;
+  geneticRisk: boolean;
+  rating: "Excellent" | "Good" | "Average" | "Poor";
+  recommendation: string;
+};
+
+// Function to calculate breeding ROI from existing breeding events
+function calculateBreedingROI(event: BreedingEvent, male?: Animal, female?: Animal): number {
+  if (!event.offspringCount || event.offspringCount <= 0) return 0;
+  
+  // Basic ROI calculation based on offspring count
+  // Assuming each offspring is worth about $30 on average
+  const offspringValue = event.offspringCount * 30;
+  
+  // Estimated investment per breeding
+  const investmentCost = 80; // Feed, medical, time, etc.
+  
+  // ROI = (Return - Investment) / Investment
+  return offspringValue / investmentCost;
+}
+
 export default function RabbitBreedingPage() {
   const [activeTab, setActiveTab] = useState("family-tree");
   const [expandedNodes, setExpandedNodes] = useState<Record<number, boolean>>({});
@@ -252,6 +284,18 @@ export default function RabbitBreedingPage() {
   const [selectedFemaleId, setSelectedFemaleId] = useState<number | undefined>();
   const [addAnimalOpen, setAddAnimalOpen] = useState(false);
   const [addBreedingEventOpen, setAddBreedingEventOpen] = useState(false);
+  const [roiPrediction, setRoiPrediction] = useState<ROIPrediction | null>(null);
+  
+  // Form for ROI calculator
+  const form = useForm({
+    defaultValues: {
+      maleId: undefined as number | undefined,
+      femaleId: undefined as number | undefined,
+      healthFactor: 8,
+      expectedOffspring: 6,
+      investmentAmount: 100,
+    }
+  });
 
   // Fetch all animals, filtering to rabbits only
   const { data: animals = [], isLoading: animalsLoading } = useQuery<Animal[]>({
@@ -264,7 +308,7 @@ export default function RabbitBreedingPage() {
   });
   
   // Fetch breeding events
-  const { data: breedingEvents = [], isLoading: eventsLoading } = useQuery<BreedingEvent[]>({
+  const { data: breedingEvents = [], isLoading: breedingEventsLoading } = useQuery<BreedingEvent[]>({
     queryKey: ['/api/breeding-events'],
     queryFn: async () => {
       const res = await fetch('/api/breeding-events');
@@ -398,6 +442,72 @@ export default function RabbitBreedingPage() {
     addBreedingEventMutation.mutate(values);
   };
 
+  // Predict ROI for breeding pair
+  const predictROI = async (
+    maleId: number | undefined, 
+    femaleId: number | undefined,
+    healthFactor: number = 8,
+    expectedOffspring: number = 6,
+    investmentAmount: number = 100
+  ) => {
+    if (!maleId || !femaleId) {
+      toast({
+        title: "Incomplete selection",
+        description: "Please select both a male and female rabbit for prediction.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for genetic compatibility
+    const riskResponse = await fetch(`/api/breeding-risk?maleId=${maleId}&femaleId=${femaleId}`);
+    const riskResult: InbreedingRiskResult = await riskResponse.json();
+    
+    // Calculate expected return based on health and offspring factors
+    const valuePerOffspring = 30; // Average value of a rabbit offspring
+    const expectedReturn = expectedOffspring * valuePerOffspring * (healthFactor / 10);
+    const netProfit = expectedReturn - investmentAmount;
+    const roiMultiplier = expectedReturn / investmentAmount;
+    
+    // Calculate compatibility score (0-100)
+    const compatibilityScore = riskResult.isRisky ? 30 : 80 + (healthFactor * 2);
+    
+    // Determine rating based on ROI and compatibility
+    let rating: "Excellent" | "Good" | "Average" | "Poor" = "Average";
+    let recommendation = "";
+    
+    if (riskResult.isRisky) {
+      rating = "Poor";
+      recommendation = `Not recommended for breeding. Genetic risk detected: ${riskResult.relationshipType}.`;
+    } else if (roiMultiplier >= 3) {
+      rating = "Excellent";
+      recommendation = "Highly recommended breeding pair. Expect excellent ROI and healthy offspring.";
+    } else if (roiMultiplier >= 2) {
+      rating = "Good";
+      recommendation = "Good potential for profitable breeding with healthy offspring.";
+    } else {
+      rating = "Average";
+      recommendation = "Average ROI potential. Consider alternatives for better profitability.";
+    }
+    
+    const prediction: ROIPrediction = {
+      maleId,
+      femaleId,
+      healthFactor,
+      expectedOffspring,
+      investment: investmentAmount,
+      expectedReturn,
+      netProfit,
+      roiMultiplier,
+      compatibilityScore,
+      geneticRisk: riskResult.isRisky,
+      rating,
+      recommendation
+    };
+    
+    setRoiPrediction(prediction);
+  };
+
   // Effect to watch for male/female selection in breeding event form
   useEffect(() => {
     const maleId = breedingEventForm.watch('maleId');
@@ -413,14 +523,15 @@ export default function RabbitBreedingPage() {
         <title>Rabbit Breeding Management | Nature Breed Farm</title>
       </Helmet>
 
-      <div className="container py-6">
-        <h1 className="text-3xl font-bold mb-6">Rabbit Breeding Management</h1>
+      <div className="container mx-auto max-w-6xl px-4 py-6">
+        <h1 className="text-3xl font-bold mb-6 text-center">Rabbit Breeding Management</h1>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="family-tree">Family Tree</TabsTrigger>
             <TabsTrigger value="breeding-pairs">Breeding Pairs</TabsTrigger>
             <TabsTrigger value="breeding-events">Breeding Events</TabsTrigger>
+            <TabsTrigger value="roi-metrics">ROI Metrics</TabsTrigger>
           </TabsList>
           
           {/* Family Tree Tab */}
@@ -1119,6 +1230,329 @@ export default function RabbitBreedingPage() {
                     })}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ROI Metrics Tab */}
+          <TabsContent value="roi-metrics" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Rabbit Breeding ROI Metrics</CardTitle>
+                <CardDescription>
+                  Calculate and predict return on investment for breeding pairs based on health factors and offspring count
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Breeding Performance Metrics</h3>
+                    <Card className="border-2 border-primary/20">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Top-Performing Breeding Pairs</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {breedingEventsLoading ? (
+                          <div className="text-center p-4">Loading data...</div>
+                        ) : breedingEvents.length === 0 ? (
+                          <div className="text-center p-4">No breeding events recorded yet.</div>
+                        ) : (
+                          <div className="space-y-3">
+                            {breedingEvents
+                              .filter(event => event.status === "successful" && event.offspringCount)
+                              .sort((a, b) => (b.offspringCount || 0) - (a.offspringCount || 0))
+                              .slice(0, 3)
+                              .map(event => {
+                                const male = animals.find(a => a.id === event.maleId);
+                                const female = animals.find(a => a.id === event.femaleId);
+                                
+                                return (
+                                  <div key={event.id} className="flex items-center justify-between border-b pb-2">
+                                    <div>
+                                      <p className="font-medium">{male?.name} + {female?.name}</p>
+                                      <p className="text-sm text-muted-foreground">
+                                        {new Date(event.breedingDate).toLocaleDateString()} • 
+                                        {event.offspringCount} offspring
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center">
+                                      <Badge variant="secondary" className="bg-primary/10">
+                                        ROI: {calculateBreedingROI(event, male, female).toFixed(1)}x
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            }
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Breed-specific Performance</h3>
+                    <Card className="border-2 border-primary/20">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Breed Performance Ranking</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {animals.length === 0 ? (
+                          <div className="text-center p-4">No rabbits registered yet.</div>
+                        ) : (
+                          <div className="space-y-3">
+                            {Array.from(new Set(animals.map(a => a.breed)))
+                              .filter(breed => breed)
+                              .map(breed => {
+                                const breedAnimals = animals.filter(a => a.breed === breed);
+                                const breedEvents = breedingEvents.filter(
+                                  e => 
+                                    (breedAnimals.some(a => a.id === e.maleId) || 
+                                    breedAnimals.some(a => a.id === e.femaleId)) &&
+                                    e.status === "successful" && 
+                                    e.offspringCount
+                                );
+                                
+                                const avgOffspring = breedEvents.length > 0 
+                                  ? breedEvents.reduce((sum, e) => sum + (e.offspringCount || 0), 0) / breedEvents.length
+                                  : 0;
+                                
+                                return {
+                                  breed,
+                                  avgOffspring,
+                                  eventCount: breedEvents.length
+                                };
+                              })
+                              .sort((a, b) => b.avgOffspring - a.avgOffspring)
+                              .map(({ breed, avgOffspring, eventCount }) => (
+                                <div key={breed} className="flex items-center justify-between border-b pb-2">
+                                  <div>
+                                    <p className="font-medium">{breed}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      Based on {eventCount} breeding events
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Badge variant="outline" className="bg-primary/5">
+                                      Avg: {avgOffspring.toFixed(1)} offspring
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))
+                            }
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">ROI Prediction Tool</h3>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <FormField
+                          control={form.control}
+                          name="maleId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Male Rabbit</FormLabel>
+                              <Select 
+                                onValueChange={(value) => field.onChange(parseInt(value))} 
+                                value={field.value?.toString() || ""}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select male rabbit" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {maleRabbits.map(male => (
+                                    <SelectItem key={male.id} value={male.id.toString()}>
+                                      {male.name} ({male.breed})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="femaleId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Female Rabbit</FormLabel>
+                              <Select 
+                                onValueChange={(value) => field.onChange(parseInt(value))} 
+                                value={field.value?.toString() || ""}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select female rabbit" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {femaleRabbits.map(female => (
+                                    <SelectItem key={female.id} value={female.id.toString()}>
+                                      {female.name} ({female.breed})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <FormField
+                          control={form.control}
+                          name="healthFactor"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Health Factor (1-10)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  min="1" 
+                                  max="10" 
+                                  {...field} 
+                                  value={field.value || "8"} 
+                                  onChange={e => field.onChange(parseInt(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Higher values indicate better health
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="expectedOffspring"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Expected Offspring</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  min="1" 
+                                  {...field} 
+                                  value={field.value || "6"} 
+                                  onChange={e => field.onChange(parseInt(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="investmentAmount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Investment ($)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  min="0" 
+                                  step="0.01" 
+                                  {...field} 
+                                  value={field.value || "100"} 
+                                  onChange={e => field.onChange(parseFloat(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <Button 
+                        onClick={() => predictROI(
+                          form.getValues("maleId"), 
+                          form.getValues("femaleId"),
+                          form.getValues("healthFactor") || 8,
+                          form.getValues("expectedOffspring") || 6,
+                          form.getValues("investmentAmount") || 100
+                        )}
+                        className="w-full"
+                      >
+                        Calculate Predicted ROI
+                      </Button>
+
+                      {roiPrediction && (
+                        <Card className="mt-6 border-primary/20 border-2">
+                          <CardHeader className="pb-2">
+                            <CardTitle>ROI Prediction Results</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <h4 className="font-medium mb-2">Financial Metrics</h4>
+                                <div className="space-y-2">
+                                  <div className="flex justify-between">
+                                    <span>Investment:</span>
+                                    <span className="font-medium">${roiPrediction.investment.toFixed(2)}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Expected Return:</span>
+                                    <span className="font-medium">${roiPrediction.expectedReturn.toFixed(2)}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Net Profit:</span>
+                                    <span className="font-medium text-green-600">${roiPrediction.netProfit.toFixed(2)}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>ROI Multiplier:</span>
+                                    <span className="font-medium text-primary">{roiPrediction.roiMultiplier.toFixed(2)}x</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <h4 className="font-medium mb-2">Breeding Metrics</h4>
+                                <div className="space-y-2">
+                                  <div className="flex justify-between">
+                                    <span>Expected Offspring:</span>
+                                    <span className="font-medium">{roiPrediction.expectedOffspring}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Health Factor:</span>
+                                    <span className="font-medium">{roiPrediction.healthFactor}/10</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Compatibility Score:</span>
+                                    <span className="font-medium">{roiPrediction.compatibilityScore}%</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Genetic Risk:</span>
+                                    <span className={`font-medium ${roiPrediction.geneticRisk ? "text-red-500" : "text-green-500"}`}>
+                                      {roiPrediction.geneticRisk ? "Present" : "None"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <Alert className={`mt-4 ${roiPrediction.rating === "Excellent" ? "bg-green-100" : roiPrediction.rating === "Good" ? "bg-blue-100" : "bg-amber-100"}`}>
+                              <AlertTitle>Overall Rating: {roiPrediction.rating}</AlertTitle>
+                              <AlertDescription>{roiPrediction.recommendation}</AlertDescription>
+                            </Alert>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
