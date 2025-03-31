@@ -209,18 +209,19 @@ export function setupAuth(app: Express) {
     }
   });
   
-  // Create initial admin user if not exists
-  (async () => {
-    const adminUser = await storage.getUserByUsername("admin");
-    if (!adminUser) {
-      await storage.createUser({
-        username: "admin",
-        password: await hashPassword("admin123"),
-        name: "Chief Ijeh",
-        role: "Admin",
-        avatar: "/chief_ijeh.jpg"
-      });
-      console.log("Created initial admin user: admin / admin123");
-    }
-  })();
+  // Create initial admin user if not exists (commented out as we handle this in storage.ts)
+  // This was causing duplicate admin users between auth.ts and storage.ts
+  // (async () => {
+  //   const adminUser = await storage.getUserByUsername("admin");
+  //   if (!adminUser) {
+  //     await storage.createUser({
+  //       username: "admin",
+  //       password: await hashPassword("admin123"),
+  //       name: "Chief Ijeh",
+  //       role: "Admin",
+  //       avatar: "/chief_ijeh.jpg"
+  //     });
+  //     console.log("Created initial admin user: admin / admin123");
+  //   }
+  // })();
 }

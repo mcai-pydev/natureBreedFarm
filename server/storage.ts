@@ -123,8 +123,10 @@ export class MemStorage implements IStorage {
       checkPeriod: 86400000, // Prune expired entries every 24h
     });
     
-    // Add sample products for testing
+    // Add sample data for testing
     this.initSampleData();
+    
+    console.log("Storage initialized with test admin user (admin/admin123)");
   }
 
   // User methods
