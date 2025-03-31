@@ -272,7 +272,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Search API route
+  // Search API routes
+  // POST endpoint for more complex searches with filters
   app.post("/api/search", async (req, res) => {
     try {
       const { query, filters } = searchSchema.parse(req.body);
@@ -282,6 +283,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
+      res.status(500).json({ error: "Failed to perform search" });
+    }
+  });
+  
+  // GET endpoint for simple URL-based searches
+  app.get("/api/search", async (req, res) => {
+    try {
+      // Allow empty queries for browsing all products with filters
+      const query = req.query.q as string || "";
+      
+      // Parse filters from query parameters
+      const filters: any = {};
+      
+      if (req.query.category) {
+        filters.category = req.query.category as string;
+      }
+      
+      if (req.query.minPrice && !isNaN(Number(req.query.minPrice))) {
+        filters.minPrice = Number(req.query.minPrice);
+      }
+      
+      if (req.query.maxPrice && !isNaN(Number(req.query.maxPrice))) {
+        filters.maxPrice = Number(req.query.maxPrice);
+      }
+      
+      if (req.query.inStock) {
+        filters.inStock = req.query.inStock === "true";
+      }
+      
+      if (req.query.sortBy) {
+        const validSortOptions = ['price-asc', 'price-desc', 'name-asc', 'name-desc', 'newest', 'featured'];
+        const sortBy = req.query.sortBy as string;
+        if (validSortOptions.includes(sortBy)) {
+          filters.sortBy = sortBy;
+        }
+      }
+      
+      const results = await storage.searchProducts(query, Object.keys(filters).length > 0 ? filters : undefined);
+      res.json(results);
+    } catch (error) {
       res.status(500).json({ error: "Failed to perform search" });
     }
   });

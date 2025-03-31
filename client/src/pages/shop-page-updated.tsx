@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/carousel";
 import { formatCurrency } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { apiRequest } from "@/lib/queryClient";
 
 // Import custom components
 import { NavigationBar } from "@/components/shop/navigation-bar";
@@ -53,6 +54,8 @@ interface CartItem extends Product {
 export default function ShopPage() {
   const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [filters, setFilters] = useState<ProductFiltersType>({
     categories: [],
     priceRange: { min: 0, max: 1000 },
@@ -67,19 +70,84 @@ export default function ShopPage() {
   const [bulkOrderOpen, setBulkOrderOpen] = useState(false);
   
   const cartSheetRef = useRef<HTMLButtonElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Fetch products from the API
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
-  
-  // Apply filters to products
-  const filteredProducts = products.filter(product => {
-    // Apply search filter
-    const matchesSearch = !searchQuery || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.description?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+
+  // Function to perform API search
+  const performSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const apiFilters = {
+        category: filters.categories.length ? filters.categories.join(',') : undefined,
+        minPrice: filters.priceRange.min,
+        maxPrice: filters.priceRange.max,
+        inStock: filters.stockStatus.inStock || filters.stockStatus.lowStock,
+        sortBy: filters.sortBy
+      };
+
+      // Use the server-side search API
+      const response = await apiRequest('POST', '/api/search', {
+        query,
+        filters: apiFilters
+      });
+      
+      const results = await response.json();
+      
+      if (Array.isArray(results)) {
+        setSearchResults(results);
+      } else {
+        console.error('Invalid search results format:', results);
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Error searching products:', error);
+      // Fallback to client-side filtering if API search fails
+      const fallbackResults = products.filter(product => 
+        product.name.toLowerCase().includes(query.toLowerCase()) ||
+        (product.description?.toLowerCase() || "").includes(query.toLowerCase())
+      );
+      setSearchResults(fallbackResults);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Debounced search function
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
     
+    if (searchQuery.trim().length > 0) {
+      searchTimeoutRef.current = setTimeout(() => {
+        performSearch(searchQuery);
+      }, 300); // Debounce for 300ms
+    } else {
+      setSearchResults([]);
+    }
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+  
+  // Determine which products to display
+  const displayProducts = searchQuery.trim() ? searchResults : products;
+  
+  // Apply filters to products (but not to search results, as search handles filters)
+  const filteredProducts = searchQuery.trim() ? displayProducts : displayProducts.filter(product => {
     // Apply category filter
     const matchesCategory = filters.categories.length === 0 || 
       filters.categories.includes(product.category || "general");
@@ -99,7 +167,7 @@ export default function ShopPage() {
       matchesStock = true;
     }
     
-    return matchesSearch && matchesCategory && matchesPrice && matchesStock;
+    return matchesCategory && matchesPrice && matchesStock;
   });
   
   // Sort filtered products
@@ -213,6 +281,11 @@ export default function ShopPage() {
   // Handle filter changes
   const handleFilterChange = (newFilters: ProductFiltersType) => {
     setFilters(newFilters);
+    
+    // Re-execute search if we have an active search query
+    if (searchQuery.trim().length > 0) {
+      performSearch(searchQuery);
+    }
   };
   
   return (
@@ -414,9 +487,35 @@ export default function ShopPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             
-            {sortedProducts.length === 0 ? (
+            {isSearching ? (
+              <div className="text-center py-12">
+                <div className="animate-pulse flex flex-col items-center">
+                  <Search className="h-10 w-10 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Searching products...</h3>
+                  <p className="text-muted-foreground">Finding the best matches for you</p>
+                </div>
+              </div>
+            ) : isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-pulse flex flex-col items-center">
+                  <div className="h-10 w-10 rounded-full bg-muted mb-4"></div>
+                  <div className="h-4 bg-muted rounded w-32 mb-3"></div>
+                  <div className="h-3 bg-muted rounded w-48"></div>
+                </div>
+              </div>
+            ) : sortedProducts.length === 0 ? (
               <div className="text-center py-12">
                 <h3 className="text-lg font-medium mb-2">No products found</h3>
                 <p className="text-muted-foreground">
@@ -440,34 +539,16 @@ export default function ShopPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {isLoading ? (
-                  // Loading skeletons
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="bg-card rounded-lg animate-pulse h-72">
-                      <div className="bg-muted h-40 rounded-t-lg"></div>
-                      <div className="p-4">
-                        <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-muted rounded w-full mb-1"></div>
-                        <div className="h-3 bg-muted rounded w-2/3 mb-4"></div>
-                        <div className="flex justify-between">
-                          <div className="h-6 bg-muted rounded w-1/4"></div>
-                          <div className="h-8 bg-muted rounded w-1/3"></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  sortedProducts.map(product => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onAddToCart={addToCart}
-                      onBuyNow={handleBuyNow}
-                      onToggleFavorite={toggleFavorite}
-                      isFavorite={favoriteProducts.includes(product.id)}
-                    />
-                  ))
-                )}
+                {sortedProducts.map(product => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAddToCart={addToCart}
+                    onBuyNow={handleBuyNow}
+                    onToggleFavorite={toggleFavorite}
+                    isFavorite={favoriteProducts.includes(product.id)}
+                  />
+                ))}
               </div>
             )}
           </div>

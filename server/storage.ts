@@ -177,18 +177,28 @@ export class MemStorage implements IStorage {
   }
 
   async searchProducts(query: string, filters?: any): Promise<Product[]> {
-    const searchTerm = query.toLowerCase();
-    let results = Array.from(this.products.values()).filter(product => 
-      product.name.toLowerCase().includes(searchTerm) || 
-      (product.description && product.description.toLowerCase().includes(searchTerm))
-    );
+    // If query is empty, return all products (filtered by other criteria if provided)
+    let results: Product[];
+    
+    if (!query.trim()) {
+      results = Array.from(this.products.values());
+    } else {
+      const searchTerm = query.toLowerCase();
+      results = Array.from(this.products.values()).filter(product => 
+        product.name.toLowerCase().includes(searchTerm) || 
+        (product.description && product.description.toLowerCase().includes(searchTerm))
+      );
+    }
     
     // Apply filters if provided
     if (filters) {
+      // Handle single category or multiple categories (comma-separated)
       if (filters.category) {
-        results = results.filter(p => p.category === filters.category);
+        const categories = filters.category.split(',').map((c: string) => c.trim());
+        results = results.filter(p => categories.includes(p.category || 'general'));
       }
       
+      // Apply price range filters
       if (filters.minPrice !== undefined) {
         results = results.filter(p => p.price >= filters.minPrice);
       }
@@ -197,10 +207,42 @@ export class MemStorage implements IStorage {
         results = results.filter(p => p.price <= filters.maxPrice);
       }
       
+      // Apply stock filter
       if (filters.inStock !== undefined) {
         results = filters.inStock 
-          ? results.filter(p => p.stock > 0)
-          : results.filter(p => p.stock === 0);
+          ? results.filter(p => p.stockQuantity > 0)
+          : results.filter(p => p.stockQuantity === 0);
+      }
+      
+      // Apply sorting
+      if (filters.sortBy) {
+        switch (filters.sortBy) {
+          case 'price-asc':
+            results.sort((a, b) => a.price - b.price);
+            break;
+          case 'price-desc':
+            results.sort((a, b) => b.price - a.price);
+            break;
+          case 'name-asc':
+            results.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+          case 'name-desc':
+            results.sort((a, b) => b.name.localeCompare(a.name));
+            break;
+          case 'newest':
+            results.sort((a, b) => {
+              const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+              const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+              return bDate - aDate;
+            });
+            break;
+          case 'featured':
+            results.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+            break;
+          default:
+            // Default sorting (featured first, then by id)
+            results.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0) || a.id - b.id);
+        }
       }
     }
     
@@ -301,9 +343,15 @@ export class MemStorage implements IStorage {
     const product = await this.getProduct(transaction.productId);
     if (product) {
       if (transaction.type === "sale" || transaction.type === "order") {
-        await this.updateProduct(product.id, { stock: product.stock - transaction.quantity });
+        await this.updateProduct(product.id, { 
+          stock: product.stock - transaction.quantity,
+          stockQuantity: (product.stockQuantity || product.stock) - transaction.quantity
+        });
       } else if (transaction.type === "purchase") {
-        await this.updateProduct(product.id, { stock: product.stock + transaction.quantity });
+        await this.updateProduct(product.id, { 
+          stock: product.stock + transaction.quantity,
+          stockQuantity: (product.stockQuantity || product.stock) + transaction.quantity
+        });
       }
     }
     
@@ -323,9 +371,15 @@ export class MemStorage implements IStorage {
       const oldProduct = await this.getProduct(existingTransaction.productId);
       if (oldProduct) {
         if (existingTransaction.type === "sale" || existingTransaction.type === "order") {
-          await this.updateProduct(oldProduct.id, { stock: oldProduct.stock + existingTransaction.quantity });
+          await this.updateProduct(oldProduct.id, { 
+            stock: oldProduct.stock + existingTransaction.quantity,
+            stockQuantity: (oldProduct.stockQuantity || oldProduct.stock) + existingTransaction.quantity
+          });
         } else if (existingTransaction.type === "purchase") {
-          await this.updateProduct(oldProduct.id, { stock: oldProduct.stock - existingTransaction.quantity });
+          await this.updateProduct(oldProduct.id, { 
+            stock: oldProduct.stock - existingTransaction.quantity,
+            stockQuantity: (oldProduct.stockQuantity || oldProduct.stock) - existingTransaction.quantity
+          });
         }
       }
       
@@ -337,9 +391,15 @@ export class MemStorage implements IStorage {
       const newProduct = await this.getProduct(productId);
       if (newProduct) {
         if (type === "sale" || type === "order") {
-          await this.updateProduct(newProduct.id, { stock: newProduct.stock - quantity });
+          await this.updateProduct(newProduct.id, { 
+            stock: newProduct.stock - quantity,
+            stockQuantity: (newProduct.stockQuantity || newProduct.stock) - quantity
+          });
         } else if (type === "purchase") {
-          await this.updateProduct(newProduct.id, { stock: newProduct.stock + quantity });
+          await this.updateProduct(newProduct.id, { 
+            stock: newProduct.stock + quantity,
+            stockQuantity: (newProduct.stockQuantity || newProduct.stock) + quantity
+          });
         }
       }
     }
@@ -357,9 +417,15 @@ export class MemStorage implements IStorage {
     const product = await this.getProduct(transaction.productId);
     if (product) {
       if (transaction.type === "sale" || transaction.type === "order") {
-        await this.updateProduct(product.id, { stock: product.stock + transaction.quantity });
+        await this.updateProduct(product.id, { 
+          stock: product.stock + transaction.quantity,
+          stockQuantity: (product.stockQuantity || product.stock) + transaction.quantity
+        });
       } else if (transaction.type === "purchase") {
-        await this.updateProduct(product.id, { stock: product.stock - transaction.quantity });
+        await this.updateProduct(product.id, { 
+          stock: product.stock - transaction.quantity,
+          stockQuantity: (product.stockQuantity || product.stock) - transaction.quantity
+        });
       }
     }
     

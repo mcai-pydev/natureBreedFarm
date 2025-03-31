@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   Menu, 
@@ -37,7 +37,37 @@ export function NavigationBar({
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const { user, logoutMutation } = useAuth();
+  
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Update local search query when the parent prop changes
+  useEffect(() => {
+    setLocalSearchQuery(searchQuery);
+  }, [searchQuery]);
+  
+  // Debounced search handler
+  const handleSearchChange = (value: string) => {
+    setLocalSearchQuery(value);
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      onSearchChange?.(value);
+    }, 300);
+  };
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
   
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -69,17 +99,17 @@ export function NavigationBar({
           <Input
             type="search"
             placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange?.(e.target.value)}
+            value={localSearchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-9 w-full"
             autoFocus
           />
-          {searchQuery && (
+          {localSearchQuery && (
             <Button
               variant="ghost"
               size="icon"
               className="absolute right-0 top-0 h-full"
-              onClick={() => onSearchChange?.("")}
+              onClick={() => handleSearchChange("")}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -121,10 +151,20 @@ export function NavigationBar({
             <Input
               type="search"
               placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange?.(e.target.value)}
+              value={localSearchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-9 w-full"
             />
+            {localSearchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-full"
+                onClick={() => handleSearchChange("")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
           
           <Button

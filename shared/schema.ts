@@ -185,5 +185,13 @@ export const searchSchema = z.object({
     minPrice: z.number().optional(),
     maxPrice: z.number().optional(),
     inStock: z.boolean().optional(),
+    sortBy: z.enum([
+      'price-asc', 
+      'price-desc', 
+      'name-asc', 
+      'name-desc', 
+      'newest', 
+      'featured'
+    ]).optional(),
   }).optional(),
 });
