@@ -1,22 +1,23 @@
 import { 
   users, type User, type InsertUser,
-  products, type Product, type InsertProduct,
+  products, type Product, type InsertProduct, 
   transactions, type Transaction, type InsertTransaction,
   newsletters, type Newsletter, type InsertNewsletter,
   bulkOrders, type BulkOrder, type InsertBulkOrder,
   socialShares, type SocialShare, type InsertSocialShare,
+  animals, type Animal, type InsertAnimal,
+  breedingEvents, type BreedingEvent, type InsertBreedingEvent,
   type TransactionWithProduct,
-  searchSchema
 } from "@shared/schema";
 import session from "express-session";
-import createMemoryStore from "memorystore";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import createMemoryStore from "memorystore";
 
-// Create MemoryStore for session storage
+// Explicitly import and define the memory store constructor
 const MemoryStore = createMemoryStore(session);
 
-// Function for hashing passwords (duplicated from auth.ts for sample data)
+// For password hashing
 const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string) {
@@ -24,6 +25,7 @@ async function hashPassword(password: string) {
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
 }
+
 // Define the type of session store to be used in IStorage
 type SessionStore = session.Store;
 
@@ -75,6 +77,24 @@ export interface IStorage {
   createSocialShare(share: InsertSocialShare): Promise<SocialShare>;
   updateSocialShare(id: number, share: Partial<InsertSocialShare>): Promise<SocialShare | undefined>;
   
+  // Animal breeding methods
+  getAnimals(): Promise<Animal[]>;
+  getAnimalsByType(type: string): Promise<Animal[]>;
+  getAnimal(id: number): Promise<Animal | undefined>;
+  createAnimal(animal: InsertAnimal): Promise<Animal>;
+  updateAnimal(id: number, animal: Partial<InsertAnimal>): Promise<Animal | undefined>;
+  deleteAnimal(id: number): Promise<boolean>;
+  getPotentialMates(animalId: number): Promise<Animal[]>;
+  checkInbreedingRisk(maleId: number, femaleId: number): Promise<{
+    isRisky: boolean;
+    relationshipType?: string;
+  }>;
+  getBreedingEvents(): Promise<BreedingEvent[]>;
+  getBreedingEvent(id: number): Promise<BreedingEvent | undefined>;
+  createBreedingEvent(event: InsertBreedingEvent): Promise<BreedingEvent>;
+  updateBreedingEvent(id: number, event: Partial<InsertBreedingEvent>): Promise<BreedingEvent | undefined>;
+  deleteBreedingEvent(id: number): Promise<boolean>;
+  
   // Analytics methods
   getProductDistribution(): Promise<{ category: string, count: number }[]>;
   getTransactionSummary(startDate: Date, endDate: Date): Promise<{ 
@@ -96,6 +116,8 @@ export class MemStorage implements IStorage {
   private newsletters: Map<number, Newsletter>;
   private bulkOrders: Map<number, BulkOrder>;
   private socialShares: Map<number, SocialShare>;
+  private animals: Map<number, Animal>;
+  private breedingEvents: Map<number, BreedingEvent>;
   
   currentUserId: number;
   currentProductId: number;
@@ -103,6 +125,8 @@ export class MemStorage implements IStorage {
   currentNewsletterId: number;
   currentBulkOrderId: number;
   currentSocialShareId: number;
+  currentAnimalId: number;
+  currentBreedingEventId: number;
   
   sessionStore: SessionStore;
 
@@ -113,6 +137,8 @@ export class MemStorage implements IStorage {
     this.newsletters = new Map();
     this.bulkOrders = new Map();
     this.socialShares = new Map();
+    this.animals = new Map();
+    this.breedingEvents = new Map();
     
     this.currentUserId = 1;
     this.currentProductId = 1;
@@ -120,15 +146,396 @@ export class MemStorage implements IStorage {
     this.currentNewsletterId = 1;
     this.currentBulkOrderId = 1;
     this.currentSocialShareId = 1;
+    this.currentAnimalId = 1;
+    this.currentBreedingEventId = 1;
     
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h
     });
     
+    // Initialize the animal breeding service directly
+    this.animals = new Map();
+    this.breedingEvents = new Map();
+    this.currentAnimalId = 1;
+    this.currentBreedingEventId = 1;
+    
+    // Create a direct implementation of the animal breeding service
+    this.animalBreedingService = {
+      getAnimals: async () => Array.from(this.animals.values()),
+      getAnimalsByType: async (type: string) => Array.from(this.animals.values())
+        .filter(animal => animal.type.toLowerCase() === type.toLowerCase()),
+      getAnimal: async (id: number) => this.animals.get(id),
+      createAnimal: async (animal: InsertAnimal) => {
+        const id = this.currentAnimalId++;
+        const newAnimal: Animal = {
+          id,
+          name: animal.name,
+          type: animal.type,
+          gender: animal.gender,
+          status: animal.status || "active",
+          breed: animal.breed || null,
+          dateOfBirth: animal.dateOfBirth || null,
+          fatherId: animal.fatherId || null,
+          motherId: animal.motherId || null,
+          notes: animal.notes || null,
+          imageUrl: animal.imageUrl || null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        this.animals.set(id, newAnimal);
+        return newAnimal;
+      },
+      updateAnimal: async (id: number, animalUpdate: Partial<InsertAnimal>) => {
+        const existingAnimal = this.animals.get(id);
+        if (!existingAnimal) return undefined;
+        
+        const updatedAnimal: Animal = { 
+          ...existingAnimal, 
+          ...animalUpdate,
+          updatedAt: new Date()
+        };
+        this.animals.set(id, updatedAnimal);
+        return updatedAnimal;
+      },
+      deleteAnimal: async (id: number) => {
+        // First check if this animal is used as a parent in other animals
+        const hasOffspring = Array.from(this.animals.values()).some(
+          animal => animal.fatherId === id || animal.motherId === id
+        );
+        
+        if (hasOffspring) {
+          // Don't delete animals with offspring, maybe mark as inactive instead
+          const animal = this.animals.get(id);
+          if (animal) {
+            animal.status = "inactive";
+            this.animals.set(id, animal);
+          }
+          return false;
+        }
+        
+        return this.animals.delete(id);
+      },
+      getPotentialMates: async (animalId: number) => {
+        const animal = this.animals.get(animalId);
+        if (!animal) return [];
+        
+        // Get animals of the opposite gender and same type
+        return Array.from(this.animals.values()).filter(potential => {
+          // Must be active and the opposite gender
+          if (potential.status !== "active" || potential.gender === animal.gender) {
+            return false;
+          }
+          
+          // Must be the same type (same species)
+          if (potential.type !== animal.type) {
+            return false;
+          }
+          
+          // Check for inbreeding risk using the internal function
+          const checkInbreedingRiskSync = (maleId: number, femaleId: number): {
+            isRisky: boolean;
+            relationshipType?: string;
+          } => {
+            const male = this.animals.get(maleId);
+            const female = this.animals.get(femaleId);
+            
+            if (!male || !female) {
+              return { isRisky: false };
+            }
+            
+            // Check if they're siblings or half-siblings
+            if ((male.fatherId && male.fatherId === female.fatherId) ||
+                (male.motherId && male.motherId === female.motherId)) {
+              return { 
+                isRisky: true, 
+                relationshipType: (male.fatherId === female.fatherId && male.motherId === female.motherId) 
+                  ? "siblings" 
+                  : "half-siblings" 
+              };
+            }
+            
+            // Check if one is the parent of the other
+            if (male.id === female.fatherId || female.id === male.motherId) {
+              return { isRisky: true, relationshipType: "parent-child" };
+            }
+            
+            return { isRisky: false };
+          };
+          
+          const { isRisky } = checkInbreedingRiskSync(
+            animal.gender === "male" ? animal.id : potential.id,
+            animal.gender === "female" ? animal.id : potential.id
+          );
+          
+          // Only include animals without inbreeding risk
+          return !isRisky;
+        });
+      },
+      checkInbreedingRisk: async (maleId: number, femaleId: number) => {
+        const male = this.animals.get(maleId);
+        const female = this.animals.get(femaleId);
+        
+        if (!male || !female) {
+          return { isRisky: false };
+        }
+        
+        // Check if they're siblings or half-siblings
+        if ((male.fatherId && male.fatherId === female.fatherId) ||
+            (male.motherId && male.motherId === female.motherId)) {
+          return { 
+            isRisky: true, 
+            relationshipType: (male.fatherId === female.fatherId && male.motherId === female.motherId) 
+              ? "siblings" 
+              : "half-siblings" 
+          };
+        }
+        
+        // Check if one is the parent of the other
+        if (male.id === female.fatherId || female.id === male.motherId) {
+          return { isRisky: true, relationshipType: "parent-child" };
+        }
+        
+        return { isRisky: false };
+      },
+      getBreedingEvents: async () => Array.from(this.breedingEvents.values()),
+      getBreedingEvent: async (id: number) => this.breedingEvents.get(id),
+      createBreedingEvent: async (event: InsertBreedingEvent & { breedingDate: Date }) => {
+        const id = this.currentBreedingEventId++;
+        
+        // Calculate expected birth date based on animal type
+        let expectedBirthDate = event.expectedBirthDate;
+        if (!expectedBirthDate && event.breedingDate) {
+          const male = this.animals.get(event.maleId);
+          if (male) {
+            // Set gestation period based on animal type
+            let gestationDays = 30; // Default
+            
+            switch(male.type.toLowerCase()) {
+              case 'rabbit':
+                gestationDays = 31; // ~31 days for rabbits
+                break;
+              case 'goat':
+                gestationDays = 150; // ~150 days for goats
+                break;
+              case 'chicken':
+                gestationDays = 21; // ~21 days for chicken eggs
+                break;
+              case 'duck':
+                gestationDays = 28; // ~28 days for duck eggs
+                break;
+            }
+            
+            // Calculate expected birth date
+            const breedingDate = new Date(event.breedingDate);
+            expectedBirthDate = new Date(breedingDate);
+            expectedBirthDate.setDate(breedingDate.getDate() + gestationDays);
+          }
+        }
+        
+        const newEvent: BreedingEvent = {
+          id,
+          maleId: event.maleId,
+          femaleId: event.femaleId,
+          breedingDate: event.breedingDate,
+          status: event.status || "pending",
+          expectedBirthDate: expectedBirthDate || null,
+          actualBirthDate: event.actualBirthDate || null,
+          offspringCount: event.offspringCount || null,
+          notes: event.notes || null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        this.breedingEvents.set(id, newEvent);
+        return newEvent;
+      },
+      updateBreedingEvent: async (id: number, eventUpdate: Partial<InsertBreedingEvent>) => {
+        const existingEvent = this.breedingEvents.get(id);
+        if (!existingEvent) return undefined;
+        
+        // If we're recording birth (setting actualBirthDate), and we have offspring count
+        // we could automatically create new animal records here
+        if (eventUpdate.actualBirthDate && 
+            eventUpdate.offspringCount && 
+            eventUpdate.offspringCount > 0 && 
+            !existingEvent.actualBirthDate) {
+          
+          // Get parent animals for reference
+          const male = this.animals.get(existingEvent.maleId);
+          const female = this.animals.get(existingEvent.femaleId);
+          
+          if (male && female) {
+            // Create offspring based on count
+            for (let i = 0; i < eventUpdate.offspringCount; i++) {
+              this.animalBreedingService.createAnimal({
+                name: `Offspring ${i+1} of ${female.name}`,
+                type: male.type, // Assuming offspring are same type as parents
+                breed: male.breed === female.breed ? male.breed : `${male.breed}/${female.breed}`, // Mixed breed if parents differ
+                gender: Math.random() > 0.5 ? 'male' : 'female', // Random gender assignment
+                dateOfBirth: eventUpdate.actualBirthDate,
+                fatherId: male.id,
+                motherId: female.id,
+                status: 'active',
+                notes: `Offspring from breeding event #${id}`
+              });
+            }
+          }
+        }
+        
+        const updatedEvent: BreedingEvent = { 
+          ...existingEvent, 
+          ...eventUpdate,
+          updatedAt: new Date()
+        };
+        this.breedingEvents.set(id, updatedEvent);
+        return updatedEvent;
+      },
+      deleteBreedingEvent: async (id: number) => {
+        const event = this.breedingEvents.get(id);
+        // If the event already resulted in births, don't allow deletion
+        if (event && event.actualBirthDate && event.offspringCount && event.offspringCount > 0) {
+          return false;
+        }
+        return this.breedingEvents.delete(id);
+      }
+    };
+    
+    // Initialize with sample breeding data
+    const initBreedingSampleData = async () => {
+      // Create some sample animals for testing
+      const rabbit1 = await this.animalBreedingService.createAnimal({
+        name: "Fluffy",
+        type: "rabbit",
+        breed: "Dutch",
+        gender: "female",
+        status: "active",
+        dateOfBirth: new Date("2024-09-15"),
+        notes: "Healthy female rabbit"
+      });
+      
+      const rabbit2 = await this.animalBreedingService.createAnimal({
+        name: "Hopper",
+        type: "rabbit",
+        breed: "Dutch",
+        gender: "male",
+        status: "active",
+        dateOfBirth: new Date("2024-08-10"),
+        notes: "Active breeding male"
+      });
+      
+      const rabbit3 = await this.animalBreedingService.createAnimal({
+        name: "Cotton",
+        type: "rabbit",
+        breed: "Angora",
+        gender: "female",
+        status: "active",
+        dateOfBirth: new Date("2024-07-20"),
+        notes: "Purebred Angora, good for breeding"
+      });
+      
+      const goat1 = await this.animalBreedingService.createAnimal({
+        name: "Billy",
+        type: "goat",
+        breed: "Boer",
+        gender: "male",
+        status: "active",
+        dateOfBirth: new Date("2023-05-10"),
+        notes: "Healthy breeding male"
+      });
+      
+      const goat2 = await this.animalBreedingService.createAnimal({
+        name: "Nanny",
+        type: "goat",
+        breed: "Boer",
+        gender: "female",
+        status: "active",
+        dateOfBirth: new Date("2023-06-15"),
+        notes: "Good milk producer"
+      });
+      
+      // Create some breeding events
+      await this.animalBreedingService.createBreedingEvent({
+        maleId: rabbit2.id,
+        femaleId: rabbit3.id,
+        breedingDate: new Date("2025-03-15"),
+        status: "pending",
+        notes: "First breeding attempt"
+      });
+      
+      await this.animalBreedingService.createBreedingEvent({
+        maleId: goat1.id,
+        femaleId: goat2.id,
+        breedingDate: new Date("2025-04-01"),
+        status: "pending",
+        notes: "Seasonal breeding"
+      });
+    };
+    
+    initBreedingSampleData();
+    
     // Add sample data for testing
     this.initSampleData();
     
     console.log("Storage initialized with test admin user (admin/admin123)");
+  }
+  
+  // Animal breeding service initialized in the constructor
+  private animalBreedingService: any;
+  
+  // Animal breeding methods - delegate to specialized service
+  async getAnimals(): Promise<Animal[]> {
+    return this.animalBreedingService.getAnimals();
+  }
+  
+  async getAnimalsByType(type: string): Promise<Animal[]> {
+    return this.animalBreedingService.getAnimalsByType(type);
+  }
+  
+  async getAnimal(id: number): Promise<Animal | undefined> {
+    return this.animalBreedingService.getAnimal(id);
+  }
+  
+  async createAnimal(animal: InsertAnimal): Promise<Animal> {
+    return this.animalBreedingService.createAnimal(animal);
+  }
+  
+  async updateAnimal(id: number, animalUpdate: Partial<InsertAnimal>): Promise<Animal | undefined> {
+    return this.animalBreedingService.updateAnimal(id, animalUpdate);
+  }
+  
+  async deleteAnimal(id: number): Promise<boolean> {
+    return this.animalBreedingService.deleteAnimal(id);
+  }
+  
+  async getPotentialMates(animalId: number): Promise<Animal[]> {
+    return this.animalBreedingService.getPotentialMates(animalId);
+  }
+  
+  async checkInbreedingRisk(maleId: number, femaleId: number): Promise<{
+    isRisky: boolean;
+    relationshipType?: string;
+  }> {
+    return this.animalBreedingService.checkInbreedingRisk(maleId, femaleId);
+  }
+  
+  async getBreedingEvents(): Promise<BreedingEvent[]> {
+    return this.animalBreedingService.getBreedingEvents();
+  }
+  
+  async getBreedingEvent(id: number): Promise<BreedingEvent | undefined> {
+    return this.animalBreedingService.getBreedingEvent(id);
+  }
+  
+  async createBreedingEvent(event: InsertBreedingEvent): Promise<BreedingEvent> {
+    return this.animalBreedingService.createBreedingEvent(event);
+  }
+  
+  async updateBreedingEvent(id: number, eventUpdate: Partial<InsertBreedingEvent>): Promise<BreedingEvent | undefined> {
+    return this.animalBreedingService.updateBreedingEvent(id, eventUpdate);
+  }
+  
+  async deleteBreedingEvent(id: number): Promise<boolean> {
+    return this.animalBreedingService.deleteBreedingEvent(id);
   }
 
   // User methods
@@ -540,26 +947,30 @@ export class MemStorage implements IStorage {
     
     return this.transactions.delete(id);
   }
-  
+
   // Newsletter methods
   async getNewsletterSubscribers(): Promise<Newsletter[]> {
     return Array.from(this.newsletters.values());
   }
   
   async getNewsletterSubscriber(email: string): Promise<Newsletter | undefined> {
-    return Array.from(this.newsletters.values()).find(sub => sub.email === email);
+    return Array.from(this.newsletters.values()).find(
+      subscriber => subscriber.email === email
+    );
   }
   
   async createNewsletterSubscriber(subscriber: InsertNewsletter): Promise<Newsletter> {
     const id = this.currentNewsletterId++;
+    
     const newSubscriber: Newsletter = {
       ...subscriber,
       id,
       name: subscriber.name || null,
-      subscribed: subscriber.subscribed ?? true,
-      verified: subscriber.verified ?? false,
+      subscribed: subscriber.subscribed || true,
+      verified: subscriber.verified || false,
       createdAt: new Date()
     };
+    
     this.newsletters.set(id, newSubscriber);
     return newSubscriber;
   }
@@ -588,15 +999,17 @@ export class MemStorage implements IStorage {
   
   async createBulkOrder(order: InsertBulkOrder): Promise<BulkOrder> {
     const id = this.currentBulkOrderId++;
+    
     const newOrder: BulkOrder = {
       ...order,
       id,
-      phone: order.phone || null,
+      createdAt: new Date(),
+      status: order.status || "pending",
       productId: order.productId || null,
       quantity: order.quantity || null,
-      status: "new",
-      createdAt: new Date()
+      phone: order.phone || null
     };
+    
     this.bulkOrders.set(id, newOrder);
     return newOrder;
   }
@@ -622,13 +1035,15 @@ export class MemStorage implements IStorage {
   
   async createSocialShare(share: InsertSocialShare): Promise<SocialShare> {
     const id = this.currentSocialShareId++;
+    
     const newShare: SocialShare = {
+      ...share,
       id,
-      productId: share.productId !== undefined ? share.productId : null,
-      platform: share.platform,
-      shareCount: share.shareCount || 1,
+      productId: share.productId || null,
+      shareCount: share.shareCount || 0,
       lastShared: new Date()
     };
+    
     this.socialShares.set(id, newShare);
     return newShare;
   }
@@ -637,23 +1052,24 @@ export class MemStorage implements IStorage {
     const existing = this.socialShares.get(id);
     if (!existing) return undefined;
     
-    const updated = { ...existing, ...share, lastShared: new Date() };
+    const updated = { ...existing, ...share };
     this.socialShares.set(id, updated);
     return updated;
   }
   
   // Analytics methods
   async getProductDistribution(): Promise<{ category: string, count: number }[]> {
-    const products = Array.from(this.products.values());
-    const categoryCount = new Map<string, number>();
+    const categoryMap = new Map<string, number>();
     
-    products.forEach(product => {
-      const category = product.category || 'uncategorized';
-      const count = categoryCount.get(category) || 0;
-      categoryCount.set(category, count + 1);
-    });
+    // Count products by category
+    for (const product of this.products.values()) {
+      const category = product.category || 'Uncategorized';
+      const count = categoryMap.get(category) || 0;
+      categoryMap.set(category, count + 1);
+    }
     
-    return Array.from(categoryCount.entries()).map(([category, count]) => ({
+    // Convert to array of objects
+    return Array.from(categoryMap.entries()).map(([category, count]) => ({
       category,
       count
     }));
@@ -667,220 +1083,252 @@ export class MemStorage implements IStorage {
   }> {
     const transactions = await this.getTransactionsByDate(startDate, endDate);
     
-    return {
-      totalSales: transactions.filter(t => t.type === 'sale').reduce((sum, t) => sum + t.price * t.quantity, 0),
-      totalPurchases: transactions.filter(t => t.type === 'purchase').reduce((sum, t) => sum + t.price * t.quantity, 0),
-      totalOrders: transactions.filter(t => t.type === 'order').reduce((sum, t) => sum + t.price * t.quantity, 0),
-      totalAuctions: transactions.filter(t => t.type === 'auction').reduce((sum, t) => sum + t.price * t.quantity, 0)
+    // Initialize summary object
+    const summary = {
+      totalSales: 0,
+      totalPurchases: 0,
+      totalOrders: 0,
+      totalAuctions: 0
     };
+    
+    // Sum up transactions by type
+    for (const transaction of transactions) {
+      if (transaction.type === 'sale') {
+        summary.totalSales += transaction.price * transaction.quantity;
+      } else if (transaction.type === 'purchase') {
+        summary.totalPurchases += transaction.price * transaction.quantity;
+      } else if (transaction.type === 'order') {
+        summary.totalOrders += transaction.price * transaction.quantity;
+      } else if (transaction.type === 'auction') {
+        summary.totalAuctions += transaction.price * transaction.quantity;
+      }
+    }
+    
+    return summary;
   }
 
-  // Initialize sample data for testing
+  // Initialize with sample data
   private async initSampleData() {
-    // Add admin user with Chief Ijeh avatar
-    const hashedPassword = await hashPassword("admin123");
-    await this.createUser({
+    // Create a test admin user
+    const admin = await this.createUser({
       username: "admin",
-      password: hashedPassword,
-      name: "Chief Ijeh",
-      role: "Admin",
-      avatar: "/assets/chief-ijeh.jpg"
+      password: await hashPassword("admin123"),
+      name: "Administrator",
+      role: "admin"
     });
     
-    // Sample products
-    const tomatoes = await this.createProduct({
-      name: "Organic Tomatoes",
-      description: "Fresh farm tomatoes",
-      price: 4.50,
-      unit: "kg",
-      stock: 120,
-      category: "produce",
-      imageUrl: "https://images.unsplash.com/photo-1597362925123-77861d3fbac7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+    // Create some sample products
+    const chicken = await this.createProduct({
+      name: "Live Chicken",
+      description: "Healthy free-range chicken",
+      price: 15.99,
+      unit: "each",
+      stock: 50,
+      stockQuantity: 50,
+      lowStockThreshold: 10,
+      stockStatus: "normal",
+      category: "chicken",
+      imageUrl: "/chicken.jpg",
+      featured: true
     });
     
-    const eggs = await this.createProduct({
-      name: "Fresh Eggs",
-      description: "Free-range chicken eggs",
-      price: 6.00,
-      unit: "dozen",
-      stock: 45,
-      category: "dairy",
-      imageUrl: "https://images.unsplash.com/photo-1573246123716-6b1782bfc499?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-    });
-    
-    const lettuce = await this.createProduct({
-      name: "Organic Lettuce",
-      description: "Fresh green lettuce",
-      price: 3.25,
-      unit: "head",
-      stock: 78,
-      category: "produce",
-      imageUrl: "https://images.unsplash.com/photo-1610348725531-843dff563e2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-    });
-    
-    const honey = await this.createProduct({
-      name: "Raw Honey",
-      description: "Pure unfiltered honey",
-      price: 12.00,
-      unit: "jar",
-      stock: 32,
-      category: "specialty",
-      imageUrl: "https://images.unsplash.com/photo-1528825871115-3581a5387919?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-    });
-    
-    // Animal products
     const goat = await this.createProduct({
       name: "Goat",
-      description: "Healthy farm-raised goats",
+      description: "Healthy adult goat ready for breeding",
       price: 250.00,
-      unit: "head",
-      stock: 15,
-      category: "livestock",
-      imageUrl: "https://images.unsplash.com/photo-1560468660-6c11a19d7330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+      unit: "each",
+      stock: 12,
+      stockQuantity: 12,
+      lowStockThreshold: 3,
+      stockStatus: "normal",
+      category: "goat",
+      imageUrl: "/goat.jpg",
+      featured: true
     });
     
-    const fish = await this.createProduct({
-      name: "Fish",
-      description: "Fresh farm-raised tilapia",
-      price: 8.50,
-      unit: "kg",
-      stock: 85,
-      category: "seafood",
-      imageUrl: "https://images.unsplash.com/photo-1534177616072-ef7dc120449d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+    const rabbit = await this.createProduct({
+      name: "Rabbit",
+      description: "Young healthy rabbit",
+      price: 35.99,
+      unit: "each",
+      stock: 25,
+      stockQuantity: 25,
+      lowStockThreshold: 5,
+      stockStatus: "normal",
+      category: "rabbit",
+      imageUrl: "/rabbit.jpg",
+      featured: false
     });
     
     const duck = await this.createProduct({
       name: "Duck",
-      description: "Free-range farm ducks",
-      price: 22.00,
-      unit: "head",
-      stock: 28,
-      category: "poultry",
-      imageUrl: "https://images.unsplash.com/photo-1597207047705-52b3d6741136?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+      description: "Domestic duck for meat or egg production",
+      price: 18.50,
+      unit: "each",
+      stock: 30,
+      stockQuantity: 30,
+      lowStockThreshold: 8,
+      stockStatus: "normal",
+      category: "duck",
+      imageUrl: "/duck.jpg",
+      featured: false
     });
     
-    const chicken = await this.createProduct({
-      name: "Chicken",
-      description: "Free-range broiler chickens",
-      price: 15.00,
-      unit: "head",
+    const fish = await this.createProduct({
+      name: "Tilapia Fish",
+      description: "Live tilapia for farming",
+      price: 5.99,
+      unit: "each",
+      stock: 200,
+      stockQuantity: 200,
+      lowStockThreshold: 30,
+      stockStatus: "normal",
+      category: "fish",
+      imageUrl: "/fish.jpg",
+      featured: true
+    });
+    
+    const eggs = await this.createProduct({
+      name: "Fresh Eggs",
+      description: "Farm fresh chicken eggs",
+      price: 3.99,
+      unit: "dozen",
+      stock: 85,
+      stockQuantity: 85,
+      lowStockThreshold: 20,
+      stockStatus: "normal",
+      category: "chicken",
+      imageUrl: "/eggs.jpg",
+      featured: true
+    });
+    
+    const goatMilk = await this.createProduct({
+      name: "Goat Milk",
+      description: "Fresh, unprocessed goat milk",
+      price: 6.50,
+      unit: "liter",
       stock: 45,
-      category: "poultry",
-      imageUrl: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+      stockQuantity: 45,
+      lowStockThreshold: 15,
+      stockStatus: "normal",
+      category: "goat",
+      imageUrl: "/goat-milk.jpg",
+      featured: false
     });
     
-    // Sample Transactions
+    const chickenFeed = await this.createProduct({
+      name: "Chicken Feed",
+      description: "Premium chicken feed mix",
+      price: 20.99,
+      unit: "25kg bag",
+      stock: 18,
+      stockQuantity: 18,
+      lowStockThreshold: 5,
+      stockStatus: "normal",
+      category: "supplies",
+      imageUrl: "/chicken-feed.jpg",
+      featured: false
+    });
     
-    // Sales
+    // Create some sample transactions
     await this.createTransaction({
-      productId: tomatoes.id,
-      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-      quantity: 25,
-      price: 4.50,
+      productId: chicken.id,
       type: "sale",
-      status: "completed",
-      notes: "Regular customer order"
+      quantity: 5,
+      price: chicken.price,
+      date: new Date("2025-03-15"),
+      customer: "John Doe",
+      notes: "Local pickup"
+    });
+    
+    await this.createTransaction({
+      productId: goat.id,
+      type: "sale",
+      quantity: 2,
+      price: goat.price,
+      date: new Date("2025-03-18"),
+      customer: "Farm Supply Co.",
+      notes: "Regular buyer"
     });
     
     await this.createTransaction({
       productId: eggs.id,
-      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-      quantity: 10,
-      price: 6.00,
       type: "sale",
-      status: "completed",
-      notes: "Local restaurant weekly order"
+      quantity: 30,
+      price: eggs.price,
+      date: new Date("2025-03-20"),
+      customer: "Local Market",
+      notes: "Weekly delivery"
+    });
+    
+    await this.createTransaction({
+      productId: chickenFeed.id,
+      type: "purchase",
+      quantity: 10,
+      price: 18.50,
+      date: new Date("2025-03-10"),
+      customer: "Feed Supplier Inc.",
+      notes: "Monthly supply order"
+    });
+    
+    await this.createTransaction({
+      productId: chicken.id,
+      type: "order",
+      quantity: 15,
+      price: chicken.price,
+      date: new Date("2025-03-25"),
+      customer: "Restaurant Group",
+      notes: "Delivery scheduled for April 1st"
     });
     
     await this.createTransaction({
       productId: fish.id,
-      date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-      quantity: 15,
-      price: 8.50,
       type: "sale",
-      status: "completed",
-      notes: "Weekend market sales"
+      quantity: 50,
+      price: fish.price,
+      date: new Date("2025-03-22"),
+      customer: "Fish Farm Co.",
+      notes: "Bulk purchase for stocking pond"
     });
     
-    // Purchases
-    await this.createTransaction({
-      productId: chicken.id,
-      date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
-      quantity: 20,
-      price: 10.00, // Purchase price
-      type: "purchase",
-      status: "completed",
-      notes: "Restocking after market day"
+    // Add some newsletter subscribers
+    await this.createNewsletterSubscriber({
+      email: "johndoe@example.com",
+      name: "John Doe",
+      subscribed: true,
+      verified: true
     });
     
-    await this.createTransaction({
-      productId: honey.id,
-      date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 days ago
-      quantity: 15,
-      price: 8.00, // Purchase price
-      type: "purchase",
-      status: "completed",
-      notes: "Purchased from local supplier"
+    await this.createNewsletterSubscriber({
+      email: "farmersupply@example.com",
+      name: "Farmer Supply Co.",
+      subscribed: true,
+      verified: true
     });
     
-    // Orders (future sales)
-    await this.createTransaction({
-      productId: goat.id,
-      date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days in future
-      quantity: 5,
-      price: 250.00,
-      type: "order",
-      status: "pending",
-      notes: "Order for upcoming festival"
-    });
-    
-    await this.createTransaction({
-      productId: duck.id,
-      date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days in future
-      quantity: 10,
-      price: 22.00,
-      type: "order",
-      status: "pending",
-      notes: "Restaurant bulk order"
-    });
-    
-    // Auction sales
-    await this.createTransaction({
-      productId: chicken.id,
-      date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days in future
-      quantity: 15,
-      price: 18.00, // Auction starting price
-      type: "auction",
-      status: "scheduled",
-      notes: "Monthly livestock auction"
-    });
-    
-    await this.createTransaction({
-      productId: goat.id,
-      date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days in future
-      quantity: 8,
-      price: 280.00, // Auction starting price
-      type: "auction",
-      status: "scheduled",
-      notes: "Premium goat auction"
+    await this.createNewsletterSubscriber({
+      email: "restaurant@example.com",
+      name: "Local Restaurant",
+      subscribed: true,
+      verified: false
     });
     
     // Add some bulk orders
     await this.createBulkOrder({
-      name: "John Restaurant",
-      email: "john@restaurant.com",
-      phone: "555-123-4567",
-      message: "Interested in ordering 20kg of tomatoes weekly for our restaurant.",
-      productId: tomatoes.id,
+      name: "Restaurant Chain Ltd.",
+      email: "orders@restaurant.com",
+      phone: "+1-555-123-4567",
+      message: "Looking for regular supply of chickens for our restaurants.",
+      productId: chicken.id,
       quantity: 20,
       status: "pending"
     });
     
     await this.createBulkOrder({
-      name: "City Market",
-      email: "orders@citymarket.com",
-      phone: "555-987-6543",
-      message: "Looking for regular supply of free-range eggs for our gourmet section.",
+      name: "School District",
+      email: "nutrition@schooldistrict.org",
+      phone: "+1-555-987-6543",
+      message: "Interested in establishing a monthly delivery of fresh eggs for our school breakfast program.",
       productId: eggs.id,
       quantity: 50,
       status: "pending"

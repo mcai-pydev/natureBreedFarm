@@ -58,8 +58,14 @@ import {
   insertNewsletterSchema,
   insertBulkOrderSchema,
   insertSocialShareSchema,
+  insertAnimalSchema,
+  insertBreedingEventSchema,
+  animalFormSchema,
+  breedingEventFormSchema,
   type InsertNewsletter,
-  type InsertProduct
+  type InsertProduct,
+  type InsertAnimal,
+  type InsertBreedingEvent
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1208,5 +1214,281 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  // Animal Breeding API Routes
+  app.get("/api/animals", async (req, res) => {
+    try {
+      const { type } = req.query;
+      
+      if (type) {
+        const animals = await storage.getAnimalsByType(type as string);
+        return res.json(animals);
+      }
+      
+      const animals = await storage.getAnimals();
+      res.json(animals);
+    } catch (error) {
+      console.error("Error fetching animals:", error);
+      res.status(500).json({ error: "Failed to fetch animals" });
+    }
+  });
+  
+  app.get("/api/animals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const animal = await storage.getAnimal(id);
+      if (!animal) {
+        return res.status(404).json({ error: "Animal not found" });
+      }
+      
+      res.json(animal);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch animal" });
+    }
+  });
+  
+  app.post("/api/animals", async (req, res) => {
+    try {
+      // Pre-process date fields if they're strings
+      const requestData = { ...req.body };
+      if (requestData.dateOfBirth && typeof requestData.dateOfBirth === 'string') {
+        requestData.dateOfBirth = new Date(requestData.dateOfBirth);
+      }
+      
+      const animalData = insertAnimalSchema.parse(requestData);
+      const newAnimal = await storage.createAnimal(animalData);
+      res.status(201).json(newAnimal);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create animal" });
+    }
+  });
+  
+  app.put("/api/animals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      // Pre-process date fields if they're strings
+      const requestData = { ...req.body };
+      if (requestData.dateOfBirth && typeof requestData.dateOfBirth === 'string') {
+        requestData.dateOfBirth = new Date(requestData.dateOfBirth);
+      }
+      
+      const animalData = insertAnimalSchema.partial().parse(requestData);
+      const updatedAnimal = await storage.updateAnimal(id, animalData);
+      
+      if (!updatedAnimal) {
+        return res.status(404).json({ error: "Animal not found" });
+      }
+      
+      res.json(updatedAnimal);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update animal" });
+    }
+  });
+  
+  app.delete("/api/animals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const success = await storage.deleteAnimal(id);
+      if (!success) {
+        return res.status(404).json({ error: "Animal not found or has offspring that prevent deletion" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete animal" });
+    }
+  });
+  
+  // Breeding-related endpoints
+  app.get("/api/animals/:id/potential-mates", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const animal = await storage.getAnimal(id);
+      if (!animal) {
+        return res.status(404).json({ error: "Animal not found" });
+      }
+      
+      const potentialMates = await storage.getPotentialMates(id);
+      res.json(potentialMates);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch potential mates" });
+    }
+  });
+  
+  app.post("/api/breeding/check-risk", async (req, res) => {
+    try {
+      const { maleId, femaleId } = req.body;
+      
+      if (!maleId || !femaleId) {
+        return res.status(400).json({ error: "Both maleId and femaleId are required" });
+      }
+      
+      const maleIdNum = Number(maleId);
+      const femaleIdNum = Number(femaleId);
+      
+      if (isNaN(maleIdNum) || isNaN(femaleIdNum)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const riskAssessment = await storage.checkInbreedingRisk(maleIdNum, femaleIdNum);
+      res.json(riskAssessment);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to check inbreeding risk" });
+    }
+  });
+  
+  // Breeding events
+  app.get("/api/breeding-events", async (req, res) => {
+    try {
+      const events = await storage.getBreedingEvents();
+      res.json(events);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch breeding events" });
+    }
+  });
+  
+  app.get("/api/breeding-events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const event = await storage.getBreedingEvent(id);
+      if (!event) {
+        return res.status(404).json({ error: "Breeding event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch breeding event" });
+    }
+  });
+  
+  app.post("/api/breeding-events", async (req, res) => {
+    try {
+      // Pre-process date fields if they're strings
+      const requestData = { ...req.body };
+      if (requestData.breedingDate && typeof requestData.breedingDate === 'string') {
+        requestData.breedingDate = new Date(requestData.breedingDate);
+      }
+      if (requestData.expectedBirthDate && typeof requestData.expectedBirthDate === 'string') {
+        requestData.expectedBirthDate = new Date(requestData.expectedBirthDate);
+      }
+      if (requestData.actualBirthDate && typeof requestData.actualBirthDate === 'string') {
+        requestData.actualBirthDate = new Date(requestData.actualBirthDate);
+      }
+      
+      const eventData = insertBreedingEventSchema.parse(requestData);
+      
+      // Check if animals exist
+      const male = await storage.getAnimal(eventData.maleId);
+      const female = await storage.getAnimal(eventData.femaleId);
+      
+      if (!male || !female) {
+        return res.status(404).json({ error: "One or both animals not found" });
+      }
+      
+      // Verify male is male and female is female
+      if (male.gender !== "male" || female.gender !== "female") {
+        return res.status(400).json({ error: "Mismatch in animal genders" });
+      }
+      
+      // Check for inbreeding risk if requested
+      if (req.query.checkRisk === 'true') {
+        const risk = await storage.checkInbreedingRisk(male.id, female.id);
+        if (risk.isRisky) {
+          return res.status(400).json({ 
+            error: "Inbreeding risk detected", 
+            risk 
+          });
+        }
+      }
+      
+      const newEvent = await storage.createBreedingEvent(eventData);
+      res.status(201).json(newEvent);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Breeding event creation error:", error);
+      res.status(500).json({ error: "Failed to create breeding event" });
+    }
+  });
+  
+  app.put("/api/breeding-events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      // Pre-process date fields if they're strings
+      const requestData = { ...req.body };
+      if (requestData.breedingDate && typeof requestData.breedingDate === 'string') {
+        requestData.breedingDate = new Date(requestData.breedingDate);
+      }
+      if (requestData.expectedBirthDate && typeof requestData.expectedBirthDate === 'string') {
+        requestData.expectedBirthDate = new Date(requestData.expectedBirthDate);
+      }
+      if (requestData.actualBirthDate && typeof requestData.actualBirthDate === 'string') {
+        requestData.actualBirthDate = new Date(requestData.actualBirthDate);
+      }
+      
+      const eventData = insertBreedingEventSchema.partial().parse(requestData);
+      const updatedEvent = await storage.updateBreedingEvent(id, eventData);
+      
+      if (!updatedEvent) {
+        return res.status(404).json({ error: "Breeding event not found" });
+      }
+      
+      res.json(updatedEvent);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update breeding event" });
+    }
+  });
+  
+  app.delete("/api/breeding-events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const success = await storage.deleteBreedingEvent(id);
+      if (!success) {
+        return res.status(404).json({ error: "Breeding event not found or already resulted in births" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete breeding event" });
+    }
+  });
+
   return httpServer;
 }

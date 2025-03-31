@@ -164,6 +164,12 @@ export type InsertBulkOrder = z.infer<typeof insertBulkOrderSchema>;
 export type SocialShare = typeof socialShares.$inferSelect;
 export type InsertSocialShare = z.infer<typeof insertSocialShareSchema>;
 
+export type Animal = typeof animals.$inferSelect;
+export type InsertAnimal = z.infer<typeof insertAnimalSchema>;
+
+export type BreedingEvent = typeof breedingEvents.$inferSelect;
+export type InsertBreedingEvent = z.infer<typeof insertBreedingEventSchema>;
+
 // Extended transaction type with product information for the frontend
 export type TransactionWithProduct = Transaction & {
   product: {
@@ -213,4 +219,85 @@ export const inventorySettingsSchema = z.object({
   stockStatus: z.enum(['normal', 'low', 'out_of_stock']).default('normal'),
   stockQuantity: z.number().min(0, "Stock quantity cannot be negative").default(0),
   nextRestockDate: z.date().nullable().optional(),
+});
+
+// Animal form validation schema
+export const animalFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  type: z.string().min(2, "Animal type is required"),
+  breed: z.string().optional(),
+  gender: z.enum(["male", "female"]),
+  dateOfBirth: z.date().optional(),
+  fatherId: z.number().optional().nullable(),
+  motherId: z.number().optional().nullable(),
+  status: z.enum(["active", "sold", "deceased"]).default("active"),
+  notes: z.string().optional(),
+  imageUrl: z.string().optional(),
+});
+
+// Breeding event form validation schema
+export const breedingEventFormSchema = z.object({
+  maleId: z.number().min(1, "Male animal is required"),
+  femaleId: z.number().min(1, "Female animal is required"),
+  breedingDate: z.date().default(() => new Date()),
+  expectedBirthDate: z.date().optional(),
+  actualBirthDate: z.date().optional(),
+  offspringCount: z.number().optional(),
+  status: z.enum(["pending", "successful", "unsuccessful"]).default("pending"),
+  notes: z.string().optional(),
+});
+
+// Animal breeding tracking tables
+export const animals = pgTable("animals", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // rabbit, goat, chicken, etc.
+  breed: text("breed"),
+  gender: text("gender").notNull(), // male, female
+  dateOfBirth: timestamp("date_of_birth"),
+  fatherId: integer("father_id"), // Will reference animals table ID
+  motherId: integer("mother_id"), // Will reference animals table ID
+  status: text("status").default("active").notNull(), // active, sold, deceased
+  notes: text("notes"),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertAnimalSchema = createInsertSchema(animals).pick({
+  name: true,
+  type: true,
+  breed: true,
+  gender: true,
+  dateOfBirth: true,
+  fatherId: true,
+  motherId: true,
+  status: true,
+  notes: true,
+  imageUrl: true,
+});
+
+export const breedingEvents = pgTable("breeding_events", {
+  id: serial("id").primaryKey(),
+  maleId: integer("male_id").references(() => animals.id).notNull(),
+  femaleId: integer("female_id").references(() => animals.id).notNull(),
+  breedingDate: timestamp("breeding_date").defaultNow().notNull(),
+  expectedBirthDate: timestamp("expected_birth_date"),
+  actualBirthDate: timestamp("actual_birth_date"),
+  offspringCount: integer("offspring_count"),
+  status: text("status").default("pending").notNull(), // pending, successful, unsuccessful
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertBreedingEventSchema = createInsertSchema(breedingEvents).pick({
+  maleId: true,
+  femaleId: true,
+  breedingDate: true,
+  expectedBirthDate: true,
+  actualBirthDate: true,
+  offspringCount: true,
+  status: true,
+  notes: true,
 });
