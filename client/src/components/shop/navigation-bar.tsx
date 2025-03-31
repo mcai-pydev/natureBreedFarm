@@ -124,22 +124,22 @@ export function NavigationBar({
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         {/* Logo */}
         <div className="flex items-center">
-          <Link href="/">
-            <a className="flex items-center">
-              <span className="text-primary font-bold text-xl">Nature Breed Farm</span>
-            </a>
+          <Link href="/" className="flex items-center">
+            <span className="text-primary font-bold text-xl">Nature Breed Farm</span>
           </Link>
         </div>
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-6">
           {navLinks.map((link) => (
-            <Link key={link.path} href={link.path}>
-              <a className={`text-sm font-medium transition-colors hover:text-primary ${
+            <Link 
+              key={link.path} 
+              href={link.path}
+              className={`text-sm font-medium transition-colors hover:text-primary ${
                 location === link.path ? "text-primary" : "text-foreground/80"
-              }`}>
-                {link.title}
-              </a>
+              }`}
+            >
+              {link.title}
             </Link>
           ))}
         </div>
@@ -184,25 +184,24 @@ export function NavigationBar({
           <div className="relative">
             {user ? (
               <div className="flex items-center space-x-2">
-                <Link href="/settings">
-                  <a className="flex items-center space-x-1">
-                    <div className="bg-primary/10 h-9 w-9 rounded-full flex items-center justify-center overflow-hidden">
-                      {user.avatar ? (
-                        <img src={user.avatar} alt={user.name || user.username} className="h-full w-full object-cover" />
-                      ) : (
-                        <User className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                    <span className="text-sm font-medium">{user.name || user.username}</span>
-                  </a>
+                <Link 
+                  href="/settings" 
+                  className="flex items-center space-x-1"
+                >
+                  <div className="bg-primary/10 h-9 w-9 rounded-full flex items-center justify-center overflow-hidden">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt={user.name || user.username} className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-5 w-5 text-primary" />
+                    )}
+                  </div>
+                  <span className="text-sm font-medium">{user.name || user.username}</span>
                 </Link>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>Logout</Button>
               </div>
             ) : (
               <Button asChild variant="default" size="sm">
-                <Link href="/auth">
-                  <a>Login</a>
-                </Link>
+                <Link href="/auth">Login</Link>
               </Button>
             )}
           </div>
@@ -255,9 +254,7 @@ export function NavigationBar({
                     </div>
                     <div className="flex space-x-2">
                       <Button asChild size="sm" variant="outline">
-                        <Link href="/settings">
-                          <a>Profile</a>
-                        </Link>
+                        <Link href="/settings">Profile</Link>
                       </Button>
                       <Button size="sm" variant="outline" onClick={handleLogout}>
                         Logout
@@ -267,9 +264,7 @@ export function NavigationBar({
                 ) : (
                   <div className="flex justify-center pb-6 border-b">
                     <Button asChild>
-                      <Link href="/auth">
-                        <a>Login / Register</a>
-                      </Link>
+                      <Link href="/auth">Login / Register</Link>
                     </Button>
                   </div>
                 )}
@@ -277,14 +272,15 @@ export function NavigationBar({
                 <nav className="space-y-1">
                   {navLinks.map((link) => (
                     <SheetClose asChild key={link.path}>
-                      <Link href={link.path}>
-                        <a className={`flex items-center py-2 px-3 rounded-md ${
+                      <Link 
+                        href={link.path}
+                        className={`flex items-center py-2 px-3 rounded-md ${
                           location === link.path 
                             ? "bg-primary/10 text-primary font-medium" 
                             : "text-foreground/80 hover:bg-accent"
-                        }`}>
-                          {link.title}
-                        </a>
+                        }`}
+                      >
+                        {link.title}
                       </Link>
                     </SheetClose>
                   ))}
