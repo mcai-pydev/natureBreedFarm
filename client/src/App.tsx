@@ -30,11 +30,13 @@ function Router() {
         <ProtectedRoute path="/products" component={ProductsPage} />
         <ProtectedRoute path="/transactions" component={TransactionsPage} />
         <ProtectedRoute path="/reports" component={ReportsPage} />
-        <ProtectedRoute path="/shop" component={ShopPage} />
+        <Route path="/shop" component={ShopPage} />
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
         <Route path="/policies" component={PolicyPage} />
         <Route path="/policies/:policyType" component={PolicyPage} />
+        <Route path="/policy" component={PolicyPage} />
+        <Route path="/policy/:policyType" component={PolicyPage} />
         <Route component={NotFound} />
       </Switch>
       
