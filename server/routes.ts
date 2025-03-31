@@ -613,7 +613,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/bulk-orders", async (req, res) => {
     try {
+      console.log("Processing bulk order request...");
       const data = bulkOrderFormSchema.parse(req.body);
+      console.log("Bulk order data validated:", {
+        name: data.name,
+        email: data.email,
+        phone: data.phone?.length ? 'provided' : 'not provided',
+        productId: data.productId,
+        quantity: data.quantity,
+      });
       
       // Create bulk order
       const order = await storage.createBulkOrder({
@@ -624,17 +632,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         quantity: data.quantity,
         message: data.message
       });
+      console.log("Bulk order created with ID:", order.id);
       
       // Get product name for the confirmation email
       const productId = Number(data.productId);
       const product = await storage.getProduct(productId);
+      console.log("Associated product found:", product ? product.name : 'No product selected');
       
       // Generate a reference number for the order
       const referenceNumber = `BO-${order.id}-${Date.now().toString().slice(-6)}`;
+      console.log("Generated reference number:", referenceNumber);
       
-      // Try to send confirmation email if product exists
+      // Check email service status first
+      const emailServiceReady = emailService.isReady();
+      console.log("Email service ready:", emailServiceReady);
+      
+      // Try to send confirmation email if product exists and email service is ready
       let emailSent = false;
-      if (product) {
+      if (product && emailServiceReady) {
+        console.log("Attempting to send confirmation email to:", data.email);
         emailSent = await emailService.sendBulkOrderConfirmation(
           data.email,
           data.name,
@@ -644,17 +660,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             referenceNumber
           }
         );
+        console.log("Email sent successfully:", emailSent);
       }
       
       // Return appropriate response based on email service status
       if (emailSent) {
+        console.log("Returning success response with email confirmation");
         return res.status(201).json({
           ...order,
           emailSent: true,
           referenceNumber,
           message: "Bulk order received. A confirmation email has been sent to your inbox."
         });
-      } else if (!emailService.isReady()) {
+      } else if (!emailServiceReady) {
         return res.status(201).json({
           ...order,
           emailSent: false,
@@ -663,6 +681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Bulk order received. Email service currently unavailable, but our team will contact you soon."
         });
       } else {
+        console.log("Email service ready but sending failed");
         res.status(201).json({
           ...order,
           emailSent: false,
@@ -671,10 +690,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
     } catch (error) {
+      console.error("Error processing bulk order:", error);
+      
       if (error instanceof z.ZodError) {
+        console.log("Validation error:", error.errors);
         return res.status(400).json({ error: error.errors });
       }
-      res.status(500).json({ error: "Failed to submit bulk order request" });
+      
+      // Provide more detailed error information in dev/test environments
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error details:", errorMessage);
+      
+      res.status(500).json({ 
+        error: "Failed to submit bulk order request",
+        message: errorMessage
+      });
     }
   });
   
@@ -914,6 +944,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to get email service status" });
+    }
+  });
+  
+  // DEBUG: Test bulk order email directly (no auth required)
+  app.post("/api/debug/test-bulk-order-email", async (req, res) => {
+    try {
+      const { email, name } = req.body;
+      if (!email || !name) {
+        return res.status(400).json({ error: "Email and name are required" });
+      }
+      
+      console.log("Testing bulk order email with:", { email, name });
+      
+      // Create a test reference number
+      const referenceNumber = `TEST-${Date.now().toString().slice(-6)}`;
+      
+      // Attempt to send the email
+      const emailSent = await emailService.sendBulkOrderConfirmation(
+        email,
+        name,
+        {
+          productName: "Test Product",
+          quantity: 10,
+          referenceNumber
+        }
+      );
+      
+      console.log("Email test result:", emailSent);
+      
+      if (emailSent) {
+        res.json({ 
+          success: true, 
+          message: "Test email sent successfully",
+          referenceNumber 
+        });
+      } else {
+        // Check if the service is configured
+        if (!emailService.isReady()) {
+          res.status(503).json({ 
+            success: false, 
+            message: "Email service is not configured",
+            configured: false 
+          });
+        } else {
+          res.status(500).json({ 
+            success: false, 
+            message: "Email service is configured but sending failed",
+            configured: true 
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error in test email endpoint:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ 
+        success: false, 
+        message: "Test email failed",
+        error: errorMessage 
+      });
     }
   });
 

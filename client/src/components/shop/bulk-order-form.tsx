@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -92,7 +92,7 @@ export function BulkOrderDialog({
   });
   
   // Reset form when dialog opens/closes
-  useState(() => {
+  useEffect(() => {
     if (open) {
       form.reset({
         name: "",
@@ -103,7 +103,7 @@ export function BulkOrderDialog({
         message: "",
       });
     }
-  });
+  }, [open, form, preselectedProductId]);
   
   // Submit mutation
   const submitMutation = useMutation({

@@ -328,6 +328,12 @@ class EmailService {
       referenceNumber: string;
     }
   ): Promise<boolean> {
+    console.log('========== EMAIL SERVICE DEBUGGING ==========');
+    console.log('Email service configured:', this.isConfigured);
+    console.log('Attempting to send email to:', email);
+    console.log('Email subject:', `Your Bulk Order Request - Ref #${orderDetails.referenceNumber}`);
+    console.log('Mail configuration status:', this.isConfigured ? 'Configured' : 'Not configured');
+    
     if (!this.isConfigured) {
       console.error('Email service is not configured for sendBulkOrderConfirmation');
       return false;

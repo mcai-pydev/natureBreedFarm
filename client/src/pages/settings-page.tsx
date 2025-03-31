@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { EmailConfigForm } from "@/components/settings/email-config";
 import { NewsletterBlastForm } from "@/components/settings/newsletter-blast";
 import { NewsletterSubscriberList } from "@/components/settings/newsletter-subscriber-list";
+import { BulkOrderEmailTest } from "@/components/settings/bulk-order-test";
 
 // Farm information form schema
 const farmInfoSchema = z.object({
@@ -286,9 +287,17 @@ export default function SettingsPage() {
               </TabsContent>
               
               {user?.role === "Admin" && (
-                <TabsContent value="email" className="space-y-4">
+                <TabsContent value="email" className="space-y-6">
                   {/* Email Configuration */}
                   <EmailConfigForm />
+                  
+                  {/* Email Testing */}
+                  <div className="bg-white rounded-lg shadow p-5">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Email Testing</h2>
+                    <div className="grid grid-cols-1 gap-4">
+                      <BulkOrderEmailTest />
+                    </div>
+                  </div>
                 </TabsContent>
               )}
               
