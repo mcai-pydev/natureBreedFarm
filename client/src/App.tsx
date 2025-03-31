@@ -10,7 +10,7 @@ import TransactionsPage from "@/pages/transactions-page";
 import ReportsPage from "@/pages/reports-page";
 import SettingsPage from "@/pages/settings-page";
 import ShopPage from "@/pages/shop-page-updated";
-import PolicyPage from "@/pages/policy-page";
+import PolicyPage from "@/pages/policy-page-fixed";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { FloatingHeroNav, FloatingHeroNavMobile } from "@/components/layout/floating-hero-nav";

@@ -51,6 +51,9 @@ export default function ProductsPage() {
     queryKey: ["/api/products"],
   });
 
+  const [selectedCategory, setSelectedCategory] = useState("general");
+  const [previewImageUrl, setPreviewImageUrl] = useState("");
+  
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -87,7 +90,25 @@ export default function ProductsPage() {
     },
   });
 
+  // Generate image URL based on product category if no custom URL is provided
+  function generateImageUrlFromCategory(category: string): string {
+    const categoryImageMap: {[key: string]: string} = {
+      produce: "https://images.unsplash.com/photo-1597362925123-77861d3fbac7",
+      dairy: "https://images.unsplash.com/photo-1573246123716-6b1782bfc499",
+      poultry: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7",
+      livestock: "https://images.unsplash.com/photo-1560468660-6c11a19d7330",
+      seafood: "https://images.unsplash.com/photo-1534177616072-ef7dc120449d",
+      specialty: "https://images.unsplash.com/photo-1528825871115-3581a5387919",
+      general: "https://images.unsplash.com/photo-1592982573555-3d0dc6cb2c32"
+    };
+    
+    return categoryImageMap[category] || categoryImageMap.general;
+  }
+
   function onSubmit(data: ProductFormValues) {
+    // Use provided image URL or generate one based on category
+    const imageUrl = data.imageUrl || generateImageUrlFromCategory(data.category);
+    
     createProductMutation.mutate({
       name: data.name,
       description: data.description || "",
@@ -95,7 +116,7 @@ export default function ProductsPage() {
       unit: data.unit,
       stock: data.stock,
       category: data.category,
-      imageUrl: data.imageUrl || undefined,
+      imageUrl: imageUrl,
     });
   }
 
@@ -113,7 +134,15 @@ export default function ProductsPage() {
                 <p className="text-gray-500">Manage and view your farm's product inventory</p>
               </div>
               
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <Dialog 
+                open={dialogOpen} 
+                onOpenChange={(open) => {
+                  setDialogOpen(open);
+                  if (open) {
+                    // Initialize the preview image URL when dialog opens
+                    setPreviewImageUrl(generateImageUrlFromCategory("general"));
+                  }
+                }}>
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="h-5 w-5 mr-2" />
@@ -225,6 +254,11 @@ export default function ProductsPage() {
                               <select 
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 {...field}
+                                onChange={(e) => {
+                                  field.onChange(e);
+                                  setSelectedCategory(e.target.value);
+                                  setPreviewImageUrl(generateImageUrlFromCategory(e.target.value));
+                                }}
                               >
                                 <option value="general">General</option>
                                 <option value="produce">Produce</option>
@@ -240,22 +274,55 @@ export default function ProductsPage() {
                         )}
                       />
                       
-                      <FormField
-                        control={form.control}
-                        name="imageUrl"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Image URL (optional)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="https://example.com/image.jpg" 
-                                {...field} 
+                      <div className="space-y-3">
+                        {/* Preview of category-based image */}
+                        {!form.watch("imageUrl") && (
+                          <div className="mt-2">
+                            <p className="text-sm text-muted-foreground mb-2">Preview of category image:</p>
+                            <div className="relative h-40 w-full rounded-md overflow-hidden border">
+                              <img 
+                                src={previewImageUrl || generateImageUrlFromCategory(selectedCategory)} 
+                                alt="Category preview" 
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = generateImageUrlFromCategory("general");
+                                }}
                               />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
+                              <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                                <p className="text-white bg-black/50 px-2 py-1 rounded text-xs">{selectedCategory}</p>
+                              </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              This image will be used if you don't provide a custom URL
+                            </p>
+                          </div>
                         )}
-                      />
+                        
+                        <FormField
+                          control={form.control}
+                          name="imageUrl"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Custom Image URL (optional)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="https://example.com/image.jpg" 
+                                  {...field} 
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    if (e.target.value) {
+                                      setPreviewImageUrl(e.target.value);
+                                    } else {
+                                      setPreviewImageUrl(generateImageUrlFromCategory(selectedCategory));
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       
                       <div className="flex justify-end space-x-3 pt-4">
                         <Button 

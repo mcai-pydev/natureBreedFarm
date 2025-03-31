@@ -210,10 +210,12 @@ export default function PolicyPage() {
 
           <div className="border-t pt-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground text-center sm:text-left">
                 © 2025 Nature Breed Farm. All rights reserved.
               </p>
-              <SocialMediaLinks variant="icon" size="sm" />
+              <div className="flex justify-center w-full sm:w-auto">
+                <SocialMediaLinks />
+              </div>
             </div>
           </div>
         </Tabs>
