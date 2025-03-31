@@ -13,21 +13,35 @@ import ShopPage from "@/pages/shop-page-updated";
 import PolicyPage from "@/pages/policy-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
+import { FloatingHeroNav, FloatingHeroNavMobile } from "@/components/layout/floating-hero-nav";
+import { useLocation } from "wouter";
 
 function Router() {
+  const [location] = useLocation();
+  const showFloatingNav = location !== "/auth";
+
   return (
-    <Switch>
-      <Route path="/auth" component={AuthPage} />
-      <ProtectedRoute path="/" component={DashboardPage} />
-      <ProtectedRoute path="/products" component={ProductsPage} />
-      <ProtectedRoute path="/transactions" component={TransactionsPage} />
-      <ProtectedRoute path="/reports" component={ReportsPage} />
-      <ProtectedRoute path="/shop" component={ShopPage} />
-      <ProtectedRoute path="/settings" component={SettingsPage} />
-      <Route path="/policies" component={PolicyPage} />
-      <Route path="/policies/:policyType" component={PolicyPage} />
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <Switch>
+        <Route path="/auth" component={AuthPage} />
+        <ProtectedRoute path="/" component={DashboardPage} />
+        <ProtectedRoute path="/products" component={ProductsPage} />
+        <ProtectedRoute path="/transactions" component={TransactionsPage} />
+        <ProtectedRoute path="/reports" component={ReportsPage} />
+        <ProtectedRoute path="/shop" component={ShopPage} />
+        <ProtectedRoute path="/settings" component={SettingsPage} />
+        <Route path="/policies" component={PolicyPage} />
+        <Route path="/policies/:policyType" component={PolicyPage} />
+        <Route component={NotFound} />
+      </Switch>
+      
+      {showFloatingNav && (
+        <>
+          <FloatingHeroNav />
+          <FloatingHeroNavMobile />
+        </>
+      )}
+    </>
   );
 }
 
