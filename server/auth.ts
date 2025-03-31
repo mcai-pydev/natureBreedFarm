@@ -96,7 +96,12 @@ export function setupAuth(app: Express) {
       
       // Send registration confirmation email if email service is ready and username is an email
       if (emailService.isReady() && username.includes('@')) {
-        await emailService.sendRegistrationConfirmation(username, name);
+        // In development, log success instead of sending email
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Development environment: Simulating registration confirmation email to", username);
+        } else {
+          await emailService.sendRegistrationConfirmation(username, name);
+        }
       }
 
       req.login(user, (err) => {

@@ -30,6 +30,10 @@ export const products = pgTable("products", {
   unit: text("unit").notNull(),
   stock: real("stock").notNull(),
   stockQuantity: real("stock_quantity").notNull().default(0),
+  lowStockThreshold: real("low_stock_threshold").default(10), // Threshold for low stock alerts
+  stockStatus: text("stock_status").default("normal"), // normal, low, out_of_stock
+  lastRestockDate: timestamp("last_restock_date").defaultNow(), // Date of last restock
+  nextRestockDate: timestamp("next_restock_date"), // Expected date of next restock
   category: text("category").default("general"),
   imageUrl: text("image_url"),
   featured: boolean("featured").default(false),
@@ -48,6 +52,10 @@ export const insertProductSchema = createInsertSchema(products).pick({
   unit: true,
   stock: true,
   stockQuantity: true,
+  lowStockThreshold: true,
+  stockStatus: true,
+  lastRestockDate: true,
+  nextRestockDate: true,
   category: true,
   imageUrl: true,
   featured: true,
@@ -187,6 +195,7 @@ export const searchSchema = z.object({
     minPrice: z.number().optional(),
     maxPrice: z.number().optional(),
     inStock: z.boolean().optional(),
+    stockStatus: z.enum(['normal', 'low', 'out_of_stock']).optional(),
     sortBy: z.enum([
       'price-asc', 
       'price-desc', 
@@ -196,4 +205,12 @@ export const searchSchema = z.object({
       'featured'
     ]).optional(),
   }).optional(),
+});
+
+// Inventory settings validation schema
+export const inventorySettingsSchema = z.object({
+  lowStockThreshold: z.number().min(1, "Threshold must be at least 1").default(10),
+  stockStatus: z.enum(['normal', 'low', 'out_of_stock']).default('normal'),
+  stockQuantity: z.number().min(0, "Stock quantity cannot be negative").default(0),
+  nextRestockDate: z.date().nullable().optional(),
 });

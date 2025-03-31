@@ -13,7 +13,8 @@ import {
   insertNewsletterSchema,
   insertBulkOrderSchema,
   insertSocialShareSchema,
-  type InsertNewsletter
+  type InsertNewsletter,
+  type InsertProduct
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -30,7 +31,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Products API routes
   app.get("/api/products", async (req, res) => {
     try {
-      const { category, featured } = req.query;
+      const { category, featured, lowStock } = req.query;
       
       if (category) {
         const products = await storage.getProductsByCategory(category as string);
@@ -39,6 +40,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (featured === 'true') {
         const products = await storage.getFeaturedProducts();
+        return res.json(products);
+      }
+      
+      if (lowStock === 'true') {
+        const products = await storage.getLowStockProducts();
         return res.json(products);
       }
       
@@ -118,6 +124,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete product" });
+    }
+  });
+  
+  // Inventory-specific endpoint to update stock
+  app.patch("/api/products/:id/stock", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const { quantity, isIncrease, lowStockThreshold, nextRestockDate } = req.body;
+      
+      if (quantity === undefined || isIncrease === undefined) {
+        return res.status(400).json({ error: "Missing required parameters: quantity and isIncrease" });
+      }
+      
+      if (typeof quantity !== 'number' || quantity < 0) {
+        return res.status(400).json({ error: "Quantity must be a positive number" });
+      }
+      
+      if (typeof isIncrease !== 'boolean') {
+        return res.status(400).json({ error: "isIncrease must be a boolean" });
+      }
+      
+      // First, update stock
+      const updatedProduct = await storage.updateProductStock(id, quantity, isIncrease);
+      
+      if (!updatedProduct) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      
+      // If additional settings were provided, update them
+      if (lowStockThreshold !== undefined || nextRestockDate !== undefined) {
+        const additionalUpdates: Partial<InsertProduct> = {};
+        
+        if (lowStockThreshold !== undefined && typeof lowStockThreshold === 'number' && lowStockThreshold > 0) {
+          additionalUpdates.lowStockThreshold = lowStockThreshold;
+        }
+        
+        if (nextRestockDate !== undefined) {
+          try {
+            additionalUpdates.nextRestockDate = typeof nextRestockDate === 'string' 
+              ? new Date(nextRestockDate) 
+              : nextRestockDate;
+          } catch (err) {
+            console.error("Invalid date format for nextRestockDate:", err);
+          }
+        }
+        
+        if (Object.keys(additionalUpdates).length > 0) {
+          const finalProduct = await storage.updateProduct(id, additionalUpdates);
+          if (finalProduct) {
+            return res.json(finalProduct);
+          }
+        }
+      }
+      
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error("Stock update error:", error);
+      res.status(500).json({ error: "Failed to update product stock" });
     }
   });
 
@@ -439,14 +507,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Send the promotional email
-      const success = await emailService.sendPromotionalEmail(
-        emails,
-        subject,
-        title,
-        content,
-        ctaLink,
-        ctaText
-      );
+      let success = false;
+      
+      // In development, simulate successful email
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Development environment: Simulating successful promotional email to", emails.length, "recipients");
+        console.log("Email content:", { subject, title, content, ctaLink, ctaText });
+        success = true;
+      } else {
+        success = await emailService.sendPromotionalEmail(
+          emails,
+          subject,
+          title,
+          content,
+          ctaLink,
+          ctaText
+        );
+      }
       
       if (!success) {
         return res.status(500).json({ 
@@ -483,7 +560,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Send welcome email
           if (emailService.isReady()) {
-            await emailService.sendNewsletterWelcome(data.email);
+            // In development, log success instead of sending email
+            if (process.env.NODE_ENV !== 'production') {
+              console.log("Development environment: Simulating welcome email to re-subscribed user:", data.email);
+            } else {
+              await emailService.sendNewsletterWelcome(data.email);
+            }
           }
           
           return res.json(updated);
@@ -502,7 +584,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (emailService.isReady()) {
         const baseUrl = process.env.BASE_URL || `http://${req.headers.host}`;
         const verificationUrl = `${baseUrl}/api/newsletter/verify`;
-        const emailSent = await emailService.sendVerificationEmail(data.email, verificationUrl);
+        
+        let emailSent = false;
+        
+        // In development, always succeed
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Development environment: Simulating successful verification email");
+          emailSent = true;
+        } else {
+          emailSent = await emailService.sendVerificationEmail(data.email, verificationUrl);
+        }
         
         if (emailSent) {
           return res.status(201).json({
@@ -582,7 +673,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send welcome email
       if (emailService.isReady()) {
-        await emailService.sendNewsletterWelcome(email);
+        // In development, log success instead of sending email
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Development environment: Simulating newsletter welcome email to", email);
+        } else {
+          await emailService.sendNewsletterWelcome(email);
+        }
       }
       
       // Redirect to a success page or return a success response
@@ -661,21 +757,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         referenceNumber
       });
       
-      try {
-        // Even if no product is selected, we still want to send an email confirmation
-        emailSent = await emailService.sendBulkOrderConfirmation(
-          data.email,
-          data.name,
-          {
-            productName,
-            quantity,
-            referenceNumber
-          }
-        );
-        console.log("Email sent successfully:", emailSent);
-      } catch (emailError) {
-        console.error("Error sending email:", emailError);
-        emailSent = false;
+      // In development, always succeed
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Development environment: Simulating successful email");
+        emailSent = true;
+      } else {
+        try {
+          // Even if no product is selected, we still want to send an email confirmation
+          emailSent = await emailService.sendBulkOrderConfirmation(
+            data.email,
+            data.name,
+            {
+              productName,
+              quantity,
+              referenceNumber
+            }
+          );
+          console.log("Email sent successfully:", emailSent);
+        } catch (emailError) {
+          console.error("Error sending email:", emailError);
+          emailSent = false;
+        }
       }
       
       // Return appropriate response based on email service status
@@ -822,15 +924,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const referenceNumber = `PI-${Date.now().toString().slice(-6)}`;
       
       // Send the product information email
-      const success = await emailService.sendProductInfo(email, product.name, {
-        imageUrl: product.imageUrl,
-        price: product.price,
-        unit: product.unit,
-        category: product.category,
-        description: product.description,
-        customerName,
-        referenceNumber
-      });
+      let success = false;
+      
+      // In development, always succeed
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Development environment: Simulating successful email for product info");
+        success = true;
+      } else {
+        success = await emailService.sendProductInfo(email, product.name, {
+          imageUrl: product.imageUrl,
+          price: product.price,
+          unit: product.unit,
+          category: product.category,
+          description: product.description,
+          customerName,
+          referenceNumber
+        });
+      }
       
       if (success) {
         // If they're not already a newsletter subscriber, suggest they sign up

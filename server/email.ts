@@ -83,6 +83,13 @@ class EmailService {
     console.log('========== EMAIL SERVICE DEBUGGING ==========');
     console.log('Email service configured:', this.isConfigured);
     
+    // In development mode, always succeed with console logs
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Development environment: Simulating successful email send');
+      console.log('Email details:', emailData);
+      return true;
+    }
+    
     if (!this.isConfigured) {
       console.error('Email service is not configured. Configure it first via settings.');
       return false; // Changed from throwing error to returning false for graceful handling
@@ -143,6 +150,13 @@ class EmailService {
    * Create and send a verification email
    */
   async sendVerificationEmail(email: string, verificationUrl: string): Promise<boolean> {
+    // In development, log and return success
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Development environment: Simulating verification email send to', email);
+      console.log('Verification URL would be', verificationUrl);
+      return true;
+    }
+    
     if (!this.isConfigured) {
       console.error('Email service is not configured for sendVerificationEmail');
       return false;
@@ -181,6 +195,12 @@ class EmailService {
    * Send a newsletter subscription confirmation email
    */
   async sendNewsletterWelcome(email: string): Promise<boolean> {
+    // In development, log and return success
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Development environment: Simulating newsletter welcome email to', email);
+      return true;
+    }
+    
     if (!this.isConfigured) {
       console.error('Email service is not configured for sendNewsletterWelcome');
       return false;
@@ -222,6 +242,13 @@ class EmailService {
     ctaLink?: string, 
     ctaText?: string
   ): Promise<boolean> {
+    // In development, log and return success
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Development environment: Simulating promotional email to', recipients.length, 'recipients');
+      console.log('Email content:', { subject, title, content, ctaLink, ctaText });
+      return true;
+    }
+    
     if (!this.isConfigured) {
       console.error('Email service is not configured for sendPromotionalEmail');
       return false;
@@ -264,6 +291,14 @@ class EmailService {
    * Send product information email
    */
   async sendProductInfo(email: string, productName: string, productDetails: any): Promise<boolean> {
+    // In development, log and return success
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Development environment: Simulating product info email to', email);
+      console.log('Product:', productName);
+      console.log('Details:', productDetails);
+      return true;
+    }
+    
     if (!this.isConfigured) {
       console.error('Email service is not configured for sendProductInfo');
       return false;
@@ -328,17 +363,11 @@ class EmailService {
       referenceNumber: string;
     }
   ): Promise<boolean> {
-    console.log('========== BULK ORDER EMAIL DEBUGGING ==========');
-    console.log('Email service configured:', this.isConfigured);
-    console.log('Attempting to send email to:', email);
-    console.log('Email subject:', `Your Bulk Order Request - Ref #${orderDetails.referenceNumber}`);
-    console.log('Mail configuration status:', this.isConfigured ? 'Configured' : 'Not configured');
-    console.log('Order details:', orderDetails);
-    console.log('Customer name:', name);
-    
-    // Always try to send the email in development/demo mode
+    // In development, log and return success
     if (process.env.NODE_ENV !== 'production') {
-      console.log('Development mode: Simulating successful email sending');
+      console.log('Development environment: Simulating bulk order confirmation email to', email);
+      console.log('Customer name:', name);
+      console.log('Order details:', orderDetails);
       return true;
     }
     
@@ -388,6 +417,13 @@ class EmailService {
    * Send registration confirmation email
    */
   async sendRegistrationConfirmation(email: string, name: string): Promise<boolean> {
+    // In development, log and return success
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Development environment: Simulating registration confirmation email to', email);
+      console.log('User name:', name);
+      return true;
+    }
+    
     if (!this.isConfigured) {
       console.error('Email service is not configured for sendRegistrationConfirmation');
       return false;
@@ -480,6 +516,10 @@ class EmailService {
    * Check if the email service is configured
    */
   isReady(): boolean {
+    // In development mode, always report as ready
+    if (process.env.NODE_ENV !== 'production') {
+      return true;
+    }
     return this.isConfigured;
   }
 }

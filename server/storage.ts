@@ -40,10 +40,12 @@ export interface IStorage {
   getProductsByCategory(category: string): Promise<Product[]>;
   getFeaturedProducts(): Promise<Product[]>;
   searchProducts(query: string, filters?: any): Promise<Product[]>;
+  getLowStockProducts(): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<boolean>;
+  updateProductStock(id: number, quantity: number, isIncrease: boolean): Promise<Product | undefined>;
   
   // Transaction methods
   getTransactions(): Promise<TransactionWithProduct[]>;
@@ -255,12 +257,28 @@ export class MemStorage implements IStorage {
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const id = this.currentProductId++;
+    
+    // Set initial stock quantity and calculate stock status
+    const stockQuantity = insertProduct.stockQuantity || insertProduct.stock;
+    const lowStockThreshold = insertProduct.lowStockThreshold || 10;
+    
+    let stockStatus = 'normal';
+    if (stockQuantity <= 0) {
+      stockStatus = 'out_of_stock';
+    } else if (stockQuantity <= lowStockThreshold) {
+      stockStatus = 'low';
+    }
+    
     const product: Product = { 
       ...insertProduct, 
       id,
       description: insertProduct.description || null,
       salePrice: insertProduct.salePrice || null,
-      stockQuantity: insertProduct.stockQuantity || insertProduct.stock,
+      stockQuantity: stockQuantity,
+      lowStockThreshold: lowStockThreshold,
+      stockStatus: stockStatus,
+      lastRestockDate: insertProduct.lastRestockDate || new Date(),
+      nextRestockDate: insertProduct.nextRestockDate || null,
       imageUrl: insertProduct.imageUrl || null,
       category: insertProduct.category || null,
       featured: insertProduct.featured || false,
@@ -279,12 +297,82 @@ export class MemStorage implements IStorage {
     if (!existingProduct) return undefined;
     
     const updatedProduct = { ...existingProduct, ...productUpdate };
+    
+    // Check if we need to update stock status
+    if (productUpdate.stockQuantity !== undefined || productUpdate.lowStockThreshold !== undefined) {
+      const stockQuantity = updatedProduct.stockQuantity || updatedProduct.stock;
+      const threshold = updatedProduct.lowStockThreshold || 10;
+      
+      if (stockQuantity <= 0) {
+        updatedProduct.stockStatus = 'out_of_stock';
+      } else if (stockQuantity <= threshold) {
+        updatedProduct.stockStatus = 'low';
+      } else {
+        updatedProduct.stockStatus = 'normal';
+      }
+    }
+    
     this.products.set(id, updatedProduct);
     return updatedProduct;
   }
 
   async deleteProduct(id: number): Promise<boolean> {
     return this.products.delete(id);
+  }
+  
+  async getLowStockProducts(): Promise<Product[]> {
+    return Array.from(this.products.values()).filter(product => {
+      // Include product if it has a threshold set and current stock is at or below threshold
+      // OR if stock is completely depleted (stock is 0)
+      return (
+        product.stock === 0 || 
+        (product.lowStockThreshold !== undefined && 
+         product.lowStockThreshold > 0 && 
+         product.stock <= product.lowStockThreshold)
+      );
+    }).sort((a, b) => {
+      // Sort by criticality:
+      // 1. Products with 0 stock first
+      if (a.stock === 0 && b.stock !== 0) return -1;
+      if (a.stock !== 0 && b.stock === 0) return 1;
+      
+      // 2. Then by how far below threshold (as a percentage)
+      const aThreshold = a.lowStockThreshold || 1;
+      const bThreshold = b.lowStockThreshold || 1;
+      
+      const aPercentage = a.stock / aThreshold;
+      const bPercentage = b.stock / bThreshold;
+      
+      return aPercentage - bPercentage;
+    });
+  }
+  
+  async updateProductStock(id: number, quantity: number, isIncrease: boolean): Promise<Product | undefined> {
+    const product = await this.getProduct(id);
+    if (!product) return undefined;
+    
+    const newQuantity = isIncrease 
+      ? (product.stockQuantity || product.stock) + quantity 
+      : Math.max(0, (product.stockQuantity || product.stock) - quantity);
+    
+    const stockStatus = newQuantity <= 0 
+      ? 'out_of_stock' 
+      : newQuantity <= (product.lowStockThreshold || 10) 
+        ? 'low' 
+        : 'normal';
+    
+    // If we're adding inventory, update the last restock date
+    const updates: Partial<InsertProduct> = {
+      stock: newQuantity,
+      stockQuantity: newQuantity,
+      stockStatus
+    };
+    
+    if (isIncrease && quantity > 0) {
+      updates.lastRestockDate = new Date();
+    }
+    
+    return this.updateProduct(id, updates);
   }
 
   // Transaction methods
@@ -343,15 +431,19 @@ export class MemStorage implements IStorage {
     const product = await this.getProduct(transaction.productId);
     if (product) {
       if (transaction.type === "sale" || transaction.type === "order") {
-        await this.updateProduct(product.id, { 
-          stock: product.stock - transaction.quantity,
-          stockQuantity: (product.stockQuantity || product.stock) - transaction.quantity
-        });
+        // Decrease stock
+        await this.updateProductStock(
+          product.id, 
+          transaction.quantity, 
+          false // decrease
+        );
       } else if (transaction.type === "purchase") {
-        await this.updateProduct(product.id, { 
-          stock: product.stock + transaction.quantity,
-          stockQuantity: (product.stockQuantity || product.stock) + transaction.quantity
-        });
+        // Increase stock and update restock date
+        await this.updateProductStock(
+          product.id, 
+          transaction.quantity, 
+          true // increase
+        );
       }
     }
     
@@ -371,15 +463,19 @@ export class MemStorage implements IStorage {
       const oldProduct = await this.getProduct(existingTransaction.productId);
       if (oldProduct) {
         if (existingTransaction.type === "sale" || existingTransaction.type === "order") {
-          await this.updateProduct(oldProduct.id, { 
-            stock: oldProduct.stock + existingTransaction.quantity,
-            stockQuantity: (oldProduct.stockQuantity || oldProduct.stock) + existingTransaction.quantity
-          });
+          // Add stock back for sales/orders
+          await this.updateProductStock(
+            oldProduct.id,
+            existingTransaction.quantity,
+            true // increase
+          );
         } else if (existingTransaction.type === "purchase") {
-          await this.updateProduct(oldProduct.id, { 
-            stock: oldProduct.stock - existingTransaction.quantity,
-            stockQuantity: (oldProduct.stockQuantity || oldProduct.stock) - existingTransaction.quantity
-          });
+          // Remove stock for purchases
+          await this.updateProductStock(
+            oldProduct.id,
+            existingTransaction.quantity,
+            false // decrease
+          );
         }
       }
       
@@ -391,15 +487,19 @@ export class MemStorage implements IStorage {
       const newProduct = await this.getProduct(productId);
       if (newProduct) {
         if (type === "sale" || type === "order") {
-          await this.updateProduct(newProduct.id, { 
-            stock: newProduct.stock - quantity,
-            stockQuantity: (newProduct.stockQuantity || newProduct.stock) - quantity
-          });
+          // Decrease stock for sales/orders
+          await this.updateProductStock(
+            newProduct.id,
+            quantity,
+            false // decrease
+          );
         } else if (type === "purchase") {
-          await this.updateProduct(newProduct.id, { 
-            stock: newProduct.stock + quantity,
-            stockQuantity: (newProduct.stockQuantity || newProduct.stock) + quantity
-          });
+          // Increase stock for purchases
+          await this.updateProductStock(
+            newProduct.id,
+            quantity,
+            true // increase
+          );
         }
       }
     }
@@ -417,15 +517,19 @@ export class MemStorage implements IStorage {
     const product = await this.getProduct(transaction.productId);
     if (product) {
       if (transaction.type === "sale" || transaction.type === "order") {
-        await this.updateProduct(product.id, { 
-          stock: product.stock + transaction.quantity,
-          stockQuantity: (product.stockQuantity || product.stock) + transaction.quantity
-        });
+        // Add stock back for sales/orders
+        await this.updateProductStock(
+          product.id,
+          transaction.quantity,
+          true // increase
+        );
       } else if (transaction.type === "purchase") {
-        await this.updateProduct(product.id, { 
-          stock: product.stock - transaction.quantity,
-          stockQuantity: (product.stockQuantity || product.stock) - transaction.quantity
-        });
+        // Remove stock for purchases
+        await this.updateProductStock(
+          product.id,
+          transaction.quantity,
+          false // decrease
+        );
       }
     }
     
