@@ -328,15 +328,16 @@ export default function ProductsPage() {
         
         <div className="flex flex-col sm:flex-row gap-2">
           {isAuthenticated && (
-            <DialogTrigger asChild onClick={() => {
-              resetForm();
-              setIsAddDialogOpen(true);
-            }}>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Product
-              </Button>
-            </DialogTrigger>
+            <Button 
+              className="gap-2"
+              onClick={() => {
+                resetForm();
+                setIsAddDialogOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Add Product
+            </Button>
           )}
         </div>
       </div>
