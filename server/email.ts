@@ -77,22 +77,36 @@ class EmailService {
    * Send an email with the provided data
    */
   async sendEmail(emailData: EmailData): Promise<boolean> {
+    console.log('========== EMAIL SERVICE DEBUGGING ==========');
+    console.log('Email service configured:', this.isConfigured);
+    
     if (!this.isConfigured) {
-      throw new Error('Email service is not configured');
+      console.error('Email service is not configured. Configure it first via settings.');
+      return false; // Changed from throwing error to returning false for graceful handling
     }
 
     try {
-      await this.transporter.sendMail({
+      console.log('Attempting to send email to:', emailData.to);
+      console.log('Email subject:', emailData.subject);
+      
+      const mailOptions = {
         from: '"Nature Breed Farm" <farm@naturebreed.com>',
         to: emailData.to,
         bcc: emailData.bcc,
         subject: emailData.subject,
         text: emailData.text,
         html: emailData.html,
-      });
+      };
+      
+      console.log('Mail configuration status: Configured');
+      
+      const result = await this.transporter.sendMail(mailOptions);
+      console.log('Email sent successfully. MessageId:', result.messageId);
+      console.log('============================================');
       return true;
     } catch (error) {
       console.error('Error sending email:', error);
+      console.log('============================================');
       return false;
     }
   }
@@ -102,7 +116,8 @@ class EmailService {
    */
   async sendVerificationEmail(email: string, verificationUrl: string): Promise<boolean> {
     if (!this.isConfigured) {
-      throw new Error('Email service is not configured');
+      console.error('Email service is not configured for sendVerificationEmail');
+      return false;
     }
 
     // Generate a new token
@@ -150,7 +165,8 @@ class EmailService {
    */
   async sendNewsletterWelcome(email: string): Promise<boolean> {
     if (!this.isConfigured) {
-      throw new Error('Email service is not configured');
+      console.error('Email service is not configured for sendNewsletterWelcome');
+      return false;
     }
 
     return await this.sendEmail({
@@ -190,7 +206,8 @@ class EmailService {
     ctaText?: string
   ): Promise<boolean> {
     if (!this.isConfigured) {
-      throw new Error('Email service is not configured');
+      console.error('Email service is not configured for sendPromotionalEmail');
+      return false;
     }
     
     if (!recipients.length) {
@@ -231,7 +248,8 @@ class EmailService {
    */
   async sendProductInfo(email: string, productName: string, productDetails: any): Promise<boolean> {
     if (!this.isConfigured) {
-      throw new Error('Email service is not configured');
+      console.error('Email service is not configured for sendProductInfo');
+      return false;
     }
 
     const { 
@@ -294,7 +312,8 @@ class EmailService {
     }
   ): Promise<boolean> {
     if (!this.isConfigured) {
-      throw new Error('Email service is not configured');
+      console.error('Email service is not configured for sendBulkOrderConfirmation');
+      return false;
     }
 
     const { productName, quantity, referenceNumber } = orderDetails;
@@ -336,7 +355,8 @@ class EmailService {
    */
   async sendRegistrationConfirmation(email: string, name: string): Promise<boolean> {
     if (!this.isConfigured) {
-      throw new Error('Email service is not configured');
+      console.error('Email service is not configured for sendRegistrationConfirmation');
+      return false;
     }
 
     return await this.sendEmail({

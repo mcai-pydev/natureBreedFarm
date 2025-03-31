@@ -38,6 +38,7 @@ export function ProductEmailForm({ productId, productName }: ProductEmailFormPro
   const [emailSent, setEmailSent] = React.useState(false);
   const [referenceNumber, setReferenceNumber] = React.useState<string | null>(null);
   const [isSubscriber, setIsSubscriber] = React.useState(false);
+  const [serviceUnavailable, setServiceUnavailable] = React.useState(false);
 
   // Form definition
   const form = useForm<EmailFormValues>({
@@ -65,19 +66,40 @@ export function ProductEmailForm({ productId, productName }: ProductEmailFormPro
       if (data.isSubscriber !== undefined) {
         setIsSubscriber(data.isSubscriber);
       }
-      
-      toast({
-        title: "Email sent!",
-        description: `Information about ${productName} has been sent to your email.`,
-      });
+      if (data.serviceUnavailable) {
+        setServiceUnavailable(true);
+        toast({
+          title: "Request received",
+          description: data.message || "Your request has been recorded, but email delivery is currently unavailable.",
+        });
+      } else {
+        toast({
+          title: "Email sent!",
+          description: `Information about ${productName} has been sent to your email.`,
+        });
+      }
       form.reset();
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to send email",
-        description: error.message || "Please try again later.",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      // Check if this is a 503 Service Unavailable error
+      if (error.status === 503) {
+        setEmailSent(true);
+        setServiceUnavailable(true);
+        if (error.data?.referenceNumber) {
+          setReferenceNumber(error.data.referenceNumber);
+        }
+        toast({
+          title: "Email service unavailable",
+          description: error.data?.message || "Your request has been recorded, but email delivery is currently unavailable.",
+        });
+        form.reset();
+      } else {
+        toast({
+          title: "Failed to send email",
+          description: error.message || "Please try again later.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -89,19 +111,36 @@ export function ProductEmailForm({ productId, productName }: ProductEmailFormPro
   return (
     <div className="mt-2">
       {emailSent ? (
-        <Alert className="bg-green-50 border-green-200 mb-4">
+        <Alert className={serviceUnavailable ? "bg-yellow-50 border-yellow-200 mb-4" : "bg-green-50 border-green-200 mb-4"}>
           <AlertDescription>
-            <p className="font-medium">Information sent!</p>
-            <p className="text-sm mt-1">
-              We've sent detailed information about {productName} to your email.
-              {referenceNumber && (
-                <span className="block mt-1 text-xs">Reference: {referenceNumber}</span>
-              )}
-            </p>
-            {!isSubscriber && (
-              <p className="text-sm mt-2">
-                Don't forget to subscribe to our newsletter for updates on new products and exclusive offers!
-              </p>
+            {serviceUnavailable ? (
+              <>
+                <p className="font-medium">Request received</p>
+                <p className="text-sm mt-1">
+                  Your product information request has been recorded, but email delivery is currently unavailable.
+                  {referenceNumber && (
+                    <span className="block mt-1 text-xs">Reference: {referenceNumber}</span>
+                  )}
+                </p>
+                <p className="text-sm mt-2">
+                  Please contact us directly or try again later.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-medium">Information sent!</p>
+                <p className="text-sm mt-1">
+                  We've sent detailed information about {productName} to your email.
+                  {referenceNumber && (
+                    <span className="block mt-1 text-xs">Reference: {referenceNumber}</span>
+                  )}
+                </p>
+                {!isSubscriber && (
+                  <p className="text-sm mt-2">
+                    Don't forget to subscribe to our newsletter for updates on new products and exclusive offers!
+                  </p>
+                )}
+              </>
             )}
           </AlertDescription>
         </Alert>

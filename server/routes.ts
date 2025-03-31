@@ -733,12 +733,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if email service is configured
-      if (!emailService.isReady()) {
-        return res.status(503).json({ 
-          error: "Email service not available", 
-          message: "The email service is not configured. Please try again later."
-        });
-      }
+      // We'll still proceed even if email service is not configured,
+      // but we'll return a different response if sending fails
       
       // Try to get the newsletter subscriber info for personalization
       const subscriber = await storage.getNewsletterSubscriber(email);
@@ -769,7 +765,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           referenceNumber
         });
       } else {
-        res.status(500).json({ error: "Failed to send product information" });
+        // Check if the failure is due to unconfigured email service
+        if (!emailService.isReady()) {
+          return res.status(503).json({ 
+            error: "Email service not available", 
+            message: "Email service is not yet configured. Your product request has been recorded with reference: " + referenceNumber,
+            referenceNumber,
+            serviceUnavailable: true
+          });
+        } else {
+          res.status(500).json({ error: "Failed to send product information" });
+        }
       }
     } catch (error) {
       res.status(500).json({ error: "Failed to process request" });
@@ -860,6 +866,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const isReady = emailService.isReady();
       res.json({ configured: isReady });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get email service status" });
+    }
+  });
+  
+  // DEBUG: Email service status endpoint (no auth required)
+  app.get("/api/debug/email-status", async (req, res) => {
+    try {
+      const isReady = emailService.isReady();
+      res.json({ 
+        configured: isReady,
+        transporter: isReady ? "Configured" : "Not configured"
+      });
     } catch (error) {
       res.status(500).json({ error: "Failed to get email service status" });
     }
