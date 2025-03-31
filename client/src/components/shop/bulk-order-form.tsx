@@ -108,10 +108,25 @@ export function BulkOrderDialog({
   // Submit mutation
   const submitMutation = useMutation({
     mutationFn: async (data: FormValues) => {
+      console.log("Submitting bulk order:", data);
       const response = await apiRequest("POST", "/api/bulk-orders", data);
-      return await response.json();
+      const result = await response.json();
+      console.log("Response received:", result);
+      return result;
     },
     onSuccess: (data) => {
+      console.log("Mutation succeeded with data:", data);
+      
+      // Reset form to initial values
+      form.reset({
+        name: "",
+        email: "",
+        phone: "",
+        productId: preselectedProductId,
+        quantity: undefined,
+        message: "",
+      });
+      
       // Check if there was a reference number returned
       if (data.referenceNumber) {
         setReferenceNumber(data.referenceNumber);
@@ -119,24 +134,37 @@ export function BulkOrderDialog({
       
       // Check if email service was unavailable
       if (data.emailSent === false || data.serviceUnavailable) {
+        console.log("Email service was unavailable or email not sent");
         setServiceUnavailable(true);
         toast({
           title: "Order Request Received",
           description: "Your bulk order request was recorded, but email confirmation could not be sent. Our team will contact you soon.",
         });
       } else {
+        console.log("Email sent successfully");
         toast({
           title: "Order Request Submitted",
           description: "We've received your bulk order request and will contact you shortly.",
         });
       }
       
+      // Close the dialog and refresh the data
       onOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["/api/bulk-orders"] });
     },
     onError: (error: any) => {
       // Check if this is a 503 Service Unavailable error
       if (error.status === 503 && error.data) {
+        // Reset form
+        form.reset({
+          name: "",
+          email: "",
+          phone: "",
+          productId: preselectedProductId,
+          quantity: undefined,
+          message: "",
+        });
+      
         setServiceUnavailable(true);
         if (error.data.referenceNumber) {
           setReferenceNumber(error.data.referenceNumber);

@@ -647,20 +647,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const emailServiceReady = emailService.isReady();
       console.log("Email service ready:", emailServiceReady);
       
-      // Try to send confirmation email if product exists and email service is ready
+      // Try to send confirmation email
       let emailSent = false;
-      if (product && emailServiceReady) {
-        console.log("Attempting to send confirmation email to:", data.email);
+      const productName = product ? product.name : "Selected products";
+      const quantity = Number(data.quantity) || 0;
+      
+      console.log("Attempting to send confirmation email to:", data.email);
+      console.log("Email data:", {
+        name: data.name,
+        email: data.email,
+        productName,
+        quantity,
+        referenceNumber
+      });
+      
+      try {
+        // Even if no product is selected, we still want to send an email confirmation
         emailSent = await emailService.sendBulkOrderConfirmation(
           data.email,
           data.name,
           {
-            productName: product.name,
-            quantity: Number(data.quantity),
+            productName,
+            quantity,
             referenceNumber
           }
         );
         console.log("Email sent successfully:", emailSent);
+      } catch (emailError) {
+        console.error("Error sending email:", emailError);
+        emailSent = false;
       }
       
       // Return appropriate response based on email service status
