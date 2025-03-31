@@ -171,7 +171,7 @@ export function FarmAIChat() {
                   <Avatar className={`mt-0.5 border ${message.role === "assistant" ? "border-green-200 bg-green-50" : "border-blue-200 bg-blue-50"}`}>
                     {message.role === "assistant" ? (
                       <>
-                        <AvatarImage src="/bot-avatar.svg" alt="AI Assistant" />
+                        <AvatarImage src="bot-avatar.svg" alt="AI Assistant" />
                         <AvatarFallback className="bg-green-100 text-green-700">
                           <Bot className="h-4 w-4" />
                         </AvatarFallback>

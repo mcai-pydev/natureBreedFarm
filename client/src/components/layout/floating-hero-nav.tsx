@@ -6,7 +6,8 @@ import {
   Package, 
   FileText, 
   BarChart2, 
-  FileQuestion
+  FileQuestion,
+  Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ export function FloatingHeroNav() {
     { title: "Products", path: "/products", icon: <Package className="h-5 w-5" /> },
     { title: "Transactions", path: "/transactions", icon: <FileText className="h-5 w-5" /> },
     { title: "Reports", path: "/reports", icon: <BarChart2 className="h-5 w-5" /> },
+    { title: "AI Assistant", path: "/ai-assistant", icon: <Bot className="h-5 w-5" /> },
     { title: "Policies", path: "/policies", icon: <FileQuestion className="h-5 w-5" /> },
   ];
 
@@ -69,6 +71,7 @@ export function FloatingHeroNavMobile() {
     { title: "Products", path: "/products", icon: <Package className="h-5 w-5" /> },
     { title: "Transactions", path: "/transactions", icon: <FileText className="h-5 w-5" /> },
     { title: "Reports", path: "/reports", icon: <BarChart2 className="h-5 w-5" /> },
+    { title: "AI Assistant", path: "/ai-assistant", icon: <Bot className="h-5 w-5" /> },
   ];
 
   return (
