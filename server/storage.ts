@@ -10,9 +10,20 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
 
 // Create MemoryStore for session storage
 const MemoryStore = createMemoryStore(session);
+
+// Function for hashing passwords (duplicated from auth.ts for sample data)
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 // Define the type of session store to be used in IStorage
 type SessionStore = session.Store;
 
@@ -483,16 +494,17 @@ export class MemStorage implements IStorage {
   // Initialize sample data for testing
   private async initSampleData() {
     // Add admin user with Chief Ijeh avatar
+    const hashedPassword = await hashPassword("admin123");
     await this.createUser({
       username: "admin",
-      password: "$2b$10$OPevsXMRwVcEzrAl.gXWcetUaiTFRQXrQRQYG.KAb3KrKi32xM6bq", // "admin123"
+      password: hashedPassword,
       name: "Chief Ijeh",
       role: "Admin",
       avatar: "/assets/chief-ijeh.jpg"
     });
     
     // Sample products
-    await this.createProduct({
+    const tomatoes = await this.createProduct({
       name: "Organic Tomatoes",
       description: "Fresh farm tomatoes",
       price: 4.50,
@@ -502,7 +514,7 @@ export class MemStorage implements IStorage {
       imageUrl: "https://images.unsplash.com/photo-1597362925123-77861d3fbac7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
-    await this.createProduct({
+    const eggs = await this.createProduct({
       name: "Fresh Eggs",
       description: "Free-range chicken eggs",
       price: 6.00,
@@ -512,7 +524,7 @@ export class MemStorage implements IStorage {
       imageUrl: "https://images.unsplash.com/photo-1573246123716-6b1782bfc499?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
-    await this.createProduct({
+    const lettuce = await this.createProduct({
       name: "Organic Lettuce",
       description: "Fresh green lettuce",
       price: 3.25,
@@ -522,7 +534,7 @@ export class MemStorage implements IStorage {
       imageUrl: "https://images.unsplash.com/photo-1610348725531-843dff563e2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
-    await this.createProduct({
+    const honey = await this.createProduct({
       name: "Raw Honey",
       description: "Pure unfiltered honey",
       price: 12.00,
@@ -533,7 +545,7 @@ export class MemStorage implements IStorage {
     });
     
     // Animal products
-    await this.createProduct({
+    const goat = await this.createProduct({
       name: "Goat",
       description: "Healthy farm-raised goats",
       price: 250.00,
@@ -543,7 +555,7 @@ export class MemStorage implements IStorage {
       imageUrl: "https://images.unsplash.com/photo-1560468660-6c11a19d7330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
-    await this.createProduct({
+    const fish = await this.createProduct({
       name: "Fish",
       description: "Fresh farm-raised tilapia",
       price: 8.50,
@@ -553,7 +565,7 @@ export class MemStorage implements IStorage {
       imageUrl: "https://images.unsplash.com/photo-1534177616072-ef7dc120449d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
-    await this.createProduct({
+    const duck = await this.createProduct({
       name: "Duck",
       description: "Free-range farm ducks",
       price: 22.00,
@@ -563,7 +575,7 @@ export class MemStorage implements IStorage {
       imageUrl: "https://images.unsplash.com/photo-1597207047705-52b3d6741136?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     });
     
-    await this.createProduct({
+    const chicken = await this.createProduct({
       name: "Chicken",
       description: "Free-range broiler chickens",
       price: 15.00,
@@ -571,6 +583,123 @@ export class MemStorage implements IStorage {
       stock: 45,
       category: "poultry",
       imageUrl: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+    });
+    
+    // Sample Transactions
+    
+    // Sales
+    await this.createTransaction({
+      productId: tomatoes.id,
+      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+      quantity: 25,
+      price: 4.50,
+      type: "sale",
+      status: "completed",
+      notes: "Regular customer order"
+    });
+    
+    await this.createTransaction({
+      productId: eggs.id,
+      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      quantity: 10,
+      price: 6.00,
+      type: "sale",
+      status: "completed",
+      notes: "Local restaurant weekly order"
+    });
+    
+    await this.createTransaction({
+      productId: fish.id,
+      date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      quantity: 15,
+      price: 8.50,
+      type: "sale",
+      status: "completed",
+      notes: "Weekend market sales"
+    });
+    
+    // Purchases
+    await this.createTransaction({
+      productId: chicken.id,
+      date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+      quantity: 20,
+      price: 10.00, // Purchase price
+      type: "purchase",
+      status: "completed",
+      notes: "Restocking after market day"
+    });
+    
+    await this.createTransaction({
+      productId: honey.id,
+      date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 days ago
+      quantity: 15,
+      price: 8.00, // Purchase price
+      type: "purchase",
+      status: "completed",
+      notes: "Purchased from local supplier"
+    });
+    
+    // Orders (future sales)
+    await this.createTransaction({
+      productId: goat.id,
+      date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days in future
+      quantity: 5,
+      price: 250.00,
+      type: "order",
+      status: "pending",
+      notes: "Order for upcoming festival"
+    });
+    
+    await this.createTransaction({
+      productId: duck.id,
+      date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days in future
+      quantity: 10,
+      price: 22.00,
+      type: "order",
+      status: "pending",
+      notes: "Restaurant bulk order"
+    });
+    
+    // Auction sales
+    await this.createTransaction({
+      productId: chicken.id,
+      date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days in future
+      quantity: 15,
+      price: 18.00, // Auction starting price
+      type: "auction",
+      status: "scheduled",
+      notes: "Monthly livestock auction"
+    });
+    
+    await this.createTransaction({
+      productId: goat.id,
+      date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days in future
+      quantity: 8,
+      price: 280.00, // Auction starting price
+      type: "auction",
+      status: "scheduled",
+      notes: "Premium goat auction"
+    });
+    
+    // Add some bulk orders
+    await this.createBulkOrder({
+      name: "John Restaurant",
+      email: "john@restaurant.com",
+      phone: "555-123-4567",
+      message: "Interested in ordering 20kg of tomatoes weekly for our restaurant.",
+      productId: tomatoes.id,
+      quantity: 20,
+      status: "pending"
+    });
+    
+    await this.createBulkOrder({
+      name: "City Market",
+      email: "orders@citymarket.com",
+      phone: "555-987-6543",
+      message: "Looking for regular supply of free-range eggs for our gourmet section.",
+      productId: eggs.id,
+      quantity: 50,
+      status: "pending"
     });
   }
 }
