@@ -1489,6 +1489,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to delete breeding event" });
     }
   });
+  
+  // GET endpoint for checking breeding risk
+  app.get("/api/breeding-risk", async (req, res) => {
+    try {
+      const { maleId, femaleId } = req.query;
+      
+      if (!maleId || !femaleId) {
+        return res.status(400).json({ error: "maleId and femaleId are required as query parameters" });
+      }
+      
+      const maleIdNum = typeof maleId === 'string' ? parseInt(maleId) : maleId;
+      const femaleIdNum = typeof femaleId === 'string' ? parseInt(femaleId) : femaleId;
+      
+      const riskAssessment = await storage.checkInbreedingRisk(maleIdNum, femaleIdNum);
+      res.json(riskAssessment);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to check inbreeding risk" });
+    }
+  });
 
   return httpServer;
 }

@@ -13,6 +13,7 @@ import SettingsPage from "@/pages/settings-page";
 import ShopPage from "@/pages/shop-page-updated";
 import PolicyPage from "@/pages/policy-page-fixed";
 import AIAssistantPage from "@/pages/ai-assistant-page";
+import RabbitBreedingPage from "@/pages/rabbit-breeding-page-fixed";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { FloatingHeroNav, FloatingHeroNavMobile } from "@/components/layout/floating-hero-nav";
@@ -33,6 +34,7 @@ function Router() {
         <Route path="/shop" component={ShopPage} />
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
+        <ProtectedRoute path="/rabbit-breeding" component={RabbitBreedingPage} />
         <Route path="/policies" component={PolicyPage} />
         <Route path="/policies/:policyType" component={PolicyPage} />
         <Route path="/policy" component={PolicyPage} />
