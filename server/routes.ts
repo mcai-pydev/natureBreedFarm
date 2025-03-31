@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
+import { emailService } from "./email";
 import { 
   insertProductSchema, 
   insertTransactionSchema, 
@@ -356,16 +357,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const updated = await storage.updateNewsletterSubscriber(existing.id, { 
             subscribed: true 
           });
+          
+          // Send welcome email
+          if (emailService.isReady()) {
+            await emailService.sendNewsletterWelcome(data.email);
+          }
+          
           return res.json(updated);
         }
       }
       
-      // Create new subscription
+      // Create new subscription as unverified
       const subscriber = await storage.createNewsletterSubscriber({
         email: data.email,
         name: data.name,
-        subscribed: true
+        subscribed: true,
+        verified: false
       });
+      
+      // Send verification email if email service is configured
+      if (emailService.isReady()) {
+        const baseUrl = process.env.BASE_URL || `http://${req.headers.host}`;
+        const verificationUrl = `${baseUrl}/api/newsletter/verify`;
+        await emailService.sendVerificationEmail(data.email, verificationUrl);
+        
+        return res.status(201).json({
+          ...subscriber,
+          verificationSent: true,
+          message: "Verification email sent. Please check your inbox."
+        });
+      }
       
       res.status(201).json(subscriber);
     } catch (error) {
@@ -392,6 +413,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Successfully unsubscribed" });
     } catch (error) {
       res.status(500).json({ error: "Failed to unsubscribe" });
+    }
+  });
+  
+  // Email verification endpoint
+  app.get("/api/newsletter/verify", async (req, res) => {
+    try {
+      const { token } = req.query;
+      if (!token) {
+        return res.status(400).json({ error: "Verification token is required" });
+      }
+      
+      // Verify the token
+      const email = emailService.verifyEmailToken(token as string);
+      if (!email) {
+        return res.status(400).json({ 
+          error: "Invalid or expired verification token",
+          details: "The verification link may have expired or been used already. Please request a new verification link."
+        });
+      }
+      
+      // Find the subscriber
+      const subscriber = await storage.getNewsletterSubscriber(email);
+      if (!subscriber) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+      
+      // Update subscriber to verified
+      await storage.updateNewsletterSubscriber(subscriber.id, { verified: true });
+      
+      // Send welcome email
+      if (emailService.isReady()) {
+        await emailService.sendNewsletterWelcome(email);
+      }
+      
+      // Redirect to a success page or return a success response
+      // For API, return a success message
+      res.json({ 
+        success: true, 
+        message: "Your email has been successfully verified. Thank you for subscribing to our newsletter." 
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to verify email" });
     }
   });
   
@@ -501,6 +564,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Send product information via email
+  app.post("/api/products/:id/send-info", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      
+      // Fetch the product
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      
+      // Check if email service is configured
+      if (!emailService.isReady()) {
+        return res.status(503).json({ 
+          error: "Email service not available", 
+          message: "The email service is not configured. Please try again later."
+        });
+      }
+      
+      // Send the product information email
+      const success = await emailService.sendProductInfo(email, product.name, {
+        imageUrl: product.imageUrl,
+        price: product.price,
+        unit: product.unit,
+        category: product.category,
+        description: product.description
+      });
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: "Product information has been sent to your email" 
+        });
+      } else {
+        res.status(500).json({ error: "Failed to send product information" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to process request" });
+    }
+  });
+  
   // Analytics API routes
   app.get("/api/analytics/product-distribution", async (req, res) => {
     try {
@@ -536,6 +648,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(summary);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch transaction summary" });
+    }
+  });
+  
+  // Email service configuration endpoint (Admin only)
+  app.post("/api/settings/email", async (req, res) => {
+    try {
+      // Ensure user is authenticated and has admin role
+      if (!req.isAuthenticated() || req.user.role !== "Admin") {
+        return res.status(403).json({ error: "Unauthorized access" });
+      }
+      
+      const { host, port, secure, user, pass } = req.body;
+      
+      // Validate required fields
+      if (!host || !port || user === undefined || pass === undefined) {
+        return res.status(400).json({ error: "Missing required email configuration" });
+      }
+      
+      // Configure the email service
+      const success = emailService.configure({
+        host,
+        port: Number(port),
+        secure: Boolean(secure),
+        auth: {
+          user,
+          pass
+        }
+      });
+      
+      if (success) {
+        res.json({ message: "Email service configured successfully" });
+      } else {
+        res.status(500).json({ error: "Failed to configure email service" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to configure email service" });
+    }
+  });
+  
+  // Email service status endpoint
+  app.get("/api/settings/email/status", async (req, res) => {
+    try {
+      // Ensure user is authenticated and has admin role
+      if (!req.isAuthenticated() || req.user.role !== "Admin") {
+        return res.status(403).json({ error: "Unauthorized access" });
+      }
+      
+      const isReady = emailService.isReady();
+      res.json({ configured: isReady });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get email service status" });
     }
   });
 

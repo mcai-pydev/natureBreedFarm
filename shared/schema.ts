@@ -88,6 +88,7 @@ export const newsletters = pgTable("newsletters", {
   email: text("email").notNull().unique(),
   name: text("name"),
   subscribed: boolean("subscribed").default(true),
+  verified: boolean("verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -95,6 +96,7 @@ export const insertNewsletterSchema = createInsertSchema(newsletters).pick({
   email: true,
   name: true,
   subscribed: true,
+  verified: true,
 });
 
 // Bulk order requests

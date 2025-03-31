@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { EmailConfigForm } from "@/components/settings/email-config";
 
 // Farm information form schema
 const farmInfoSchema = z.object({
@@ -104,170 +106,189 @@ export default function SettingsPage() {
               <p className="text-gray-500">Manage your farm and account settings</p>
             </div>
             
-            {/* Farm Information */}
-            <div className="bg-white rounded-lg shadow mb-6 p-5">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Farm Information</h2>
+            <Tabs defaultValue="general" className="mb-6">
+              <TabsList className="mb-4">
+                <TabsTrigger value="general">Farm Information</TabsTrigger>
+                <TabsTrigger value="security">Account Security</TabsTrigger>
+                {user?.role === "Admin" && <TabsTrigger value="email">Email Settings</TabsTrigger>}
+              </TabsList>
               
-              <Form {...farmInfoForm}>
-                <form onSubmit={farmInfoForm.handleSubmit(onFarmInfoSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={farmInfoForm.control}
-                    name="farmName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Farm Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <TabsContent value="general" className="space-y-4">
+                {/* Farm Information */}
+                <div className="bg-white rounded-lg shadow p-5">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Farm Information</h2>
                   
-                  <FormField
-                    control={farmInfoForm.control}
-                    name="ownerName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Owner Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={farmInfoForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={farmInfoForm.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={farmInfoForm.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>Address</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            className="resize-none" 
-                            rows={3} 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="md:col-span-2 flex justify-end">
-                    <Button type="submit">Save Changes</Button>
-                  </div>
-                </form>
-              </Form>
-            </div>
-            
-            {/* Account Security */}
-            <div className="bg-white rounded-lg shadow p-5">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Account Security</h2>
+                  <Form {...farmInfoForm}>
+                    <form onSubmit={farmInfoForm.handleSubmit(onFarmInfoSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={farmInfoForm.control}
+                        name="farmName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Farm Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={farmInfoForm.control}
+                        name="ownerName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Owner Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={farmInfoForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={farmInfoForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={farmInfoForm.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem className="md:col-span-2">
+                            <FormLabel>Address</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                className="resize-none" 
+                                rows={3} 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="md:col-span-2 flex justify-end">
+                        <Button type="submit">Save Changes</Button>
+                      </div>
+                    </form>
+                  </Form>
+                </div>
+              </TabsContent>
               
-              <Form {...passwordForm}>
-                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={passwordForm.control}
-                    name="currentPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Current Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <TabsContent value="security" className="space-y-4">
+                {/* Account Security */}
+                <div className="bg-white rounded-lg shadow p-5">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Account Security</h2>
                   
-                  <div className="md:col-span-2 h-0"></div>
-                  
-                  <FormField
-                    control={passwordForm.control}
-                    name="newPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={passwordForm.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={passwordForm.control}
-                    name="twoFactor"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Enable two-factor authentication</FormLabel>
-                          <FormDescription>
-                            Additional security for your account using your mobile device
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="md:col-span-2 flex justify-end">
-                    <Button type="submit">Update Password</Button>
-                  </div>
-                </form>
-              </Form>
-            </div>
+                  <Form {...passwordForm}>
+                    <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={passwordForm.control}
+                        name="currentPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Current Password</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="••••••••" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="md:col-span-2 h-0"></div>
+                      
+                      <FormField
+                        control={passwordForm.control}
+                        name="newPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>New Password</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="••••••••" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={passwordForm.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Confirm New Password</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="••••••••" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={passwordForm.control}
+                        name="twoFactor"
+                        render={({ field }) => (
+                          <FormItem className="md:col-span-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Enable two-factor authentication</FormLabel>
+                              <FormDescription>
+                                Additional security for your account using your mobile device
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="md:col-span-2 flex justify-end">
+                        <Button type="submit">Update Password</Button>
+                      </div>
+                    </form>
+                  </Form>
+                </div>
+              </TabsContent>
+              
+              {user?.role === "Admin" && (
+                <TabsContent value="email" className="space-y-4">
+                  {/* Email Configuration */}
+                  <EmailConfigForm />
+                </TabsContent>
+              )}
+            </Tabs>
           </div>
         </main>
       </div>

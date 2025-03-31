@@ -447,7 +447,8 @@ export class MemStorage implements IStorage {
       ...subscriber,
       id,
       name: subscriber.name || null,
-      subscribed: subscriber.subscribed || true,
+      subscribed: subscriber.subscribed ?? true,
+      verified: subscriber.verified ?? false,
       createdAt: new Date()
     };
     this.newsletters.set(id, newSubscriber);
