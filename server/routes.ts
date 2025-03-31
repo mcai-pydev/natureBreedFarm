@@ -498,20 +498,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         verified: false
       });
       
-      // Send verification email if email service is configured
+      // Try to send verification email if email service is configured
       if (emailService.isReady()) {
         const baseUrl = process.env.BASE_URL || `http://${req.headers.host}`;
         const verificationUrl = `${baseUrl}/api/newsletter/verify`;
-        await emailService.sendVerificationEmail(data.email, verificationUrl);
+        const emailSent = await emailService.sendVerificationEmail(data.email, verificationUrl);
         
-        return res.status(201).json({
-          ...subscriber,
-          verificationSent: true,
-          message: "Verification email sent. Please check your inbox."
-        });
+        if (emailSent) {
+          return res.status(201).json({
+            ...subscriber,
+            verificationSent: true,
+            message: "Verification email sent. Please check your inbox."
+          });
+        } else {
+          // Email service is configured but sending failed
+          return res.status(201).json({
+            ...subscriber,
+            verificationSent: false,
+            message: "Subscription recorded but verification email could not be sent. Our team will contact you shortly."
+          });
+        }
       }
       
-      res.status(201).json(subscriber);
+      // Email service not configured
+      return res.status(201).json({
+        ...subscriber,
+        serviceUnavailable: true,
+        verificationSent: false,
+        message: "Subscription recorded, but email verification service is currently unavailable."
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
@@ -617,9 +632,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate a reference number for the order
       const referenceNumber = `BO-${order.id}-${Date.now().toString().slice(-6)}`;
       
-      // Send confirmation email if email service is ready and product exists
-      if (emailService.isReady() && product) {
-        await emailService.sendBulkOrderConfirmation(
+      // Try to send confirmation email if product exists
+      let emailSent = false;
+      if (product) {
+        emailSent = await emailService.sendBulkOrderConfirmation(
           data.email,
           data.name,
           {
@@ -628,15 +644,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
             referenceNumber
           }
         );
-        
+      }
+      
+      // Return appropriate response based on email service status
+      if (emailSent) {
         return res.status(201).json({
           ...order,
           emailSent: true,
+          referenceNumber,
           message: "Bulk order received. A confirmation email has been sent to your inbox."
         });
+      } else if (!emailService.isReady()) {
+        return res.status(201).json({
+          ...order,
+          emailSent: false,
+          serviceUnavailable: true,
+          referenceNumber,
+          message: "Bulk order received. Email service currently unavailable, but our team will contact you soon."
+        });
+      } else {
+        res.status(201).json({
+          ...order,
+          emailSent: false,
+          referenceNumber,
+          message: "Bulk order received. Our team will contact you soon."
+        });
       }
-      
-      res.status(201).json(order);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });

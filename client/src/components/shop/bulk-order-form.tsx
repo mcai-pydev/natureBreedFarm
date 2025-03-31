@@ -69,6 +69,8 @@ export function BulkOrderDialog({
 }: BulkOrderDialogProps) {
   const { toast } = useToast();
   const [submittingOrder, setSubmittingOrder] = useState(false);
+  const [serviceUnavailable, setServiceUnavailable] = useState(false);
+  const [referenceNumber, setReferenceNumber] = useState<string | null>(null);
   
   // Fetch products for dropdown
   const { data: products = [] } = useQuery<Product[]>({
@@ -107,26 +109,53 @@ export function BulkOrderDialog({
   const submitMutation = useMutation({
     mutationFn: async (data: FormValues) => {
       const response = await apiRequest("POST", "/api/bulk-orders", data);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to submit bulk order request");
-      }
-      return response.json();
+      return await response.json();
     },
-    onSuccess: () => {
-      toast({
-        title: "Order Request Submitted",
-        description: "We've received your bulk order request and will contact you shortly.",
-      });
+    onSuccess: (data) => {
+      // Check if there was a reference number returned
+      if (data.referenceNumber) {
+        setReferenceNumber(data.referenceNumber);
+      }
+      
+      // Check if email service was unavailable
+      if (data.emailSent === false || data.serviceUnavailable) {
+        setServiceUnavailable(true);
+        toast({
+          title: "Order Request Received",
+          description: "Your bulk order request was recorded, but email confirmation could not be sent. Our team will contact you soon.",
+        });
+      } else {
+        toast({
+          title: "Order Request Submitted",
+          description: "We've received your bulk order request and will contact you shortly.",
+        });
+      }
+      
       onOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["/api/bulk-orders"] });
     },
-    onError: (error) => {
-      toast({
-        title: "Submission Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      // Check if this is a 503 Service Unavailable error
+      if (error.status === 503 && error.data) {
+        setServiceUnavailable(true);
+        if (error.data.referenceNumber) {
+          setReferenceNumber(error.data.referenceNumber);
+        }
+        
+        toast({
+          title: "Order Request Received",
+          description: error.data.message || "Your request was recorded, but email delivery is currently unavailable.",
+        });
+        
+        onOpenChange(false);
+        queryClient.invalidateQueries({ queryKey: ["/api/bulk-orders"] });
+      } else {
+        toast({
+          title: "Submission Failed",
+          description: error.message || "Failed to submit bulk order request",
+          variant: "destructive",
+        });
+      }
     },
   });
   

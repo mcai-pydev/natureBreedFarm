@@ -120,19 +120,8 @@ class EmailService {
       return false;
     }
 
-    // Generate a new token
-    const token = this.generateVerificationToken();
-    
-    // Set expiration time to 24 hours from now
-    const expires = new Date();
-    expires.setHours(expires.getHours() + 24);
-    
-    // Store the token
-    this.verificationTokens.set(token, {
-      email,
-      token,
-      expires,
-    });
+    // Generate a new token and store it with the email
+    const token = this.generateVerificationToken(email);
 
     // Create full verification URL
     const fullVerificationUrl = `${verificationUrl}?token=${token}`;
@@ -420,9 +409,26 @@ class EmailService {
 
   /**
    * Generate a random verification token
+   * If email is provided, it also stores the token with the email
    */
-  private generateVerificationToken(): string {
-    return randomBytes(32).toString('hex');
+  generateVerificationToken(email?: string): string {
+    const token = randomBytes(32).toString('hex');
+    
+    // If email is provided, store the token with the email
+    if (email) {
+      // Set expiration time to 24 hours from now
+      const expires = new Date();
+      expires.setHours(expires.getHours() + 24);
+      
+      // Store the token
+      this.verificationTokens.set(token, {
+        email,
+        token,
+        expires,
+      });
+    }
+    
+    return token;
   }
 
   /**

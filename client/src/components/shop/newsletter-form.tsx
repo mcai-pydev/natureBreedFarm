@@ -22,6 +22,8 @@ type NewsletterFormValues = z.infer<typeof newsletterFormSchema>;
 export function NewsletterForm() {
   const { toast } = useToast();
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [serviceUnavailable, setServiceUnavailable] = useState(false);
+  const [verificationNeeded, setVerificationNeeded] = useState(false);
   
   const form = useForm<NewsletterFormValues>({
     resolver: zodResolver(newsletterFormSchema),
@@ -36,20 +38,51 @@ export function NewsletterForm() {
       const res = await apiRequest("POST", "/api/newsletter/subscribe", data);
       return await res.json();
     },
-    onSuccess: () => {
-      toast({
-        title: "Successfully subscribed!",
-        description: "Thank you for subscribing to our newsletter.",
-      });
-      setIsSubscribed(true);
+    onSuccess: (data) => {
+      // Check if verification is needed (normal flow)
+      if (data.verificationSent) {
+        setVerificationNeeded(true);
+        toast({
+          title: "Verification Email Sent",
+          description: "Please check your inbox to confirm your subscription.",
+        });
+      } 
+      // Email service unavailable but subscription recorded
+      else if (data.serviceUnavailable) {
+        setServiceUnavailable(true);
+        setIsSubscribed(true);
+        toast({
+          title: "Subscription Recorded",
+          description: "Your subscription was recorded, but the verification email could not be sent due to service unavailability.",
+        });
+      } 
+      // Default success case (shouldn't normally happen with verification flow)
+      else {
+        setIsSubscribed(true);
+        toast({
+          title: "Successfully subscribed!",
+          description: "Thank you for subscribing to our newsletter.",
+        });
+      }
       form.reset();
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Subscription failed",
-        description: error.message,
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      // Email service unavailable with 503 status
+      if (error.status === 503 && error.data?.serviceUnavailable) {
+        setServiceUnavailable(true);
+        setIsSubscribed(true);
+        toast({
+          title: "Subscription Recorded",
+          description: error.data.message || "Your subscription was recorded, but the verification email could not be sent.",
+        });
+        form.reset();
+      } else {
+        toast({
+          title: "Subscription failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     }
   });
 
@@ -57,13 +90,27 @@ export function NewsletterForm() {
     mutation.mutate(data);
   }
 
+  // Different success/notification states
+  if (verificationNeeded) {
+    return (
+      <div className="bg-blue-50 rounded-lg p-4 text-center">
+        <h3 className="text-primary font-medium mb-2">Please verify your email</h3>
+        <p className="text-sm text-gray-600">
+          We've sent a verification link to your email address. 
+          Please check your inbox and click the link to confirm your subscription.
+        </p>
+      </div>
+    );
+  }
+  
   if (isSubscribed) {
     return (
-      <div className="bg-green-50 rounded-lg p-4 text-center">
+      <div className={`${serviceUnavailable ? 'bg-yellow-50' : 'bg-green-50'} rounded-lg p-4 text-center`}>
         <h3 className="text-primary font-medium mb-2">Thank you for subscribing!</h3>
         <p className="text-sm text-gray-600">
-          You're now on our mailing list and will receive updates on new products,
-          seasonal offers, and farming tips.
+          {serviceUnavailable 
+            ? "Your subscription has been recorded, but we couldn't send a verification email due to technical issues. Our team will contact you soon." 
+            : "You're now on our mailing list and will receive updates on new products, seasonal offers, and farming tips."}
         </p>
       </div>
     );
