@@ -13,6 +13,7 @@ interface EmailConfig {
 
 export interface EmailData {
   to: string;
+  bcc?: string[];
   subject: string;
   text?: string;
   html?: string;
@@ -84,6 +85,7 @@ class EmailService {
       await this.transporter.sendMail({
         from: '"Nature Breed Farm" <farm@naturebreed.com>',
         to: emailData.to,
+        bcc: emailData.bcc,
         subject: emailData.subject,
         text: emailData.text,
         html: emailData.html,
@@ -170,6 +172,54 @@ class EmailService {
           <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;">
           <p style="color: #999; font-size: 12px; text-align: center;">
             &copy; ${new Date().getFullYear()} Nature Breed Farm. All rights reserved.
+          </p>
+        </div>
+      `,
+    });
+  }
+  
+  /**
+   * Send a promotional email to newsletter subscribers
+   */
+  async sendPromotionalEmail(
+    recipients: string[], 
+    subject: string, 
+    title: string, 
+    content: string, 
+    ctaLink?: string, 
+    ctaText?: string
+  ): Promise<boolean> {
+    if (!this.isConfigured) {
+      throw new Error('Email service is not configured');
+    }
+    
+    if (!recipients.length) {
+      return false;
+    }
+    
+    // Send to all recipients using BCC for privacy
+    return await this.sendEmail({
+      to: 'newsletter@naturebreedfarm.com',
+      bcc: recipients,
+      subject: subject,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 5px;">
+          <h2 style="color: #333; text-align: center;">${title}</h2>
+          <div style="padding: 15px; margin: 20px 0; border-radius: 5px;">
+            ${content}
+          </div>
+          ${ctaLink && ctaText ? `
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${ctaLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                ${ctaText}
+              </a>
+            </div>
+          ` : ''}
+          <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            &copy; ${new Date().getFullYear()} Nature Breed Farm. All rights reserved.
+            <br>
+            <a href="{unsubscribe_link}" style="color: #999;">Unsubscribe</a>
           </p>
         </div>
       `,

@@ -20,6 +20,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { EmailConfigForm } from "@/components/settings/email-config";
+import { NewsletterBlastForm } from "@/components/settings/newsletter-blast";
+import { NewsletterSubscriberList } from "@/components/settings/newsletter-subscriber-list";
 
 // Farm information form schema
 const farmInfoSchema = z.object({
@@ -111,6 +113,7 @@ export default function SettingsPage() {
                 <TabsTrigger value="general">Farm Information</TabsTrigger>
                 <TabsTrigger value="security">Account Security</TabsTrigger>
                 {user?.role === "Admin" && <TabsTrigger value="email">Email Settings</TabsTrigger>}
+                {user?.role === "Admin" && <TabsTrigger value="newsletter">Newsletter</TabsTrigger>}
               </TabsList>
               
               <TabsContent value="general" className="space-y-4">
@@ -286,6 +289,14 @@ export default function SettingsPage() {
                 <TabsContent value="email" className="space-y-4">
                   {/* Email Configuration */}
                   <EmailConfigForm />
+                </TabsContent>
+              )}
+              
+              {user?.role === "Admin" && (
+                <TabsContent value="newsletter" className="space-y-4">
+                  {/* Newsletter Management */}
+                  <NewsletterBlastForm />
+                  <NewsletterSubscriberList />
                 </TabsContent>
               )}
             </Tabs>

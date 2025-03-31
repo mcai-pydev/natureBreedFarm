@@ -13,7 +13,8 @@ import {
   searchSchema,
   insertNewsletterSchema,
   insertBulkOrderSchema,
-  insertSocialShareSchema
+  insertSocialShareSchema,
+  type InsertNewsletter
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -340,6 +341,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(subscribers);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch newsletter subscribers" });
+    }
+  });
+  
+  // Update newsletter subscriber
+  app.patch("/api/newsletter/:id", async (req, res) => {
+    try {
+      // Ensure user is authenticated and has admin role
+      if (!req.isAuthenticated() || req.user.role !== "Admin") {
+        return res.status(403).json({ error: "Unauthorized access" });
+      }
+      
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const { subscribed, verified } = req.body;
+      if (subscribed === undefined && verified === undefined) {
+        return res.status(400).json({ error: "No update parameters provided" });
+      }
+      
+      const updateData: Partial<InsertNewsletter> = {};
+      if (subscribed !== undefined) updateData.subscribed = subscribed;
+      if (verified !== undefined) updateData.verified = verified;
+      
+      const updated = await storage.updateNewsletterSubscriber(id, updateData);
+      if (!updated) {
+        return res.status(404).json({ error: "Subscriber not found" });
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update subscriber" });
+    }
+  });
+  
+  // Get newsletter stats
+  app.get("/api/newsletter/stats", async (req, res) => {
+    try {
+      // Ensure user is authenticated and has admin role
+      if (!req.isAuthenticated() || req.user.role !== "Admin") {
+        return res.status(403).json({ error: "Unauthorized access" });
+      }
+      
+      const subscribers = await storage.getNewsletterSubscribers();
+      const verifiedSubscribers = subscribers.filter(sub => sub.verified && sub.subscribed);
+      
+      res.json({
+        count: verifiedSubscribers.length,
+        totalCount: subscribers.length,
+        verified: subscribers.filter(sub => sub.verified).length,
+        unverified: subscribers.filter(sub => !sub.verified).length,
+        subscribed: subscribers.filter(sub => sub.subscribed).length,
+        unsubscribed: subscribers.filter(sub => !sub.subscribed).length,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch newsletter statistics" });
+    }
+  });
+  
+  // Send promotional email to subscribers
+  app.post("/api/newsletter/promotional", async (req, res) => {
+    try {
+      // Ensure user is authenticated and has admin role
+      if (!req.isAuthenticated() || req.user.role !== "Admin") {
+        return res.status(403).json({ error: "Unauthorized access" });
+      }
+      
+      // Validate request body
+      const { subject, title, content, ctaText, ctaLink } = req.body;
+      if (!subject || !title || !content) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      // Check if email service is configured
+      if (!emailService.isReady()) {
+        return res.status(500).json({ 
+          error: "Email service is not configured",
+          message: "The email service is not configured. Please configure it in the Email Settings."
+        });
+      }
+      
+      // Get all verified and subscribed subscribers
+      const subscribers = await storage.getNewsletterSubscribers();
+      const emails = subscribers
+        .filter(sub => sub.verified && sub.subscribed)
+        .map(sub => sub.email);
+      
+      if (emails.length === 0) {
+        return res.status(400).json({ 
+          error: "No subscribers",
+          message: "There are no verified subscribers to send the email to."
+        });
+      }
+      
+      // Send the promotional email
+      const success = await emailService.sendPromotionalEmail(
+        emails,
+        subject,
+        title,
+        content,
+        ctaLink,
+        ctaText
+      );
+      
+      if (!success) {
+        return res.status(500).json({ 
+          error: "Failed to send email",
+          message: "There was an error sending the promotional email. Please try again."
+        });
+      }
+      
+      res.status(200).json({ 
+        success: true,
+        message: `Email sent to ${emails.length} subscribers`,
+        recipientCount: emails.length
+      });
+    } catch (error) {
+      console.error("Promotional email error:", error);
+      res.status(500).json({ error: "Failed to send promotional email" });
     }
   });
   
