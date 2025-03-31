@@ -4,13 +4,17 @@ import {
   Filter, 
   X,
   ShoppingCart,
-  Search
+  Search,
+  Star,
+  ExternalLink
 } from "lucide-react";
 import { Product } from "@shared/schema";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
   Sheet,
   SheetContent,
@@ -596,6 +600,128 @@ export default function ShopPage() {
           </div>
         </div>
       </div>
+      
+      {/* Testimonials Section */}
+      <div className="bg-muted/30 py-16 border-t border-muted">
+        <div className="container mx-auto px-4">
+          <h2 className="text-2xl font-semibold mb-8 text-center">What Our Customers Say</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              {
+                name: "Sarah Thompson",
+                review: "The freshest produce I've ever purchased online. Everything arrived in perfect condition!",
+                rating: 5
+              },
+              {
+                name: "Michael Johnson",
+                review: "I love supporting local farmers. The quality is outstanding and prices are reasonable.",
+                rating: 4
+              },
+              {
+                name: "Emily Davis",
+                review: "Been ordering weekly for 3 months now. Consistent quality and excellent customer service.",
+                rating: 5
+              }
+            ].map((testimonial, index) => (
+              <Card key={index} className="bg-card border shadow-sm">
+                <CardContent className="pt-6 p-6">
+                  <div className="flex items-center mb-4">
+                    <Avatar className="mr-3 border border-primary/20">
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {testimonial.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h4 className="font-medium">{testimonial.name}</h4>
+                      <div className="flex">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-3 w-3 ${
+                              i < testimonial.rating 
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-muted"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground italic">"{testimonial.review}"</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* Footer */}
+      <footer className="bg-card border-t py-12 px-4">
+        <div className="container mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="font-semibold mb-4">Nature Breed Farm</h3>
+              <p className="text-sm text-muted-foreground">
+                Growing sustainable, organic produce since 2010. Our commitment is to quality, freshness, 
+                and environmental responsibility.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Quick Links</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="/" className="hover:text-primary flex items-center">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Home
+                </a></li>
+                <li><a href="/shop" className="hover:text-primary flex items-center">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Shop
+                </a></li>
+                <li><a href="/products" className="hover:text-primary flex items-center">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Products
+                </a></li>
+                <li><a href="/reports" className="hover:text-primary flex items-center">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Reports
+                </a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Customer Service</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-primary flex items-center">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2" />FAQs
+                </a></li>
+                <li><a href="#" className="hover:text-primary flex items-center">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Shipping Policy
+                </a></li>
+                <li><a href="#" className="hover:text-primary flex items-center" onClick={() => setBulkOrderOpen(true)}>
+                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Bulk Orders
+                </a></li>
+                <li><a href="/policy" className="hover:text-primary flex items-center">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Privacy Policy
+                </a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Contact Us</h3>
+              <address className="not-italic text-sm text-muted-foreground space-y-2">
+                <p>Nature Breed Farm</p>
+                <p>123 Farm Road, Countryside</p>
+                <p>Email: contact@naturebreed.farm</p>
+                <p>Phone: (123) 456-7890</p>
+              </address>
+              <div className="mt-4">
+                <ShareButtons compact />
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t border-muted mt-8 pt-8 text-center text-sm text-muted-foreground">
+            <p>© {new Date().getFullYear()} Nature Breed Farm. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
