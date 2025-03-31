@@ -4,6 +4,50 @@ import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
 import { emailService } from "./email";
+
+// Helper function for AI chat responses when no API key is available
+function getFallbackResponse(message: string, history: any[] = []): string {
+  // Basic farming advice responses
+  const farmingResponses = [
+    "Based on my knowledge, it's best to ensure proper irrigation for crops during dry seasons. Make sure to monitor soil moisture levels regularly.",
+    "For organic pest control, consider using neem oil or introducing beneficial insects like ladybugs to manage common pests.",
+    "Crop rotation is an effective strategy to prevent soil depletion and reduce pest problems. Try not to plant the same crop in the same location for consecutive seasons.",
+    "When raising livestock, proper nutrition is critical. Ensure balanced feed and clean water are always available.",
+    "For optimal egg production in chickens, provide 14-16 hours of light, proper nutrition with calcium supplements, and maintain a stress-free environment.",
+    "Sustainable farming practices include composting, using cover crops, and implementing water conservation techniques.",
+    "For healthier soil, consider adding organic matter like compost or well-rotted manure. This improves soil structure and adds essential nutrients.",
+    "Natural fertilizers can be made from compost, manure, bone meal, or fish emulsion. These are generally better for long-term soil health than synthetic options.",
+    "When selecting crops, consider your climate zone, soil type, and available resources like water and sunlight.",
+    "Proper storage of harvested crops is essential to prevent spoilage. Different crops require different temperature, humidity, and ventilation conditions."
+  ];
+
+  // Extract keywords from the user's message
+  const lowerMessage = message.toLowerCase();
+  
+  // Some basic keyword-based responses
+  if (lowerMessage.includes("chicken") || lowerMessage.includes("egg")) {
+    return "For healthy chickens and optimal egg production, provide a balanced diet with protein (16-18%), sufficient calcium for egg shells, clean water, proper ventilation in the coop, and about 14-16 hours of light per day. Regular health checks and parasite prevention are also important for maintaining a productive flock.";
+  }
+  
+  if (lowerMessage.includes("goat") || lowerMessage.includes("kid")) {
+    return "Goats require proper shelter, clean water, quality forage, and mineral supplements. For breeding, does should be at least 8-10 months old and weigh 60-75% of their adult weight. Breeding season typically runs from September to March, with a gestation period of approximately 150 days.";
+  }
+  
+  if (lowerMessage.includes("fish") || lowerMessage.includes("tilapia") || lowerMessage.includes("aquaculture")) {
+    return "In aquaculture systems, particularly for tilapia, maintain water temperature between 24-30°C (75-86°F), pH levels of 6.5-8.5, and dissolved oxygen above 5mg/L. Feed young tilapia 3-5 times daily and adult fish 1-2 times daily with appropriate commercial feed containing 32-40% protein for fingerlings and 24-28% for adult fish.";
+  }
+  
+  if (lowerMessage.includes("soil") || lowerMessage.includes("fertilizer")) {
+    return "Healthy soil contains a balance of minerals, organic matter, air, and water. To improve soil naturally, add compost or aged manure, plant cover crops like clover or rye, and practice crop rotation. Test your soil every 3-5 years to understand pH and nutrient levels, then amend accordingly with specific minerals or organic matter.";
+  }
+  
+  if (lowerMessage.includes("pest") || lowerMessage.includes("insect") || lowerMessage.includes("disease")) {
+    return "For organic pest management, practice prevention through crop rotation, companion planting, and maintaining biodiversity. For active infestations, consider biological controls like beneficial insects, physical barriers, or organic sprays made from neem oil, garlic, or soap. Always identify the specific pest before treatment, as unnecessary applications can harm beneficial organisms.";
+  }
+  
+  // If no specific keywords match, return a random farming tip
+  return farmingResponses[Math.floor(Math.random() * farmingResponses.length)];
+}
 import { 
   insertProductSchema, 
   insertTransactionSchema, 
@@ -1132,6 +1176,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create and return HTTP server
+  // AI Chat API endpoint
+  app.post("/api/ai/chat", async (req, res) => {
+    try {
+      const { message, history } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+      
+      // Check if we have an API key
+      const apiKey = process.env.OPENAI_API_KEY;
+      
+      if (!apiKey) {
+        // If no API key, return a generic response for testing
+        return res.json({
+          response: getFallbackResponse(message, history)
+        });
+      }
+      
+      // Here we would normally call the OpenAI API or another AI service
+      // For now, we'll return a sample response
+      setTimeout(() => {
+        res.json({
+          response: getFallbackResponse(message, history)
+        });
+      }, 1000); // Simulate API delay
+      
+    } catch (error) {
+      console.error("Error processing chat message:", error);
+      res.status(500).json({ error: "Failed to process chat message" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
