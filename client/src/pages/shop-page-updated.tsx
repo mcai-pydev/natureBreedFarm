@@ -585,7 +585,7 @@ export default function ShopPage() {
       </div>
       
       {/* Social sharing section */}
-      <div className="container mx-auto py-12 px-4">
+      <div className="container mx-auto py-12 px-4 border-t border-green-100 mt-8">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-semibold mb-2">Share Nature Breed Farm</h2>
           <p className="text-muted-foreground max-w-xl mx-auto mb-6">
@@ -602,7 +602,7 @@ export default function ShopPage() {
       </div>
       
       {/* Testimonials Section */}
-      <div className="bg-muted/30 py-16 border-t border-muted">
+      <div className="bg-green-50/70 py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-semibold mb-8 text-center">What Our Customers Say</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -623,31 +623,31 @@ export default function ShopPage() {
                 rating: 5
               }
             ].map((testimonial, index) => (
-              <Card key={index} className="bg-card border shadow-sm">
+              <Card key={index} className="bg-white border shadow-sm hover:shadow-md transition-shadow duration-200">
                 <CardContent className="pt-6 p-6">
                   <div className="flex items-center mb-4">
-                    <Avatar className="mr-3 border border-primary/20">
-                      <AvatarFallback className="bg-primary/10 text-primary">
+                    <Avatar className="mr-3 border-2 border-primary/30">
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                         {testimonial.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h4 className="font-medium">{testimonial.name}</h4>
+                      <h4 className="font-semibold text-primary/90">{testimonial.name}</h4>
                       <div className="flex">
                         {Array.from({ length: 5 }).map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-3 w-3 ${
+                            className={`h-3.5 w-3.5 ${
                               i < testimonial.rating 
                               ? "text-yellow-400 fill-yellow-400"
-                              : "text-muted"
+                              : "text-gray-200"
                             }`}
                           />
                         ))}
                       </div>
                     </div>
                   </div>
-                  <p className="text-muted-foreground italic">"{testimonial.review}"</p>
+                  <p className="text-gray-600 italic">"{testimonial.review}"</p>
                 </CardContent>
               </Card>
             ))}
@@ -656,68 +656,68 @@ export default function ShopPage() {
       </div>
       
       {/* Footer */}
-      <footer className="bg-card border-t py-12 px-4">
+      <footer className="bg-white border-t border-green-100 py-12 px-4">
         <div className="container mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="font-semibold mb-4">Nature Breed Farm</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="font-semibold mb-4 text-primary">Nature Breed Farm</h3>
+              <p className="text-sm text-gray-600">
                 Growing sustainable, organic produce since 2010. Our commitment is to quality, freshness, 
                 and environmental responsibility.
               </p>
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4">Quick Links</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/" className="hover:text-primary flex items-center">
-                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Home
+              <h3 className="font-semibold mb-4 text-primary">Quick Links</h3>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><a href="/" className="hover:text-primary flex items-center transition-colors duration-200">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2 text-primary/70" />Home
                 </a></li>
-                <li><a href="/shop" className="hover:text-primary flex items-center">
-                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Shop
+                <li><a href="/shop" className="hover:text-primary flex items-center transition-colors duration-200">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2 text-primary/70" />Shop
                 </a></li>
-                <li><a href="/products" className="hover:text-primary flex items-center">
-                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Products
+                <li><a href="/products" className="hover:text-primary flex items-center transition-colors duration-200">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2 text-primary/70" />Products
                 </a></li>
-                <li><a href="/reports" className="hover:text-primary flex items-center">
-                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Reports
-                </a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Customer Service</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary flex items-center">
-                  <ExternalLink className="h-3.5 w-3.5 mr-2" />FAQs
-                </a></li>
-                <li><a href="#" className="hover:text-primary flex items-center">
-                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Shipping Policy
-                </a></li>
-                <li><a href="#" className="hover:text-primary flex items-center" onClick={() => setBulkOrderOpen(true)}>
-                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Bulk Orders
-                </a></li>
-                <li><a href="/policy" className="hover:text-primary flex items-center">
-                  <ExternalLink className="h-3.5 w-3.5 mr-2" />Privacy Policy
+                <li><a href="/reports" className="hover:text-primary flex items-center transition-colors duration-200">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2 text-primary/70" />Reports
                 </a></li>
               </ul>
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4">Contact Us</h3>
-              <address className="not-italic text-sm text-muted-foreground space-y-2">
+              <h3 className="font-semibold mb-4 text-primary">Customer Service</h3>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><a href="#" className="hover:text-primary flex items-center transition-colors duration-200">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2 text-primary/70" />FAQs
+                </a></li>
+                <li><a href="#" className="hover:text-primary flex items-center transition-colors duration-200">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2 text-primary/70" />Shipping Policy
+                </a></li>
+                <li><a href="#" className="hover:text-primary flex items-center transition-colors duration-200" onClick={() => setBulkOrderOpen(true)}>
+                  <ExternalLink className="h-3.5 w-3.5 mr-2 text-primary/70" />Bulk Orders
+                </a></li>
+                <li><a href="/policy" className="hover:text-primary flex items-center transition-colors duration-200">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2 text-primary/70" />Privacy Policy
+                </a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4 text-primary">Contact Us</h3>
+              <address className="not-italic text-sm text-gray-600 space-y-2">
                 <p>Nature Breed Farm</p>
                 <p>123 Farm Road, Countryside</p>
                 <p>Email: contact@naturebreed.farm</p>
                 <p>Phone: (123) 456-7890</p>
               </address>
               <div className="mt-4">
-                <ShareButtons compact />
+                <ShareButtons showLabel={false} />
               </div>
             </div>
           </div>
           
-          <div className="border-t border-muted mt-8 pt-8 text-center text-sm text-muted-foreground">
+          <div className="border-t border-green-100 mt-8 pt-8 text-center text-sm text-gray-500">
             <p>© {new Date().getFullYear()} Nature Breed Farm. All rights reserved.</p>
           </div>
         </div>
