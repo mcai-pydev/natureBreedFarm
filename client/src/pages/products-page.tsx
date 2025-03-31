@@ -1,392 +1,879 @@
-import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import Sidebar from "@/components/layout/sidebar";
-import MobileMenu from "@/components/layout/mobile-menu";
-import ProductCard from "@/components/products/product-card";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Product } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { InsertProduct } from "@shared/schema";
-
-// Form validation schema
-const productSchema = z.object({
-  name: z.string().min(2, "Product name must be at least 2 characters"),
-  description: z.string().optional(),
-  price: z.coerce.number().positive("Price must be positive"),
-  unit: z.string().min(1, "Unit is required"),
-  stock: z.coerce.number().nonnegative("Stock cannot be negative"),
-  category: z.string().min(1, "Category is required"),
-  imageUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-});
-
-type ProductFormValues = z.infer<typeof productSchema>;
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Edit, Trash2, Search, AlertTriangle, ShoppingCart, Package, Loader2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import InventoryManagement from "@/components/products/inventory-management";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function ProductsPage() {
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const { data: products = [], isLoading } = useQuery<any[]>({
-    queryKey: ["/api/products"],
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    unit: "kg",
+    stock: "",
+    category: "produce",
+    imageUrl: "",
+    lowStockThreshold: "10",
+    featured: false
   });
-
-  const [selectedCategory, setSelectedCategory] = useState("general");
-  const [previewImageUrl, setPreviewImageUrl] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   
-  const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      price: 0,
-      unit: "",
-      stock: 0,
-      category: "general",
-      imageUrl: "",
-    },
+  // Get products data
+  const { data: products, isLoading, isError } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+    queryFn: async () => {
+      const response = await fetch("/api/products");
+      if (!response.ok) throw new Error("Failed to fetch products");
+      return await response.json();
+    }
   });
-
-  const createProductMutation = useMutation({
-    mutationFn: async (productData: InsertProduct) => {
+  
+  // Get low stock products
+  const { data: lowStockProducts } = useQuery<Product[]>({
+    queryKey: ["/api/products", "lowStock"],
+    queryFn: async () => {
+      const response = await fetch("/api/products?lowStock=true");
+      if (!response.ok) throw new Error("Failed to fetch low stock products");
+      return await response.json();
+    }
+  });
+  
+  // Add product mutation
+  const addProductMutation = useMutation({
+    mutationFn: async (productData: any) => {
       const response = await apiRequest("POST", "/api/products", productData);
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setIsAddDialogOpen(false);
+      resetForm();
       toast({
-        title: "Product created",
-        description: "The product has been created successfully",
+        title: "Product added",
+        description: "The product has been added successfully",
       });
-      form.reset();
-      setDialogOpen(false);
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast({
-        title: "Failed to create product",
-        description: error.message,
+        title: "Error",
+        description: `Failed to add product: ${error.message}`,
         variant: "destructive",
       });
-    },
+    }
   });
-
-  // Generate image URL based on product category if no custom URL is provided
-  function generateImageUrlFromCategory(category: string): string {
-    const categoryImageMap: {[key: string]: string} = {
-      produce: "https://images.unsplash.com/photo-1597362925123-77861d3fbac7",
-      dairy: "https://images.unsplash.com/photo-1573246123716-6b1782bfc499",
-      poultry: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7",
-      livestock: "https://images.unsplash.com/photo-1560468660-6c11a19d7330",
-      seafood: "https://images.unsplash.com/photo-1534177616072-ef7dc120449d",
-      specialty: "https://images.unsplash.com/photo-1528825871115-3581a5387919",
-      general: "https://images.unsplash.com/photo-1592982573555-3d0dc6cb2c32"
+  
+  // Edit product mutation
+  const editProductMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await apiRequest("PUT", `/api/products/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setIsEditDialogOpen(false);
+      setSelectedProduct(null);
+      toast({
+        title: "Product updated",
+        description: "The product has been updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update product: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Delete product mutation
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/products/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Product deleted",
+        description: "The product has been deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete product: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === "checkbox") {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData(prev => ({ ...prev, [name]: checked }));
+    } else if (type === "number") {
+      setFormData(prev => ({ ...prev, [name]: value === "" ? "" : value }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+  
+  // Handle adding a new product
+  const handleAddProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name || !formData.price || !formData.unit || !formData.stock) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Prepare data for API
+    const productData = {
+      name: formData.name,
+      description: formData.description || null,
+      price: parseFloat(formData.price),
+      unit: formData.unit,
+      stock: parseInt(formData.stock),
+      category: formData.category || null,
+      imageUrl: formData.imageUrl || getImageUrlForCategory(formData.category),
+      lowStockThreshold: parseInt(formData.lowStockThreshold) || 10,
+      featured: formData.featured || false
     };
     
-    return categoryImageMap[category] || categoryImageMap.general;
-  }
-
-  function onSubmit(data: ProductFormValues) {
-    // Use provided image URL or generate one based on category
-    const imageUrl = data.imageUrl || generateImageUrlFromCategory(data.category);
+    addProductMutation.mutate(productData);
+  };
+  
+  // Handle editing a product
+  const handleEditProduct = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    createProductMutation.mutate({
-      name: data.name,
-      description: data.description || "",
-      price: data.price,
-      unit: data.unit,
-      stock: data.stock,
-      category: data.category,
-      imageUrl: imageUrl,
+    if (!selectedProduct) return;
+    
+    // Prepare data for API
+    const productData = {
+      name: formData.name,
+      description: formData.description || null,
+      price: parseFloat(formData.price),
+      unit: formData.unit,
+      stock: parseInt(formData.stock),
+      category: formData.category || null,
+      imageUrl: formData.imageUrl || selectedProduct.imageUrl,
+      lowStockThreshold: parseInt(formData.lowStockThreshold) || 10,
+      featured: formData.featured || false
+    };
+    
+    editProductMutation.mutate({ id: selectedProduct.id, data: productData });
+  };
+  
+  // Handle deleting a product with confirmation
+  const handleDeleteProduct = (product: Product) => {
+    if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
+      deleteProductMutation.mutate(product.id);
+    }
+  };
+  
+  // Set edit form data from selected product
+  const handleEditClick = (product: Product) => {
+    setSelectedProduct(product);
+    setFormData({
+      name: product.name,
+      description: product.description || "",
+      price: product.price.toString(),
+      unit: product.unit,
+      stock: product.stock.toString(),
+      category: product.category || "produce",
+      imageUrl: product.imageUrl || "",
+      lowStockThreshold: ((product.lowStockThreshold !== null && product.lowStockThreshold !== undefined) 
+        ? product.lowStockThreshold 
+        : 10).toString(),
+      featured: product.featured || false
     });
+    setIsEditDialogOpen(true);
+  };
+  
+  // Reset form to defaults
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      price: "",
+      unit: "kg",
+      stock: "",
+      category: "produce",
+      imageUrl: "",
+      lowStockThreshold: "10",
+      featured: false
+    });
+  };
+  
+  // Get a default image URL based on category
+  const getImageUrlForCategory = (category: string) => {
+    const categoryImageMap: Record<string, string> = {
+      produce: "https://images.unsplash.com/photo-1597362925123-77861d3fbac7",
+      dairy: "https://images.unsplash.com/photo-1573246123716-6b1782bfc499",
+      livestock: "https://images.unsplash.com/photo-1560468660-6c11a19d7330",
+      poultry: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7",
+      seafood: "https://images.unsplash.com/photo-1534177616072-ef7dc120449d",
+      specialty: "https://images.unsplash.com/photo-1528825871115-3581a5387919"
+    };
+    
+    return categoryImageMap[category] || "https://images.unsplash.com/photo-1627483262769-04d0a1401487";
+  };
+  
+  // Filter products based on search and category
+  const filteredProducts = products ? products.filter(product => {
+    const matchesSearch = 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+    const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
+    
+    return matchesSearch && matchesCategory;
+  }) : [];
+  
+  // Get unique categories for filter
+  const categories = products ? 
+    ["all", ...Array.from(new Set(products.map(product => product.category || "uncategorized")))] 
+    : ["all"];
+  
+  // Function to get stock status badge
+  const getStockStatusBadge = (product: Product) => {
+    if (product.stock <= 0) {
+      return <Badge variant="outline" className="bg-red-100 text-red-800">Out of Stock</Badge>;
+    }
+    
+    if (product.lowStockThreshold !== null && 
+        product.lowStockThreshold !== undefined && 
+        product.stock <= product.lowStockThreshold) {
+      return <Badge variant="outline" className="bg-amber-100 text-amber-800">Low Stock</Badge>;
+    }
+    
+    return <Badge variant="outline" className="bg-green-100 text-green-800">In Stock</Badge>;
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="p-6 flex justify-center items-center min-h-screen">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p>Loading products...</p>
+        </div>
+      </div>
+    );
   }
-
+  
+  if (isError) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Error</CardTitle>
+            <CardDescription>Failed to load products</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              <p>There was an error loading the product data. Please try again later.</p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/products"] })}>
+              Retry
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+  
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <div className="flex flex-grow">
-        <Sidebar />
-        <main className="flex-grow">
-          <MobileMenu />
+    <div className="p-6 space-y-6">
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+          <p className="text-muted-foreground">
+            Manage your farm inventory and product listings
+          </p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-2">
+          <DialogTrigger asChild onClick={() => {
+            resetForm();
+            setIsAddDialogOpen(true);
+          }}>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Product
+            </Button>
+          </DialogTrigger>
+        </div>
+      </div>
+      
+      {/* Inventory status summary */}
+      {lowStockProducts && lowStockProducts.length > 0 && (
+        <Card className="bg-amber-50 border-amber-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-amber-800">
+              <AlertTriangle className="h-5 w-5" />
+              Inventory Alert
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-amber-800">
+              You have {lowStockProducts.length} product{lowStockProducts.length !== 1 ? 's' : ''} with low stock levels that require attention.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" className="text-amber-800 border-amber-300 hover:bg-amber-100" onClick={() => window.scrollTo(0, document.body.scrollHeight)}>
+              View Low Stock Items
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
+      
+      {/* Search and filter toolbar */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search products..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        
+        <div className="flex gap-2">
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map(category => (
+                <SelectItem key={category} value={category}>
+                  {category === "all" ? "All Categories" : category.charAt(0).toUpperCase() + category.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           
-          <div className="p-4 md:p-8 max-w-7xl mx-auto">
-            <div className="mb-6 flex justify-between items-center">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Farm Products</h1>
-                <p className="text-gray-500">Manage and view your farm's product inventory</p>
+          <div className="flex rounded-md border">
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              className="rounded-r-none"
+              onClick={() => setViewMode("grid")}
+              size="sm"
+            >
+              <Package className="h-4 w-4" />
+            </Button>
+            <Separator orientation="vertical" />
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              className="rounded-l-none"
+              onClick={() => setViewMode("list")}
+              size="sm"
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Product grid or list view */}
+      {viewMode === "grid" ? (
+        // Grid view
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filteredProducts.map(product => (
+            <Card key={product.id} className="overflow-hidden flex flex-col">
+              <div className="h-48 overflow-hidden bg-gray-100">
+                <img 
+                  src={product.imageUrl || getImageUrlForCategory(product.category || "produce")} 
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-transform hover:scale-105" 
+                />
+              </div>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-lg">{product.name}</CardTitle>
+                  {getStockStatusBadge(product)}
+                </div>
+                <CardDescription className="line-clamp-2">
+                  {product.description || `${product.name} from Nature Breed Farm`}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pb-2 flex-grow">
+                <div className="flex justify-between mb-4">
+                  <div className="font-medium text-lg">
+                    {formatCurrency(product.price)}
+                    <span className="text-sm text-muted-foreground ml-1">
+                      per {product.unit}
+                    </span>
+                  </div>
+                </div>
+                
+                <InventoryManagement 
+                  product={product} 
+                  onUpdate={() => queryClient.invalidateQueries({ queryKey: ["/api/products"] })}
+                />
+              </CardContent>
+              <CardFooter className="border-t pt-4">
+                <div className="flex gap-2 w-full">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 gap-1"
+                    onClick={() => handleEditClick(product)}
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                    Edit
+                  </Button>
+                  {user?.role === "Admin" && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 gap-1 border-red-200 hover:bg-red-50 hover:text-red-600"
+                      onClick={() => handleDeleteProduct(product)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </Button>
+                  )}
+                </div>
+              </CardFooter>
+            </Card>
+          ))}
+          
+          {filteredProducts.length === 0 && (
+            <div className="col-span-full py-12 text-center text-muted-foreground">
+              <Package className="mx-auto h-12 w-12 mb-4 opacity-20" />
+              <h3 className="text-lg font-medium mb-1">No products found</h3>
+              <p>Try adjusting your search or filter criteria</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        // List view
+        <Table>
+          <TableCaption>Inventory List. Total: {filteredProducts.length} products</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Stock</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredProducts.map(product => (
+              <TableRow key={product.id}>
+                <TableCell className="font-medium">{product.name}</TableCell>
+                <TableCell>{product.category || "Uncategorized"}</TableCell>
+                <TableCell>{formatCurrency(product.price)} / {product.unit}</TableCell>
+                <TableCell>
+                  <span className="font-mono">
+                    {product.stock}
+                  </span>
+                </TableCell>
+                <TableCell>{getStockStatusBadge(product)}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex gap-2 justify-end">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleEditClick(product)}
+                    >
+                      <Edit className="h-3.5 w-3.5 mr-1" />
+                      Edit
+                    </Button>
+                    
+                    {user?.role === "Admin" && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="border-red-200 hover:bg-red-50 hover:text-red-600"
+                        onClick={() => handleDeleteProduct(product)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" />
+                        Delete
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            
+            {filteredProducts.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                  No products found. Try adjusting your search or filter criteria.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      )}
+      
+      {/* Add Product Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Add New Product</DialogTitle>
+            <DialogDescription>
+              Enter the details for the new product below.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleAddProduct}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Product Name *</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter product name"
+                  required
+                />
               </div>
               
-              <Dialog 
-                open={dialogOpen} 
-                onOpenChange={(open) => {
-                  setDialogOpen(open);
-                  if (open) {
-                    // Initialize the preview image URL when dialog opens
-                    setPreviewImageUrl(generateImageUrlFromCategory("general"));
-                  }
-                }}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-5 w-5 mr-2" />
-                    Add Product
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Product</DialogTitle>
-                    <DialogDescription>
-                      Enter the details of the new farm product.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Product Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Organic Tomatoes" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Provide a short description" 
-                                className="resize-none" 
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="price"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Price</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  step="0.01" 
-                                  placeholder="0.00" 
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="unit"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Unit</FormLabel>
-                              <FormControl>
-                                <Input placeholder="kg, lb, each" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <FormField
-                        control={form.control}
-                        name="stock"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Initial Stock</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                placeholder="0" 
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="category"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Category</FormLabel>
-                            <FormControl>
-                              <select 
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                {...field}
-                                onChange={(e) => {
-                                  field.onChange(e);
-                                  setSelectedCategory(e.target.value);
-                                  setPreviewImageUrl(generateImageUrlFromCategory(e.target.value));
-                                }}
-                              >
-                                <option value="general">General</option>
-                                <option value="produce">Produce</option>
-                                <option value="dairy">Dairy</option>
-                                <option value="poultry">Poultry</option>
-                                <option value="livestock">Livestock</option>
-                                <option value="seafood">Seafood</option>
-                                <option value="specialty">Specialty</option>
-                              </select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="space-y-3">
-                        {/* Preview of category-based image */}
-                        {!form.watch("imageUrl") && (
-                          <div className="mt-2">
-                            <p className="text-sm text-muted-foreground mb-2">Preview of category image:</p>
-                            <div className="relative h-40 w-full rounded-md overflow-hidden border">
-                              <img 
-                                src={previewImageUrl || generateImageUrlFromCategory(selectedCategory)} 
-                                alt="Category preview" 
-                                className="h-full w-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = generateImageUrlFromCategory("general");
-                                }}
-                              />
-                              <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                                <p className="text-white bg-black/50 px-2 py-1 rounded text-xs">{selectedCategory}</p>
-                              </div>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              This image will be used if you don't provide a custom URL
-                            </p>
-                          </div>
-                        )}
-                        
-                        <FormField
-                          control={form.control}
-                          name="imageUrl"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Custom Image URL (optional)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="https://example.com/image.jpg" 
-                                  {...field} 
-                                  onChange={(e) => {
-                                    field.onChange(e);
-                                    if (e.target.value) {
-                                      setPreviewImageUrl(e.target.value);
-                                    } else {
-                                      setPreviewImageUrl(generateImageUrlFromCategory(selectedCategory));
-                                    }
-                                  }}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <div className="flex justify-end space-x-3 pt-4">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => setDialogOpen(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          type="submit" 
-                          disabled={createProductMutation.isPending}
-                        >
-                          {createProductMutation.isPending ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Saving...
-                            </>
-                          ) : (
-                            "Save Product"
-                          )}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Select name="category" value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="produce">Produce</SelectItem>
+                    <SelectItem value="dairy">Dairy</SelectItem>
+                    <SelectItem value="livestock">Livestock</SelectItem>
+                    <SelectItem value="poultry">Poultry</SelectItem>
+                    <SelectItem value="seafood">Seafood</SelectItem>
+                    <SelectItem value="specialty">Specialty</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="price">Price per Unit *</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="unit">Unit *</Label>
+                <Select name="unit" value={formData.unit} onValueChange={(value) => setFormData(prev => ({ ...prev, unit: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="kg">Kilogram (kg)</SelectItem>
+                    <SelectItem value="g">Gram (g)</SelectItem>
+                    <SelectItem value="lb">Pound (lb)</SelectItem>
+                    <SelectItem value="oz">Ounce (oz)</SelectItem>
+                    <SelectItem value="liter">Liter (L)</SelectItem>
+                    <SelectItem value="bottle">Bottle</SelectItem>
+                    <SelectItem value="jar">Jar</SelectItem>
+                    <SelectItem value="box">Box</SelectItem>
+                    <SelectItem value="piece">Piece</SelectItem>
+                    <SelectItem value="dozen">Dozen</SelectItem>
+                    <SelectItem value="head">Head</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="stock">Initial Stock *</Label>
+                <Input
+                  id="stock"
+                  name="stock"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.stock}
+                  onChange={handleInputChange}
+                  placeholder="0"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="lowStockThreshold">Low Stock Threshold</Label>
+                <Input
+                  id="lowStockThreshold"
+                  name="lowStockThreshold"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={formData.lowStockThreshold}
+                  onChange={handleInputChange}
+                  placeholder="10"
+                />
+                <p className="text-xs text-muted-foreground">
+                  You'll receive alerts when stock falls below this number
+                </p>
+              </div>
+              
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="description">Description</Label>
+                <Input
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Enter product description"
+                />
+              </div>
+              
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="imageUrl">Image URL</Label>
+                <Input
+                  id="imageUrl"
+                  name="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/image.jpg"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave blank to use a default image based on category
+                </p>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="featured"
+                  name="featured"
+                  checked={formData.featured as boolean}
+                  onChange={handleInputChange}
+                  className="form-checkbox h-4 w-4 text-primary rounded"
+                />
+                <Label htmlFor="featured">Feature this product in listings and shop</Label>
+              </div>
             </div>
             
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="h-48 w-full bg-gray-200 animate-pulse"></div>
-                    <div className="p-4">
-                      <div className="h-6 w-2/3 bg-gray-200 animate-pulse mb-2"></div>
-                      <div className="h-4 w-full bg-gray-100 animate-pulse mb-4"></div>
-                      <div className="flex justify-between">
-                        <div className="h-4 w-20 bg-gray-200 animate-pulse"></div>
-                        <div className="h-4 w-16 bg-gray-200 animate-pulse"></div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsAddDialogOpen(false);
+                  resetForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={addProductMutation.isPending}>
+                {addProductMutation.isPending ? "Adding..." : "Add Product"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Product Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+            <DialogDescription>
+              Update the details for {selectedProduct?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleEditProduct}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Product Name *</Label>
+                <Input
+                  id="edit-name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter product name"
+                  required
+                />
               </div>
-            ) : products && products.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-category">Category</Label>
+                <Select name="category" value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="produce">Produce</SelectItem>
+                    <SelectItem value="dairy">Dairy</SelectItem>
+                    <SelectItem value="livestock">Livestock</SelectItem>
+                    <SelectItem value="poultry">Poultry</SelectItem>
+                    <SelectItem value="seafood">Seafood</SelectItem>
+                    <SelectItem value="specialty">Specialty</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            ) : (
-              <div className="text-center py-12 bg-white rounded-lg shadow">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-                <p className="text-gray-500 mb-6">Start by adding your first farm product</p>
-                <Button onClick={() => setDialogOpen(true)}>
-                  <Plus className="h-5 w-5 mr-2" />
-                  Add Product
-                </Button>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-price">Price per Unit *</Label>
+                <Input
+                  id="edit-price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  placeholder="0.00"
+                  required
+                />
               </div>
-            )}
-          </div>
-        </main>
-      </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-unit">Unit *</Label>
+                <Select name="unit" value={formData.unit} onValueChange={(value) => setFormData(prev => ({ ...prev, unit: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="kg">Kilogram (kg)</SelectItem>
+                    <SelectItem value="g">Gram (g)</SelectItem>
+                    <SelectItem value="lb">Pound (lb)</SelectItem>
+                    <SelectItem value="oz">Ounce (oz)</SelectItem>
+                    <SelectItem value="liter">Liter (L)</SelectItem>
+                    <SelectItem value="bottle">Bottle</SelectItem>
+                    <SelectItem value="jar">Jar</SelectItem>
+                    <SelectItem value="box">Box</SelectItem>
+                    <SelectItem value="piece">Piece</SelectItem>
+                    <SelectItem value="dozen">Dozen</SelectItem>
+                    <SelectItem value="head">Head</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-stock">Current Stock *</Label>
+                <Input
+                  id="edit-stock"
+                  name="stock"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.stock}
+                  onChange={handleInputChange}
+                  placeholder="0"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-lowStockThreshold">Low Stock Threshold</Label>
+                <Input
+                  id="edit-lowStockThreshold"
+                  name="lowStockThreshold"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={formData.lowStockThreshold}
+                  onChange={handleInputChange}
+                  placeholder="10"
+                />
+                <p className="text-xs text-muted-foreground">
+                  You'll receive alerts when stock falls below this number
+                </p>
+              </div>
+              
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Input
+                  id="edit-description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Enter product description"
+                />
+              </div>
+              
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="edit-imageUrl">Image URL</Label>
+                <Input
+                  id="edit-imageUrl"
+                  name="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="edit-featured"
+                  name="featured"
+                  checked={formData.featured as boolean}
+                  onChange={handleInputChange}
+                  className="form-checkbox h-4 w-4 text-primary rounded"
+                />
+                <Label htmlFor="edit-featured">Feature this product in listings and shop</Label>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setSelectedProduct(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={editProductMutation.isPending}>
+                {editProductMutation.isPending ? "Updating..." : "Update Product"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

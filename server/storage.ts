@@ -326,7 +326,8 @@ export class MemStorage implements IStorage {
       // OR if stock is completely depleted (stock is 0)
       return (
         product.stock === 0 || 
-        (product.lowStockThreshold !== undefined && 
+        (product.lowStockThreshold !== null && 
+         product.lowStockThreshold !== undefined && 
          product.lowStockThreshold > 0 && 
          product.stock <= product.lowStockThreshold)
       );
@@ -337,8 +338,8 @@ export class MemStorage implements IStorage {
       if (a.stock !== 0 && b.stock === 0) return 1;
       
       // 2. Then by how far below threshold (as a percentage)
-      const aThreshold = a.lowStockThreshold || 1;
-      const bThreshold = b.lowStockThreshold || 1;
+      const aThreshold = (a.lowStockThreshold !== null && a.lowStockThreshold !== undefined) ? a.lowStockThreshold : 1;
+      const bThreshold = (b.lowStockThreshold !== null && b.lowStockThreshold !== undefined) ? b.lowStockThreshold : 1;
       
       const aPercentage = a.stock / aThreshold;
       const bPercentage = b.stock / bThreshold;
@@ -355,9 +356,13 @@ export class MemStorage implements IStorage {
       ? (product.stockQuantity || product.stock) + quantity 
       : Math.max(0, (product.stockQuantity || product.stock) - quantity);
     
+    const threshold = (product.lowStockThreshold !== null && product.lowStockThreshold !== undefined) 
+      ? product.lowStockThreshold 
+      : 10;
+      
     const stockStatus = newQuantity <= 0 
       ? 'out_of_stock' 
-      : newQuantity <= (product.lowStockThreshold || 10) 
+      : newQuantity <= threshold
         ? 'low' 
         : 'normal';
     
