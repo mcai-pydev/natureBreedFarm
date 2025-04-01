@@ -4,16 +4,23 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { HelmetProvider } from 'react-helmet-async';
 import NotFound from "@/pages/not-found";
-import AuthPage from "@/pages/auth-page-fixed";
+
+// Legacy pages (to be migrated)
 import DashboardPage from "@/pages/dashboard-page";
 import ProductsPage from "@/pages/products-page";
 import TransactionsPage from "@/pages/transactions-page";
 import ReportsPage from "@/pages/reports-page";
 import SettingsPage from "@/pages/settings-page";
-import ShopPage from "@/pages/shop-page-updated";
 import PolicyPage from "@/pages/policy-page-fixed";
 import AIAssistantPage from "@/pages/ai-assistant-page";
 import RabbitBreedingPage from "@/pages/rabbit-breeding-page-fixed";
+
+// New modular pages
+import LandingPage from "@/pages/landing-page";
+import AdminDashboard from "@/modules/admin/pages/admin-dashboard";
+import ShopPage from "@/modules/customer/pages/shop-page";
+import AuthPage from "@/modules/common/pages/auth-page";
+
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { FloatingHeroNav, FloatingHeroNavMobile } from "@/components/layout/floating-hero-nav";
@@ -21,17 +28,39 @@ import { useLocation } from "wouter";
 
 function Router() {
   const [location] = useLocation();
-  const showFloatingNav = location !== "/auth";
+  const showFloatingNav = !location.includes("/admin") && 
+                          !location.includes("/auth") && 
+                          location !== "/";
+
+  // Determine if we should show legacy navigation or use the new modular layouts
+  const isLegacyRoute = location.includes("/transactions") || 
+                        location.includes("/reports") || 
+                        location.includes("/settings") || 
+                        location.includes("/policy") || 
+                        location.includes("/policies") || 
+                        location.includes("/ai-assistant") || 
+                        location.includes("/rabbit-breeding");
 
   return (
     <>
       <Switch>
+        {/* Landing page (new) */}
+        <Route path="/" component={LandingPage} />
+        
+        {/* Auth page (improved) */}
         <Route path="/auth" component={AuthPage} />
-        <ProtectedRoute path="/" component={DashboardPage} />
+        
+        {/* Customer routes (new) */}
+        <Route path="/shop" component={ShopPage} />
+        
+        {/* Admin routes (new) */}
+        <ProtectedRoute path="/admin" component={AdminDashboard} />
+        
+        {/* Legacy routes (to be migrated) */}
+        <ProtectedRoute path="/dashboard" component={DashboardPage} />
         <Route path="/products" component={ProductsPage} />
         <ProtectedRoute path="/transactions" component={TransactionsPage} />
         <ProtectedRoute path="/reports" component={ReportsPage} />
-        <Route path="/shop" component={ShopPage} />
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
         <Route path="/rabbit-breeding" component={RabbitBreedingPage} />
@@ -39,10 +68,13 @@ function Router() {
         <Route path="/policies/:policyType" component={PolicyPage} />
         <Route path="/policy" component={PolicyPage} />
         <Route path="/policy/:policyType" component={PolicyPage} />
+        
+        {/* Not Found */}
         <Route component={NotFound} />
       </Switch>
       
-      {showFloatingNav && (
+      {/* Only show floating nav on legacy routes */}
+      {showFloatingNav && isLegacyRoute && (
         <>
           <FloatingHeroNav />
           <FloatingHeroNavMobile />

@@ -18,7 +18,9 @@ type AuthContextType = {
 };
 
 type LoginData = Pick<InsertUser, "username" | "password">;
-type RegisterData = Pick<InsertUser, "username" | "password" | "name" | "role">;
+type RegisterData = Pick<InsertUser, "username" | "password" | "name" | "role"> & {
+  email?: string;
+};
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
