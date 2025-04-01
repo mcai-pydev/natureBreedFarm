@@ -29,6 +29,22 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
+// Middleware to ensure user is authenticated
+export const requireAuth = (req: any, res: any, next: any) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  next();
+};
+
+// Middleware to ensure user is admin
+export const requireAdmin = (req: any, res: any, next: any) => {
+  if (!req.isAuthenticated() || req.user.role !== "Admin") {
+    return res.status(403).json({ error: "Admin privileges required" });
+  }
+  next();
+};
+
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "farm-management-secret",

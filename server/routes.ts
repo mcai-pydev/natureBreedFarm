@@ -70,7 +70,7 @@ import {
 import { z } from "zod";
 
 // Import setupAuth from auth.ts after all other imports to prevent circular dependency
-import { setupAuth } from "./auth";
+import { setupAuth, requireAuth, requireAdmin } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup static files middleware
@@ -451,12 +451,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Newsletter API routes
-  app.get("/api/newsletter", async (req, res) => {
+  app.get("/api/newsletter", requireAdmin, async (req, res) => {
     try {
-      // Ensure user is authenticated and has admin role
-      if (!req.isAuthenticated() || req.user.role !== "Admin") {
-        return res.status(403).json({ error: "Unauthorized access" });
-      }
       
       const subscribers = await storage.getNewsletterSubscribers();
       res.json(subscribers);
