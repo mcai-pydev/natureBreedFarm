@@ -18,17 +18,20 @@ import {
   Instagram
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import CustomerNavbar from './customer-navbar';
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
   showHeader?: boolean;
   showFooter?: boolean;
+  useSimpleHeader?: boolean;
 }
 
 export function CustomerLayout({ 
   children, 
   showHeader = true,
-  showFooter = true
+  showFooter = true,
+  useSimpleHeader = false
 }: CustomerLayoutProps) {
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -55,7 +58,11 @@ export function CustomerLayout({
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      {showHeader && (
+      {showHeader && useSimpleHeader && (
+        <CustomerNavbar onAuthClick={() => navigate('/auth')} />
+      )}
+      
+      {showHeader && !useSimpleHeader && (
         <header className="border-b">
           {/* Top Bar */}
           <div className="bg-primary/5 py-2 px-4">

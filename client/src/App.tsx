@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { HelmetProvider } from 'react-helmet-async';
+import { ThemeProvider } from '@/components/theme/theme-provider';
 import NotFound from "@/pages/not-found";
 
 // Legacy pages (to be migrated)
@@ -19,6 +20,7 @@ import RabbitBreedingPage from "@/pages/rabbit-breeding-page-fixed";
 import LandingPage from "@/pages/landing-page";
 import AdminDashboard from "@/modules/admin/pages/admin-dashboard";
 import ShopPage from "@/modules/customer/pages/shop-page";
+import CheckoutPage from "@/modules/customer/pages/checkout-page";
 import AuthPage from "@/modules/common/pages/auth-page";
 
 import { ProtectedRoute } from "./lib/protected-route";
@@ -52,6 +54,7 @@ function Router() {
         
         {/* Customer routes (new) */}
         <Route path="/shop" component={ShopPage} />
+        <Route path="/checkout" component={CheckoutPage} />
         
         {/* Admin routes (new) */}
         <ProtectedRoute path="/admin" component={AdminDashboard} />
@@ -87,12 +90,14 @@ function Router() {
 function App() {
   return (
     <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Router />
-          <Toaster />
-        </AuthProvider>
-      </QueryClientProvider>
+      <ThemeProvider defaultTheme="system" storageKey="nature-breed-theme">
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <Router />
+            <Toaster />
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </HelmetProvider>
   );
 }
