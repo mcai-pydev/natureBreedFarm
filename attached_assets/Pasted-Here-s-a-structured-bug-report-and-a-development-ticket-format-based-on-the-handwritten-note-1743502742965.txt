@@ -1,0 +1,101 @@
+Here’s a **structured bug report** and a **development ticket** format based on the handwritten notes. These can be used in tools like Jira, Trello, GitHub Issues, etc.
+
+---
+
+## 🐞 **Structured Bug Report**
+
+### Title: Various UI/UX and Functional Issues in Registration and Chat Flow
+
+---
+
+**Environment:**  
+Platform/OS: [e.g., Android/iOS/Web]  
+App Version: [e.g., v1.0.3]  
+User: Mcenoch Oforha
+
+---
+
+**Reported Issues:**
+
+1. **Password Field Visibility**
+   - ❌ Password is not visible (possibly missing “show password” option or input is obscured).
+   - 🔒 No visibility toggle available.
+
+2. **Navigation:**
+   - 🔼 “Back” button (triangle symbol) does not return to the previous page.
+
+3. **Chat:**
+   - Cannot enter the chat section (click has no effect or transition fails).
+   - When both checkboxes are selected, the image turns green unexpectedly.
+
+4. **Email Field:**
+   - Only clean email address should be allowed; current input might accept non-email strings.
+
+---
+
+**Steps to Reproduce:**
+
+1. Go to registration form.
+2. Enter password → observe no visibility toggle.
+3. Navigate to overview screen → try to go back using arrow button.
+4. Try to enter chat → observe failure.
+5. Enter invalid email → check validation.
+
+---
+
+**Expected Behavior:**
+
+- Password should have a toggle for visibility.
+- Back navigation should return to the previous screen.
+- Chat should be accessible upon click.
+- Email input should validate email-only strings.
+
+---
+
+**Attachments:**
+- Handwritten notes (scanned)
+- Screenshots (if applicable)
+
+---
+
+## 🛠️ **Development Ticket: UI/UX and Feature Enhancements**
+
+---
+
+### Epic: App Polish and UX Improvements  
+**Assignee:** [Developer Name]  
+**Priority:** Medium  
+**Sprint:** [Sprint Name / Date Range]
+
+---
+
+**Task Breakdown:**
+
+1. **Design Improvements:**
+   - Improve layout of the **Home screen** – integrate logo more aesthetically.
+   - Set default **language selection** in user profile or onboarding.
+
+2. **Form Field Enhancements:**
+   - Place “Name” input in a single line.
+   - Replace term “Dozen” with "10 pcs" (context: likely refers to eggs).
+   - Clarify use of “Goat milk” – verify if it’s linked to currency conversion or pricing.
+   - Add **photo upload** option if needed.
+
+3. **Navigation & UX:**
+   - Fix “Back” arrow button behavior on overview screen.
+   - Allow access to Chat screen.
+   - Checkbox interaction should not unintentionally change image color (fix logic).
+
+4. **Contact Info Section:**
+   - Email input field must enforce proper email format.
+   - Add WhatsApp as an optional contact method.
+
+---
+
+**Notes:**
+- Green image might indicate a status, ensure it's only triggered under the right conditions.
+- Align wording with intended user language and clarity (e.g., replace ambiguous terms).
+
+---
+
+Let me know if you’d like these exported to a specific format (e.g., markdown, JSON, CSV for Jira import), or need help populating it into a project board.
