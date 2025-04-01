@@ -1,8 +1,10 @@
 import React from "react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import LanguageSelector from "@/components/ui/language-selector";
 import {
   LayoutDashboard,
   Package,
@@ -266,10 +268,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-background z-10 border-b h-16 flex items-center justify-between px-4 lg:px-6">
           <div className="flex items-center space-x-2">
-            <h1 className="text-lg font-semibold hidden md:inline-block">Farm Management Dashboard</h1>
+            <h1 className="text-lg font-semibold hidden md:inline-block">
+              {useTranslation().t('dashboard.welcome')}
+            </h1>
           </div>
           <div className="flex items-center space-x-2">
-            {/* Additional header content could go here */}
+            <LanguageSelector />
           </div>
         </header>
         <main className="flex-1 overflow-auto p-4 lg:p-6">

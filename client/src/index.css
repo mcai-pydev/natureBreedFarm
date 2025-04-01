@@ -10,4 +10,31 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+  
+  /* RTL Support */
+  [dir="rtl"] {
+    /* Adjust padding/margins for RTL */
+    .rtl-mirror {
+      @apply rotate-y-180;
+    }
+    
+    /* Flip icons for RTL */
+    .rtl-flip-icon {
+      @apply scale-x-[-1];
+    }
+    
+    /* Align text for RTL */
+    .text-start {
+      @apply text-right;
+    }
+    
+    .text-end {
+      @apply text-left;
+    }
+  }
+}
+
+/* Utility for bidirectional support */
+.rotate-y-180 {
+  transform: rotateY(180deg);
 }

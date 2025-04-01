@@ -1,0 +1,366 @@
+{
+  "app": {
+    "title": "Nature Breed Farm",
+    "tagline": "Agriculture durable pour un avenir meilleur"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "submit": "Soumettre",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "view": "Voir",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "logout": "Déconnexion",
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "welcome": "Bienvenue",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "language": "Langue",
+    "theme": "Thème",
+    "notification": "Notification",
+    "settings": "Paramètres",
+    "profile": "Profil",
+    "help": "Aide",
+    "about": "À propos"
+  },
+  "auth": {
+    "loginTitle": "Bon retour",
+    "registerTitle": "Rejoindre Nature Breed Farm",
+    "usernameLabel": "Nom d'utilisateur",
+    "emailLabel": "Email",
+    "passwordLabel": "Mot de passe",
+    "confirmPasswordLabel": "Confirmer le mot de passe",
+    "forgotPassword": "Mot de passe oublié?",
+    "noAccount": "Pas encore de compte?",
+    "haveAccount": "Vous avez déjà un compte?",
+    "loginSuccess": "Vous vous êtes connecté avec succès",
+    "registerSuccess": "Inscription réussie",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "invalidCredentials": "Nom d'utilisateur ou mot de passe invalide",
+    "emailInUse": "Cet email est déjà utilisé",
+    "usernameInUse": "Ce nom d'utilisateur est déjà utilisé",
+    "fullNameLabel": "Nom complet",
+    "addressLabel": "Adresse",
+    "phoneLabel": "Numéro de téléphone"
+  },
+  "dashboard": {
+    "welcome": "Bienvenue sur votre tableau de bord agricole",
+    "summary": "Résumé de la ferme",
+    "recentActivity": "Activité récente",
+    "quickActions": "Actions rapides",
+    "inventory": "Inventaire",
+    "salesOverview": "Aperçu des ventes",
+    "upcomingEvents": "Événements à venir",
+    "animalHealth": "Santé animale",
+    "farmExpenses": "Dépenses de la ferme",
+    "farmIncome": "Revenus de la ferme",
+    "reports": "Rapports"
+  },
+  "animals": {
+    "title": "Animaux",
+    "manage": "Gérer les animaux",
+    "add": "Ajouter un animal",
+    "edit": "Modifier un animal",
+    "delete": "Supprimer un animal",
+    "types": {
+      "goat": "Chèvre",
+      "fish": "Poisson",
+      "duck": "Canard",
+      "chicken": "Poulet",
+      "rabbit": "Lapin"
+    },
+    "details": {
+      "id": "ID",
+      "name": "Nom",
+      "type": "Type",
+      "breed": "Race",
+      "gender": "Sexe",
+      "birthDate": "Date de naissance",
+      "acquiredDate": "Date d'acquisition",
+      "status": "Statut",
+      "health": "Santé",
+      "parent": "Parent",
+      "weight": "Poids",
+      "price": "Prix",
+      "notes": "Notes"
+    },
+    "status": {
+      "active": "Actif",
+      "sold": "Vendu",
+      "deceased": "Décédé",
+      "quarantined": "Mis en quarantaine"
+    },
+    "health": {
+      "excellent": "Excellent",
+      "good": "Bon",
+      "fair": "Moyen",
+      "poor": "Mauvais"
+    },
+    "gender": {
+      "male": "Mâle",
+      "female": "Femelle"
+    }
+  },
+  "breeding": {
+    "title": "Reproduction",
+    "manage": "Gérer la reproduction",
+    "events": "Événements de reproduction",
+    "add": "Ajouter un événement de reproduction",
+    "edit": "Modifier un événement de reproduction",
+    "delete": "Supprimer un événement de reproduction",
+    "details": {
+      "maleParent": "Parent mâle",
+      "femaleParent": "Parent femelle",
+      "breedingDate": "Date de reproduction",
+      "expectedBirthDate": "Date de naissance prévue",
+      "actualBirthDate": "Date de naissance réelle",
+      "notes": "Notes",
+      "status": "Statut",
+      "offspring": "Progéniture",
+      "successRate": "Taux de réussite",
+      "geneticCompatibility": "Compatibilité génétique",
+      "inbreedingRisk": "Risque de consanguinité"
+    },
+    "status": {
+      "planned": "Planifié",
+      "inProgress": "En cours",
+      "successful": "Réussi",
+      "unsuccessful": "Échoué",
+      "cancelled": "Annulé"
+    },
+    "risk": {
+      "low": "Risque faible",
+      "medium": "Risque moyen",
+      "high": "Risque élevé",
+      "siblings": "Frères et sœurs",
+      "parentChild": "Parent-enfant",
+      "halfSiblings": "Demi-frères et sœurs"
+    },
+    "suggestions": {
+      "title": "Suggestions de reproduction",
+      "bestMatches": "Meilleures correspondances",
+      "compatibility": "Compatibilité",
+      "expectedOutcome": "Résultat attendu",
+      "geneticDiversity": "Diversité génétique"
+    }
+  },
+  "inventory": {
+    "title": "Inventaire",
+    "manage": "Gérer l'inventaire",
+    "add": "Ajouter un article",
+    "edit": "Modifier un article",
+    "delete": "Supprimer un article",
+    "details": {
+      "name": "Nom",
+      "category": "Catégorie",
+      "quantity": "Quantité",
+      "unit": "Unité",
+      "price": "Prix",
+      "supplier": "Fournisseur",
+      "lastRestockDate": "Dernière date de réapprovisionnement",
+      "expiryDate": "Date d'expiration",
+      "location": "Emplacement",
+      "minimumStockLevel": "Niveau de stock minimum",
+      "notes": "Notes"
+    },
+    "categories": {
+      "feed": "Alimentation",
+      "medicine": "Médicament",
+      "equipment": "Équipement",
+      "product": "Produit"
+    },
+    "notifications": {
+      "lowStock": "Alerte de stock bas",
+      "expired": "Alerte d'expiration",
+      "restockNeeded": "Réapprovisionnement nécessaire"
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "manage": "Gérer les transactions",
+    "add": "Ajouter une transaction",
+    "edit": "Modifier une transaction",
+    "delete": "Supprimer une transaction",
+    "details": {
+      "id": "ID",
+      "date": "Date",
+      "type": "Type",
+      "amount": "Montant",
+      "paymentMethod": "Méthode de paiement",
+      "status": "Statut",
+      "customer": "Client",
+      "supplier": "Fournisseur",
+      "notes": "Notes",
+      "items": "Articles"
+    },
+    "type": {
+      "sale": "Vente",
+      "purchase": "Achat",
+      "expense": "Dépense",
+      "income": "Revenu",
+      "auction": "Enchère"
+    },
+    "status": {
+      "pending": "En attente",
+      "completed": "Terminé",
+      "cancelled": "Annulé",
+      "refunded": "Remboursé"
+    },
+    "paymentMethod": {
+      "cash": "Espèces",
+      "creditCard": "Carte de crédit",
+      "bankTransfer": "Virement bancaire",
+      "mobilePayment": "Paiement mobile"
+    }
+  },
+  "reports": {
+    "title": "Rapports",
+    "generate": "Générer un rapport",
+    "export": "Exporter",
+    "print": "Imprimer",
+    "types": {
+      "sales": "Rapport des ventes",
+      "inventory": "Rapport d'inventaire",
+      "animals": "Rapport sur les animaux",
+      "expenses": "Rapport des dépenses",
+      "income": "Rapport des revenus",
+      "breeding": "Rapport de reproduction",
+      "production": "Rapport de production"
+    },
+    "period": {
+      "daily": "Quotidien",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel",
+      "quarterly": "Trimestriel",
+      "yearly": "Annuel",
+      "custom": "Personnalisé"
+    },
+    "charts": {
+      "salesTrend": "Tendance des ventes",
+      "inventoryLevel": "Niveau d'inventaire",
+      "animalPopulation": "Population animale",
+      "expenseBreakdown": "Répartition des dépenses",
+      "incomeSource": "Source de revenus",
+      "profitMargin": "Marge bénéficiaire",
+      "breedingSuccess": "Succès de reproduction"
+    }
+  },
+  "shop": {
+    "title": "Boutique de la ferme",
+    "categories": "Catégories",
+    "products": "Produits",
+    "cart": "Panier",
+    "checkout": "Paiement",
+    "orderHistory": "Historique des commandes",
+    "productDetails": "Détails du produit",
+    "addToCart": "Ajouter au panier",
+    "buyNow": "Acheter maintenant",
+    "outOfStock": "Rupture de stock",
+    "inStock": "En stock",
+    "quantity": "Quantité",
+    "price": "Prix",
+    "total": "Total",
+    "continueShopping": "Continuer les achats",
+    "placeOrder": "Passer la commande",
+    "paymentInfo": "Informations de paiement",
+    "shippingInfo": "Informations d'expédition",
+    "orderSummary": "Récapitulatif de la commande",
+    "orderSuccess": "Commande passée avec succès",
+    "emptyCart": "Votre panier est vide",
+    "relatedProducts": "Produits associés",
+    "featuredProducts": "Produits en vedette",
+    "newArrivals": "Nouveautés",
+    "search": "Rechercher des produits",
+    "filter": "Filtrer les produits",
+    "sort": "Trier les produits",
+    "freeShipping": "Livraison gratuite pour les commandes de plus de",
+    "callUs": "Appelez-nous",
+    "sortOptions": {
+      "priceLowToHigh": "Prix: croissant",
+      "priceHighToLow": "Prix: décroissant",
+      "newest": "Plus récent d'abord",
+      "popularity": "Popularité"
+    },
+    "newsletter": {
+      "title": "Abonnez-vous à notre newsletter",
+      "description": "Recevez les dernières mises à jour sur les nouveaux produits et les promotions spéciales",
+      "placeholder": "Entrez votre email",
+      "subscribe": "S'abonner",
+      "success": "Vous vous êtes abonné avec succès à notre newsletter",
+      "error": "Échec de l'abonnement à la newsletter"
+    },
+    "bulkOrder": {
+      "title": "Commande en gros",
+      "description": "Pour les commandes importantes, remplissez ce formulaire et nous vous contacterons",
+      "name": "Nom",
+      "email": "Email",
+      "phone": "Téléphone",
+      "productInterest": "Produits d'intérêt",
+      "quantity": "Quantité estimée",
+      "additionalInfo": "Informations supplémentaires",
+      "submit": "Soumettre la demande",
+      "success": "Demande de commande en gros soumise avec succès",
+      "error": "Échec de la soumission de la demande de commande en gros"
+    }
+  },
+  "email": {
+    "subscription": {
+      "subject": "Bienvenue à la newsletter de Nature Breed Farm",
+      "greeting": "Bonjour,",
+      "body": "Merci de vous être abonné à notre newsletter. Vous recevrez des mises à jour sur les nouveaux produits, les promotions spéciales et les actualités de la ferme.",
+      "closing": "Cordialement,",
+      "signature": "L'équipe de Nature Breed Farm"
+    },
+    "order": {
+      "subject": "Confirmation de commande - Nature Breed Farm",
+      "greeting": "Cher(e) {{name}},",
+      "thankYou": "Merci pour votre commande!",
+      "orderDetails": "Détails de la commande:",
+      "orderNumber": "Numéro de commande: {{orderNumber}}",
+      "orderDate": "Date de commande: {{orderDate}}",
+      "paymentMethod": "Méthode de paiement: {{paymentMethod}}",
+      "shippingAddress": "Adresse de livraison:",
+      "items": "Articles:",
+      "subtotal": "Sous-total:",
+      "shipping": "Livraison:",
+      "tax": "Taxe:",
+      "total": "Total:",
+      "support": "Si vous avez des questions, veuillez contacter notre équipe d'assistance.",
+      "closing": "Merci d'avoir fait vos achats chez nous!",
+      "signature": "L'équipe de Nature Breed Farm"
+    },
+    "contact": {
+      "subject": "Merci d'avoir contacté Nature Breed Farm",
+      "greeting": "Cher(e) {{name}},",
+      "thankYou": "Merci de nous avoir contactés!",
+      "message": "Nous avons reçu votre message et nous vous répondrons dès que possible.",
+      "query": "Votre demande: {{query}}",
+      "closing": "Cordialement,",
+      "signature": "L'équipe de Nature Breed Farm"
+    }
+  },
+  "errors": {
+    "required": "Ce champ est obligatoire",
+    "invalidEmail": "Veuillez entrer une adresse email valide",
+    "minLength": "Ce champ doit comporter au moins {{count}} caractères",
+    "maxLength": "Ce champ ne doit pas dépasser {{count}} caractères",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "invalidNumber": "Veuillez entrer un nombre valide",
+    "serverError": "Erreur serveur, veuillez réessayer plus tard",
+    "notFound": "Non trouvé",
+    "unauthorized": "Accès non autorisé",
+    "forbidden": "Accès interdit",
+    "conflict": "Conflit de ressources",
+    "badRequest": "Requête incorrecte",
+    "timeout": "Délai d'attente de la requête dépassé",
+    "offline": "Vous êtes hors ligne",
+    "unknown": "Une erreur inconnue s'est produite"
+  }
+}

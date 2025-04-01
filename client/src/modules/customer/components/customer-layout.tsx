@@ -1,6 +1,9 @@
 import React from "react";
 import { useLocation, Link } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { CurrencyDisplay } from "@/components/ui/currency-display";
+import LanguageSelector from "@/components/ui/language-selector";
 import {
   ShoppingBag,
   Search,
@@ -32,13 +35,15 @@ export function CustomerLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [cartCount, setCartCount] = React.useState(0);
 
+  const { t } = useTranslation();
+  
   // Navigation items
   const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Shop", href: "/shop" },
-    { label: "About", href: "/about" },
-    { label: "Blog", href: "/blog" },
-    { label: "Contact", href: "/contact" },
+    { label: t('nav.home'), href: "/" },
+    { label: t('nav.shop'), href: "/shop" },
+    { label: t('nav.about'), href: "/about" },
+    { label: t('nav.blog'), href: "/blog" },
+    { label: t('nav.contact'), href: "/contact" },
   ];
 
   // Function to determine if a nav item is active
@@ -55,9 +60,14 @@ export function CustomerLayout({
           {/* Top Bar */}
           <div className="bg-primary/5 py-2 px-4">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
-              <p className="text-xs text-muted-foreground">Free shipping on orders over $100</p>
-              <div className="text-xs">
-                <a href="tel:+1234567890" className="text-foreground hover:text-primary">Call us: (123) 456-7890</a>
+              <p className="text-xs text-muted-foreground">
+                {useTranslation().t('shop.freeShipping')} <CurrencyDisplay amount={100} />
+              </p>
+              <div className="flex items-center space-x-4">
+                <a href="tel:+1234567890" className="text-xs text-foreground hover:text-primary">
+                  {useTranslation().t('shop.callUs')}: (123) 456-7890
+                </a>
+                <LanguageSelector />
               </div>
             </div>
           </div>
@@ -129,7 +139,7 @@ export function CustomerLayout({
                   <Link href="/auth">
                     <a>
                       <Button variant="outline" size="sm" className="hidden md:flex">
-                        Login / Register
+                        {useTranslation().t('auth.loginOrRegister')}
                       </Button>
                     </a>
                   </Link>
@@ -178,7 +188,7 @@ export function CustomerLayout({
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input 
                       type="search" 
-                      placeholder="Search products..." 
+                      placeholder={t('shop.search')} 
                       className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
@@ -186,7 +196,7 @@ export function CustomerLayout({
                 
                 <nav className="space-y-6">
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Menu</p>
+                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t('nav.menu')}</p>
                     {navItems.map((item) => (
                       <Link key={item.href} href={item.href}>
                         <a 
@@ -204,7 +214,7 @@ export function CustomerLayout({
                   </div>
                   
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Account</p>
+                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t('auth.account')}</p>
                     {user ? (
                       <>
                         <Link href="/account">
@@ -243,7 +253,7 @@ export function CustomerLayout({
                           className="block py-2 text-base font-medium text-foreground hover:text-primary"
                           onClick={() => setMobileMenuOpen(false)}
                         >
-                          Login / Register
+                          {useTranslation().t('auth.loginOrRegister')}
                         </a>
                       </Link>
                     )}
@@ -251,7 +261,7 @@ export function CustomerLayout({
                 </nav>
                 
                 <div className="mt-8 pt-6 border-t">
-                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">Connect with us</p>
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">{t('footer.connectWithUs')}</p>
                   <div className="flex space-x-4">
                     <a href="#" className="text-foreground hover:text-primary">
                       <Facebook className="h-5 w-5" />
@@ -302,7 +312,7 @@ export function CustomerLayout({
             </div>
             
             <div>
-              <h3 className="font-semibold text-foreground mb-4">Quick Links</h3>
+              <h3 className="font-semibold text-foreground mb-4">{t('footer.quickLinks')}</h3>
               <ul className="space-y-2 text-sm">
                 {navItems.map((item) => (
                   <li key={item.href}>
@@ -317,7 +327,7 @@ export function CustomerLayout({
             </div>
             
             <div>
-              <h3 className="font-semibold text-foreground mb-4">Customer Service</h3>
+              <h3 className="font-semibold text-foreground mb-4">{t('footer.customerService')}</h3>
               <ul className="space-y-2 text-sm">
                 <li><a href="#" className="hover:text-primary">FAQs</a></li>
                 <li><a href="#" className="hover:text-primary">Shipping & Returns</a></li>
@@ -327,7 +337,7 @@ export function CustomerLayout({
             </div>
             
             <div>
-              <h3 className="font-semibold text-foreground mb-4">Contact Us</h3>
+              <h3 className="font-semibold text-foreground mb-4">{t('nav.contact')}</h3>
               <address className="not-italic text-sm space-y-2">
                 <p>123 Farm Road, Countryside</p>
                 <p>State, Country, 12345</p>

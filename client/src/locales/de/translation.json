@@ -1,0 +1,366 @@
+{
+  "app": {
+    "title": "Nature Breed Farm",
+    "tagline": "Nachhaltige Landwirtschaft für eine bessere Zukunft"
+  },
+  "common": {
+    "loading": "Wird geladen...",
+    "error": "Ein Fehler ist aufgetreten",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "submit": "Absenden",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "view": "Ansehen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "logout": "Abmelden",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "welcome": "Willkommen",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "sort": "Sortieren",
+    "language": "Sprache",
+    "theme": "Design",
+    "notification": "Benachrichtigung",
+    "settings": "Einstellungen",
+    "profile": "Profil",
+    "help": "Hilfe",
+    "about": "Über uns"
+  },
+  "auth": {
+    "loginTitle": "Willkommen zurück",
+    "registerTitle": "Bei Nature Breed Farm registrieren",
+    "usernameLabel": "Benutzername",
+    "emailLabel": "E-Mail",
+    "passwordLabel": "Passwort",
+    "confirmPasswordLabel": "Passwort bestätigen",
+    "forgotPassword": "Passwort vergessen?",
+    "noAccount": "Noch kein Konto?",
+    "haveAccount": "Bereits ein Konto?",
+    "loginSuccess": "Sie haben sich erfolgreich angemeldet",
+    "registerSuccess": "Registrierung erfolgreich",
+    "passwordMismatch": "Passwörter stimmen nicht überein",
+    "invalidCredentials": "Ungültiger Benutzername oder Passwort",
+    "emailInUse": "E-Mail wird bereits verwendet",
+    "usernameInUse": "Benutzername wird bereits verwendet",
+    "fullNameLabel": "Vollständiger Name",
+    "addressLabel": "Adresse",
+    "phoneLabel": "Telefonnummer"
+  },
+  "dashboard": {
+    "welcome": "Willkommen zu Ihrem Farm-Dashboard",
+    "summary": "Farm-Übersicht",
+    "recentActivity": "Letzte Aktivitäten",
+    "quickActions": "Schnellaktionen",
+    "inventory": "Bestand",
+    "salesOverview": "Verkaufsübersicht",
+    "upcomingEvents": "Kommende Ereignisse",
+    "animalHealth": "Tiergesundheit",
+    "farmExpenses": "Farmausgaben",
+    "farmIncome": "Farmeinkommen",
+    "reports": "Berichte"
+  },
+  "animals": {
+    "title": "Tiere",
+    "manage": "Tiere verwalten",
+    "add": "Tier hinzufügen",
+    "edit": "Tier bearbeiten",
+    "delete": "Tier löschen",
+    "types": {
+      "goat": "Ziege",
+      "fish": "Fisch",
+      "duck": "Ente",
+      "chicken": "Huhn",
+      "rabbit": "Kaninchen"
+    },
+    "details": {
+      "id": "ID",
+      "name": "Name",
+      "type": "Typ",
+      "breed": "Rasse",
+      "gender": "Geschlecht",
+      "birthDate": "Geburtsdatum",
+      "acquiredDate": "Erwerbsdatum",
+      "status": "Status",
+      "health": "Gesundheit",
+      "parent": "Elternteil",
+      "weight": "Gewicht",
+      "price": "Preis",
+      "notes": "Notizen"
+    },
+    "status": {
+      "active": "Aktiv",
+      "sold": "Verkauft",
+      "deceased": "Verstorben",
+      "quarantined": "Unter Quarantäne"
+    },
+    "health": {
+      "excellent": "Ausgezeichnet",
+      "good": "Gut",
+      "fair": "Mittelmäßig",
+      "poor": "Schlecht"
+    },
+    "gender": {
+      "male": "Männlich",
+      "female": "Weiblich"
+    }
+  },
+  "breeding": {
+    "title": "Zucht",
+    "manage": "Zucht verwalten",
+    "events": "Zuchtereignisse",
+    "add": "Zuchtereignis hinzufügen",
+    "edit": "Zuchtereignis bearbeiten",
+    "delete": "Zuchtereignis löschen",
+    "details": {
+      "maleParent": "Männliches Elternteil",
+      "femaleParent": "Weibliches Elternteil",
+      "breedingDate": "Zuchtdatum",
+      "expectedBirthDate": "Voraussichtliches Geburtsdatum",
+      "actualBirthDate": "Tatsächliches Geburtsdatum",
+      "notes": "Notizen",
+      "status": "Status",
+      "offspring": "Nachkommen",
+      "successRate": "Erfolgsrate",
+      "geneticCompatibility": "Genetische Kompatibilität",
+      "inbreedingRisk": "Inzuchtrisiko"
+    },
+    "status": {
+      "planned": "Geplant",
+      "inProgress": "In Bearbeitung",
+      "successful": "Erfolgreich",
+      "unsuccessful": "Erfolglos",
+      "cancelled": "Abgebrochen"
+    },
+    "risk": {
+      "low": "Niedriges Risiko",
+      "medium": "Mittleres Risiko",
+      "high": "Hohes Risiko",
+      "siblings": "Geschwister",
+      "parentChild": "Elternteil-Kind",
+      "halfSiblings": "Halbgeschwister"
+    },
+    "suggestions": {
+      "title": "Zuchtvorschläge",
+      "bestMatches": "Beste Übereinstimmungen",
+      "compatibility": "Kompatibilität",
+      "expectedOutcome": "Erwartetes Ergebnis",
+      "geneticDiversity": "Genetische Vielfalt"
+    }
+  },
+  "inventory": {
+    "title": "Bestand",
+    "manage": "Bestand verwalten",
+    "add": "Artikel hinzufügen",
+    "edit": "Artikel bearbeiten",
+    "delete": "Artikel löschen",
+    "details": {
+      "name": "Name",
+      "category": "Kategorie",
+      "quantity": "Menge",
+      "unit": "Einheit",
+      "price": "Preis",
+      "supplier": "Lieferant",
+      "lastRestockDate": "Letztes Auffülldatum",
+      "expiryDate": "Ablaufdatum",
+      "location": "Standort",
+      "minimumStockLevel": "Mindestbestand",
+      "notes": "Notizen"
+    },
+    "categories": {
+      "feed": "Futter",
+      "medicine": "Medizin",
+      "equipment": "Ausrüstung",
+      "product": "Produkt"
+    },
+    "notifications": {
+      "lowStock": "Niedriger Bestand Alarm",
+      "expired": "Ablauf Alarm",
+      "restockNeeded": "Nachfüllen erforderlich"
+    }
+  },
+  "transactions": {
+    "title": "Transaktionen",
+    "manage": "Transaktionen verwalten",
+    "add": "Transaktion hinzufügen",
+    "edit": "Transaktion bearbeiten",
+    "delete": "Transaktion löschen",
+    "details": {
+      "id": "ID",
+      "date": "Datum",
+      "type": "Typ",
+      "amount": "Betrag",
+      "paymentMethod": "Zahlungsmethode",
+      "status": "Status",
+      "customer": "Kunde",
+      "supplier": "Lieferant",
+      "notes": "Notizen",
+      "items": "Artikel"
+    },
+    "type": {
+      "sale": "Verkauf",
+      "purchase": "Einkauf",
+      "expense": "Ausgabe",
+      "income": "Einkommen",
+      "auction": "Auktion"
+    },
+    "status": {
+      "pending": "Ausstehend",
+      "completed": "Abgeschlossen",
+      "cancelled": "Abgebrochen",
+      "refunded": "Erstattet"
+    },
+    "paymentMethod": {
+      "cash": "Bargeld",
+      "creditCard": "Kreditkarte",
+      "bankTransfer": "Banküberweisung",
+      "mobilePayment": "Mobile Zahlung"
+    }
+  },
+  "reports": {
+    "title": "Berichte",
+    "generate": "Bericht generieren",
+    "export": "Exportieren",
+    "print": "Drucken",
+    "types": {
+      "sales": "Verkaufsbericht",
+      "inventory": "Bestandsbericht",
+      "animals": "Tierbericht",
+      "expenses": "Ausgabenbericht",
+      "income": "Einkommensbericht",
+      "breeding": "Zuchtbericht",
+      "production": "Produktionsbericht"
+    },
+    "period": {
+      "daily": "Täglich",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich",
+      "quarterly": "Vierteljährlich",
+      "yearly": "Jährlich",
+      "custom": "Benutzerdefiniert"
+    },
+    "charts": {
+      "salesTrend": "Verkaufstrend",
+      "inventoryLevel": "Bestandsniveau",
+      "animalPopulation": "Tierpopulation",
+      "expenseBreakdown": "Ausgabenaufschlüsselung",
+      "incomeSource": "Einkommensquelle",
+      "profitMargin": "Gewinnmarge",
+      "breedingSuccess": "Zuchterfolg"
+    }
+  },
+  "shop": {
+    "title": "Hofladen",
+    "categories": "Kategorien",
+    "products": "Produkte",
+    "cart": "Warenkorb",
+    "checkout": "Zur Kasse",
+    "orderHistory": "Bestellverlauf",
+    "productDetails": "Produktdetails",
+    "addToCart": "In den Warenkorb",
+    "buyNow": "Jetzt kaufen",
+    "outOfStock": "Nicht auf Lager",
+    "inStock": "Auf Lager",
+    "quantity": "Menge",
+    "price": "Preis",
+    "total": "Gesamt",
+    "continueShopping": "Weiter einkaufen",
+    "placeOrder": "Bestellung aufgeben",
+    "paymentInfo": "Zahlungsinformationen",
+    "shippingInfo": "Versandinformationen",
+    "orderSummary": "Bestellübersicht",
+    "orderSuccess": "Bestellung erfolgreich aufgegeben",
+    "emptyCart": "Ihr Warenkorb ist leer",
+    "relatedProducts": "Ähnliche Produkte",
+    "featuredProducts": "Empfohlene Produkte",
+    "newArrivals": "Neuheiten",
+    "search": "Produkte suchen",
+    "filter": "Produkte filtern",
+    "sort": "Produkte sortieren",
+    "freeShipping": "Kostenloser Versand bei Bestellungen über",
+    "callUs": "Rufen Sie uns an",
+    "sortOptions": {
+      "priceLowToHigh": "Preis: Niedrig zu Hoch",
+      "priceHighToLow": "Preis: Hoch zu Niedrig",
+      "newest": "Neueste zuerst",
+      "popularity": "Beliebtheit"
+    },
+    "newsletter": {
+      "title": "Melden Sie sich für unseren Newsletter an",
+      "description": "Erhalten Sie die neuesten Updates zu neuen Produkten und Sonderaktionen",
+      "placeholder": "E-Mail-Adresse eingeben",
+      "subscribe": "Abonnieren",
+      "success": "Sie haben unseren Newsletter erfolgreich abonniert",
+      "error": "Fehler beim Abonnieren des Newsletters"
+    },
+    "bulkOrder": {
+      "title": "Großbestellung",
+      "description": "Für große Bestellungen füllen Sie dieses Formular aus und wir werden Sie kontaktieren",
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "productInterest": "Interessante Produkte",
+      "quantity": "Geschätzte Menge",
+      "additionalInfo": "Zusätzliche Informationen",
+      "submit": "Anfrage einreichen",
+      "success": "Großbestellungsanfrage erfolgreich übermittelt",
+      "error": "Fehler beim Übermitteln der Großbestellungsanfrage"
+    }
+  },
+  "email": {
+    "subscription": {
+      "subject": "Willkommen zum Nature Breed Farm Newsletter",
+      "greeting": "Hallo,",
+      "body": "Vielen Dank für Ihr Abonnement unseres Newsletters. Sie erhalten Updates zu neuen Produkten, Sonderaktionen und Neuigkeiten von der Farm.",
+      "closing": "Mit freundlichen Grüßen,",
+      "signature": "Das Nature Breed Farm Team"
+    },
+    "order": {
+      "subject": "Bestellbestätigung - Nature Breed Farm",
+      "greeting": "Sehr geehrte(r) {{name}},",
+      "thankYou": "Vielen Dank für Ihre Bestellung!",
+      "orderDetails": "Bestelldetails:",
+      "orderNumber": "Bestellnummer: {{orderNumber}}",
+      "orderDate": "Bestelldatum: {{orderDate}}",
+      "paymentMethod": "Zahlungsmethode: {{paymentMethod}}",
+      "shippingAddress": "Lieferadresse:",
+      "items": "Artikel:",
+      "subtotal": "Zwischensumme:",
+      "shipping": "Versand:",
+      "tax": "Steuer:",
+      "total": "Gesamtsumme:",
+      "support": "Bei Fragen kontaktieren Sie bitte unser Support-Team.",
+      "closing": "Vielen Dank für Ihren Einkauf bei uns!",
+      "signature": "Das Nature Breed Farm Team"
+    },
+    "contact": {
+      "subject": "Vielen Dank für Ihre Kontaktaufnahme mit Nature Breed Farm",
+      "greeting": "Sehr geehrte(r) {{name}},",
+      "thankYou": "Vielen Dank für Ihre Kontaktaufnahme!",
+      "message": "Wir haben Ihre Nachricht erhalten und werden uns so schnell wie möglich bei Ihnen melden.",
+      "query": "Ihre Anfrage: {{query}}",
+      "closing": "Mit freundlichen Grüßen,",
+      "signature": "Das Nature Breed Farm Team"
+    }
+  },
+  "errors": {
+    "required": "Dieses Feld ist erforderlich",
+    "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "minLength": "Dieses Feld muss mindestens {{count}} Zeichen lang sein",
+    "maxLength": "Dieses Feld darf {{count}} Zeichen nicht überschreiten",
+    "passwordMismatch": "Passwörter stimmen nicht überein",
+    "invalidNumber": "Bitte geben Sie eine gültige Zahl ein",
+    "serverError": "Serverfehler, bitte versuchen Sie es später erneut",
+    "notFound": "Nicht gefunden",
+    "unauthorized": "Unbefugter Zugriff",
+    "forbidden": "Verbotener Zugriff",
+    "conflict": "Ressourcenkonflikt",
+    "badRequest": "Ungültige Anfrage",
+    "timeout": "Zeitüberschreitung der Anfrage",
+    "offline": "Sie sind offline",
+    "unknown": "Unbekannter Fehler aufgetreten"
+  }
+}

@@ -1,0 +1,366 @@
+{
+  "app": {
+    "title": "Nature Breed Farm",
+    "tagline": "Sustainable Farming for a Better Future"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register",
+    "welcome": "Welcome",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "language": "Language",
+    "theme": "Theme",
+    "notification": "Notification",
+    "settings": "Settings",
+    "profile": "Profile",
+    "help": "Help",
+    "about": "About"
+  },
+  "auth": {
+    "loginTitle": "Welcome Back",
+    "registerTitle": "Join Nature Breed Farm",
+    "usernameLabel": "Username",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "loginSuccess": "You have successfully logged in",
+    "registerSuccess": "Registration successful",
+    "passwordMismatch": "Passwords do not match",
+    "invalidCredentials": "Invalid username or password",
+    "emailInUse": "Email is already in use",
+    "usernameInUse": "Username is already in use",
+    "fullNameLabel": "Full Name",
+    "addressLabel": "Address",
+    "phoneLabel": "Phone Number"
+  },
+  "dashboard": {
+    "welcome": "Welcome to your farm dashboard",
+    "summary": "Farm Summary",
+    "recentActivity": "Recent Activity",
+    "quickActions": "Quick Actions",
+    "inventory": "Inventory",
+    "salesOverview": "Sales Overview",
+    "upcomingEvents": "Upcoming Events",
+    "animalHealth": "Animal Health",
+    "farmExpenses": "Farm Expenses",
+    "farmIncome": "Farm Income",
+    "reports": "Reports"
+  },
+  "animals": {
+    "title": "Animals",
+    "manage": "Manage Animals",
+    "add": "Add Animal",
+    "edit": "Edit Animal",
+    "delete": "Delete Animal",
+    "types": {
+      "goat": "Goat",
+      "fish": "Fish",
+      "duck": "Duck",
+      "chicken": "Chicken",
+      "rabbit": "Rabbit"
+    },
+    "details": {
+      "id": "ID",
+      "name": "Name",
+      "type": "Type",
+      "breed": "Breed",
+      "gender": "Gender",
+      "birthDate": "Birth Date",
+      "acquiredDate": "Acquired Date",
+      "status": "Status",
+      "health": "Health",
+      "parent": "Parent",
+      "weight": "Weight",
+      "price": "Price",
+      "notes": "Notes"
+    },
+    "status": {
+      "active": "Active",
+      "sold": "Sold",
+      "deceased": "Deceased",
+      "quarantined": "Quarantined"
+    },
+    "health": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "fair": "Fair",
+      "poor": "Poor"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    }
+  },
+  "breeding": {
+    "title": "Breeding",
+    "manage": "Manage Breeding",
+    "events": "Breeding Events",
+    "add": "Add Breeding Event",
+    "edit": "Edit Breeding Event",
+    "delete": "Delete Breeding Event",
+    "details": {
+      "maleParent": "Male Parent",
+      "femaleParent": "Female Parent",
+      "breedingDate": "Breeding Date",
+      "expectedBirthDate": "Expected Birth Date",
+      "actualBirthDate": "Actual Birth Date",
+      "notes": "Notes",
+      "status": "Status",
+      "offspring": "Offspring",
+      "successRate": "Success Rate",
+      "geneticCompatibility": "Genetic Compatibility",
+      "inbreedingRisk": "Inbreeding Risk"
+    },
+    "status": {
+      "planned": "Planned",
+      "inProgress": "In Progress",
+      "successful": "Successful",
+      "unsuccessful": "Unsuccessful",
+      "cancelled": "Cancelled"
+    },
+    "risk": {
+      "low": "Low Risk",
+      "medium": "Medium Risk",
+      "high": "High Risk",
+      "siblings": "Siblings",
+      "parentChild": "Parent-Child",
+      "halfSiblings": "Half-Siblings"
+    },
+    "suggestions": {
+      "title": "Breeding Suggestions",
+      "bestMatches": "Best Matches",
+      "compatibility": "Compatibility",
+      "expectedOutcome": "Expected Outcome",
+      "geneticDiversity": "Genetic Diversity"
+    }
+  },
+  "inventory": {
+    "title": "Inventory",
+    "manage": "Manage Inventory",
+    "add": "Add Item",
+    "edit": "Edit Item",
+    "delete": "Delete Item",
+    "details": {
+      "name": "Name",
+      "category": "Category",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "price": "Price",
+      "supplier": "Supplier",
+      "lastRestockDate": "Last Restock Date",
+      "expiryDate": "Expiry Date",
+      "location": "Location",
+      "minimumStockLevel": "Minimum Stock Level",
+      "notes": "Notes"
+    },
+    "categories": {
+      "feed": "Feed",
+      "medicine": "Medicine",
+      "equipment": "Equipment",
+      "product": "Product"
+    },
+    "notifications": {
+      "lowStock": "Low Stock Alert",
+      "expired": "Expiry Alert",
+      "restockNeeded": "Restock Needed"
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "manage": "Manage Transactions",
+    "add": "Add Transaction",
+    "edit": "Edit Transaction",
+    "delete": "Delete Transaction",
+    "details": {
+      "id": "ID",
+      "date": "Date",
+      "type": "Type",
+      "amount": "Amount",
+      "paymentMethod": "Payment Method",
+      "status": "Status",
+      "customer": "Customer",
+      "supplier": "Supplier",
+      "notes": "Notes",
+      "items": "Items"
+    },
+    "type": {
+      "sale": "Sale",
+      "purchase": "Purchase",
+      "expense": "Expense",
+      "income": "Income",
+      "auction": "Auction"
+    },
+    "status": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded"
+    },
+    "paymentMethod": {
+      "cash": "Cash",
+      "creditCard": "Credit Card",
+      "bankTransfer": "Bank Transfer",
+      "mobilePayment": "Mobile Payment"
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "generate": "Generate Report",
+    "export": "Export",
+    "print": "Print",
+    "types": {
+      "sales": "Sales Report",
+      "inventory": "Inventory Report",
+      "animals": "Animals Report",
+      "expenses": "Expenses Report",
+      "income": "Income Report",
+      "breeding": "Breeding Report",
+      "production": "Production Report"
+    },
+    "period": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "yearly": "Yearly",
+      "custom": "Custom"
+    },
+    "charts": {
+      "salesTrend": "Sales Trend",
+      "inventoryLevel": "Inventory Level",
+      "animalPopulation": "Animal Population",
+      "expenseBreakdown": "Expense Breakdown",
+      "incomeSource": "Income Source",
+      "profitMargin": "Profit Margin",
+      "breedingSuccess": "Breeding Success"
+    }
+  },
+  "shop": {
+    "title": "Farm Shop",
+    "categories": "Categories",
+    "products": "Products",
+    "cart": "Shopping Cart",
+    "checkout": "Checkout",
+    "orderHistory": "Order History",
+    "productDetails": "Product Details",
+    "addToCart": "Add to Cart",
+    "buyNow": "Buy Now",
+    "outOfStock": "Out of Stock",
+    "inStock": "In Stock",
+    "quantity": "Quantity",
+    "price": "Price",
+    "total": "Total",
+    "continueShopping": "Continue Shopping",
+    "placeOrder": "Place Order",
+    "paymentInfo": "Payment Information",
+    "shippingInfo": "Shipping Information",
+    "orderSummary": "Order Summary",
+    "orderSuccess": "Order Placed Successfully",
+    "emptyCart": "Your cart is empty",
+    "relatedProducts": "Related Products",
+    "featuredProducts": "Featured Products",
+    "newArrivals": "New Arrivals",
+    "search": "Search Products",
+    "filter": "Filter Products",
+    "sort": "Sort Products",
+    "freeShipping": "Free shipping on orders over",
+    "callUs": "Call us",
+    "sortOptions": {
+      "priceLowToHigh": "Price: Low to High",
+      "priceHighToLow": "Price: High to Low",
+      "newest": "Newest First",
+      "popularity": "Popularity"
+    },
+    "newsletter": {
+      "title": "Subscribe to Our Newsletter",
+      "description": "Get the latest updates on new products and special promotions",
+      "placeholder": "Enter your email",
+      "subscribe": "Subscribe",
+      "success": "You have successfully subscribed to our newsletter",
+      "error": "Failed to subscribe to newsletter"
+    },
+    "bulkOrder": {
+      "title": "Bulk Order",
+      "description": "For large orders, fill out this form and we'll contact you",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "productInterest": "Products of Interest",
+      "quantity": "Estimated Quantity",
+      "additionalInfo": "Additional Information",
+      "submit": "Submit Inquiry",
+      "success": "Bulk order inquiry submitted successfully",
+      "error": "Failed to submit bulk order inquiry"
+    }
+  },
+  "email": {
+    "subscription": {
+      "subject": "Welcome to Nature Breed Farm Newsletter",
+      "greeting": "Hello,",
+      "body": "Thank you for subscribing to our newsletter. You will receive updates on new products, special promotions, and farm news.",
+      "closing": "Best regards,",
+      "signature": "The Nature Breed Farm Team"
+    },
+    "order": {
+      "subject": "Order Confirmation - Nature Breed Farm",
+      "greeting": "Dear {{name}},",
+      "thankYou": "Thank you for your order!",
+      "orderDetails": "Order Details:",
+      "orderNumber": "Order Number: {{orderNumber}}",
+      "orderDate": "Order Date: {{orderDate}}",
+      "paymentMethod": "Payment Method: {{paymentMethod}}",
+      "shippingAddress": "Shipping Address:",
+      "items": "Items:",
+      "subtotal": "Subtotal:",
+      "shipping": "Shipping:",
+      "tax": "Tax:",
+      "total": "Total:",
+      "support": "If you have any questions, please contact our support team.",
+      "closing": "Thank you for shopping with us!",
+      "signature": "The Nature Breed Farm Team"
+    },
+    "contact": {
+      "subject": "Thank You for Contacting Nature Breed Farm",
+      "greeting": "Dear {{name}},",
+      "thankYou": "Thank you for contacting us!",
+      "message": "We have received your message and will get back to you as soon as possible.",
+      "query": "Your Query: {{query}}",
+      "closing": "Best regards,",
+      "signature": "The Nature Breed Farm Team"
+    }
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "minLength": "This field must be at least {{count}} characters long",
+    "maxLength": "This field must not exceed {{count}} characters",
+    "passwordMismatch": "Passwords do not match",
+    "invalidNumber": "Please enter a valid number",
+    "serverError": "Server error, please try again later",
+    "notFound": "Not found",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Forbidden access",
+    "conflict": "Resource conflict",
+    "badRequest": "Bad request",
+    "timeout": "Request timed out",
+    "offline": "You are offline",
+    "unknown": "Unknown error occurred"
+  }
+}

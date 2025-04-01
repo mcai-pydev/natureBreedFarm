@@ -1,0 +1,366 @@
+{
+  "app": {
+    "title": "مزرعة نيتشر بريد",
+    "tagline": "زراعة مستدامة لمستقبل أفضل"
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "error": "حدث خطأ",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "submit": "تقديم",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "view": "عرض",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "logout": "تسجيل الخروج",
+    "login": "تسجيل الدخول",
+    "register": "تسجيل",
+    "welcome": "مرحباً",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب",
+    "language": "اللغة",
+    "theme": "المظهر",
+    "notification": "إشعار",
+    "settings": "الإعدادات",
+    "profile": "الملف الشخصي",
+    "help": "مساعدة",
+    "about": "نبذة عنا"
+  },
+  "auth": {
+    "loginTitle": "مرحباً بك مرة أخرى",
+    "registerTitle": "انضم إلى مزرعة نيتشر بريد",
+    "usernameLabel": "اسم المستخدم",
+    "emailLabel": "البريد الإلكتروني",
+    "passwordLabel": "كلمة المرور",
+    "confirmPasswordLabel": "تأكيد كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccount": "ليس لديك حساب؟",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "loginSuccess": "تم تسجيل الدخول بنجاح",
+    "registerSuccess": "تم التسجيل بنجاح",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "invalidCredentials": "اسم المستخدم أو كلمة المرور غير صحيحة",
+    "emailInUse": "البريد الإلكتروني مستخدم بالفعل",
+    "usernameInUse": "اسم المستخدم مستخدم بالفعل",
+    "fullNameLabel": "الاسم الكامل",
+    "addressLabel": "العنوان",
+    "phoneLabel": "رقم الهاتف"
+  },
+  "dashboard": {
+    "welcome": "مرحباً بك في لوحة تحكم المزرعة",
+    "summary": "ملخص المزرعة",
+    "recentActivity": "النشاط الأخير",
+    "quickActions": "إجراءات سريعة",
+    "inventory": "المخزون",
+    "salesOverview": "نظرة عامة على المبيعات",
+    "upcomingEvents": "الأحداث القادمة",
+    "animalHealth": "صحة الحيوان",
+    "farmExpenses": "نفقات المزرعة",
+    "farmIncome": "دخل المزرعة",
+    "reports": "التقارير"
+  },
+  "animals": {
+    "title": "الحيوانات",
+    "manage": "إدارة الحيوانات",
+    "add": "إضافة حيوان",
+    "edit": "تعديل حيوان",
+    "delete": "حذف حيوان",
+    "types": {
+      "goat": "ماعز",
+      "fish": "سمك",
+      "duck": "بط",
+      "chicken": "دجاج",
+      "rabbit": "أرنب"
+    },
+    "details": {
+      "id": "المعرف",
+      "name": "الاسم",
+      "type": "النوع",
+      "breed": "السلالة",
+      "gender": "الجنس",
+      "birthDate": "تاريخ الميلاد",
+      "acquiredDate": "تاريخ الاقتناء",
+      "status": "الحالة",
+      "health": "الصحة",
+      "parent": "الأب",
+      "weight": "الوزن",
+      "price": "السعر",
+      "notes": "ملاحظات"
+    },
+    "status": {
+      "active": "نشط",
+      "sold": "مباع",
+      "deceased": "متوفى",
+      "quarantined": "في الحجر الصحي"
+    },
+    "health": {
+      "excellent": "ممتاز",
+      "good": "جيد",
+      "fair": "مقبول",
+      "poor": "ضعيف"
+    },
+    "gender": {
+      "male": "ذكر",
+      "female": "أنثى"
+    }
+  },
+  "breeding": {
+    "title": "التربية",
+    "manage": "إدارة التربية",
+    "events": "أحداث التربية",
+    "add": "إضافة حدث تربية",
+    "edit": "تعديل حدث تربية",
+    "delete": "حذف حدث تربية",
+    "details": {
+      "maleParent": "الأب",
+      "femaleParent": "الأم",
+      "breedingDate": "تاريخ التربية",
+      "expectedBirthDate": "تاريخ الولادة المتوقع",
+      "actualBirthDate": "تاريخ الولادة الفعلي",
+      "notes": "ملاحظات",
+      "status": "الحالة",
+      "offspring": "النسل",
+      "successRate": "معدل النجاح",
+      "geneticCompatibility": "التوافق الجيني",
+      "inbreedingRisk": "خطر التربية الداخلية"
+    },
+    "status": {
+      "planned": "مخطط",
+      "inProgress": "قيد التنفيذ",
+      "successful": "ناجح",
+      "unsuccessful": "غير ناجح",
+      "cancelled": "ملغى"
+    },
+    "risk": {
+      "low": "خطر منخفض",
+      "medium": "خطر متوسط",
+      "high": "خطر مرتفع",
+      "siblings": "أشقاء",
+      "parentChild": "أب-طفل",
+      "halfSiblings": "نصف أشقاء"
+    },
+    "suggestions": {
+      "title": "اقتراحات التربية",
+      "bestMatches": "أفضل التطابقات",
+      "compatibility": "التوافق",
+      "expectedOutcome": "النتيجة المتوقعة",
+      "geneticDiversity": "التنوع الجيني"
+    }
+  },
+  "inventory": {
+    "title": "المخزون",
+    "manage": "إدارة المخزون",
+    "add": "إضافة عنصر",
+    "edit": "تعديل عنصر",
+    "delete": "حذف عنصر",
+    "details": {
+      "name": "الاسم",
+      "category": "الفئة",
+      "quantity": "الكمية",
+      "unit": "الوحدة",
+      "price": "السعر",
+      "supplier": "المورد",
+      "lastRestockDate": "تاريخ آخر تجديد",
+      "expiryDate": "تاريخ انتهاء الصلاحية",
+      "location": "الموقع",
+      "minimumStockLevel": "الحد الأدنى للمخزون",
+      "notes": "ملاحظات"
+    },
+    "categories": {
+      "feed": "العلف",
+      "medicine": "الدواء",
+      "equipment": "المعدات",
+      "product": "المنتج"
+    },
+    "notifications": {
+      "lowStock": "تنبيه المخزون المنخفض",
+      "expired": "تنبيه انتهاء الصلاحية",
+      "restockNeeded": "بحاجة للتجديد"
+    }
+  },
+  "transactions": {
+    "title": "المعاملات",
+    "manage": "إدارة المعاملات",
+    "add": "إضافة معاملة",
+    "edit": "تعديل معاملة",
+    "delete": "حذف معاملة",
+    "details": {
+      "id": "المعرف",
+      "date": "التاريخ",
+      "type": "النوع",
+      "amount": "المبلغ",
+      "paymentMethod": "طريقة الدفع",
+      "status": "الحالة",
+      "customer": "العميل",
+      "supplier": "المورد",
+      "notes": "ملاحظات",
+      "items": "العناصر"
+    },
+    "type": {
+      "sale": "بيع",
+      "purchase": "شراء",
+      "expense": "نفقة",
+      "income": "دخل",
+      "auction": "مزاد"
+    },
+    "status": {
+      "pending": "قيد الانتظار",
+      "completed": "مكتمل",
+      "cancelled": "ملغى",
+      "refunded": "مسترد"
+    },
+    "paymentMethod": {
+      "cash": "نقدًا",
+      "creditCard": "بطاقة ائتمان",
+      "bankTransfer": "تحويل بنكي",
+      "mobilePayment": "دفع عبر الجوال"
+    }
+  },
+  "reports": {
+    "title": "التقارير",
+    "generate": "إنشاء تقرير",
+    "export": "تصدير",
+    "print": "طباعة",
+    "types": {
+      "sales": "تقرير المبيعات",
+      "inventory": "تقرير المخزون",
+      "animals": "تقرير الحيوانات",
+      "expenses": "تقرير النفقات",
+      "income": "تقرير الدخل",
+      "breeding": "تقرير التربية",
+      "production": "تقرير الإنتاج"
+    },
+    "period": {
+      "daily": "يومي",
+      "weekly": "أسبوعي",
+      "monthly": "شهري",
+      "quarterly": "ربع سنوي",
+      "yearly": "سنوي",
+      "custom": "مخصص"
+    },
+    "charts": {
+      "salesTrend": "اتجاه المبيعات",
+      "inventoryLevel": "مستوى المخزون",
+      "animalPopulation": "تعداد الحيوانات",
+      "expenseBreakdown": "تفصيل النفقات",
+      "incomeSource": "مصدر الدخل",
+      "profitMargin": "هامش الربح",
+      "breedingSuccess": "نجاح التربية"
+    }
+  },
+  "shop": {
+    "title": "متجر المزرعة",
+    "categories": "الفئات",
+    "products": "المنتجات",
+    "cart": "سلة التسوق",
+    "checkout": "إتمام الشراء",
+    "orderHistory": "سجل الطلبات",
+    "productDetails": "تفاصيل المنتج",
+    "addToCart": "إضافة إلى السلة",
+    "buyNow": "شراء الآن",
+    "outOfStock": "غير متوفر",
+    "inStock": "متوفر",
+    "quantity": "الكمية",
+    "price": "السعر",
+    "total": "الإجمالي",
+    "continueShopping": "متابعة التسوق",
+    "placeOrder": "تقديم الطلب",
+    "paymentInfo": "معلومات الدفع",
+    "shippingInfo": "معلومات الشحن",
+    "orderSummary": "ملخص الطلب",
+    "orderSuccess": "تم تقديم الطلب بنجاح",
+    "emptyCart": "سلة التسوق فارغة",
+    "relatedProducts": "منتجات ذات صلة",
+    "featuredProducts": "منتجات مميزة",
+    "newArrivals": "وصل حديثًا",
+    "search": "البحث عن منتجات",
+    "filter": "تصفية المنتجات",
+    "sort": "ترتيب المنتجات",
+    "freeShipping": "شحن مجاني للطلبات التي تزيد عن",
+    "callUs": "اتصل بنا",
+    "sortOptions": {
+      "priceLowToHigh": "السعر: من الأقل إلى الأعلى",
+      "priceHighToLow": "السعر: من الأعلى إلى الأقل",
+      "newest": "الأحدث أولاً",
+      "popularity": "الشعبية"
+    },
+    "newsletter": {
+      "title": "اشترك في نشرتنا الإخبارية",
+      "description": "احصل على آخر التحديثات حول المنتجات الجديدة والعروض الخاصة",
+      "placeholder": "أدخل بريدك الإلكتروني",
+      "subscribe": "اشتراك",
+      "success": "لقد اشتركت بنجاح في نشرتنا الإخبارية",
+      "error": "فشل الاشتراك في النشرة الإخبارية"
+    },
+    "bulkOrder": {
+      "title": "طلب بالجملة",
+      "description": "للطلبات الكبيرة، املأ هذا النموذج وسنتصل بك",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "productInterest": "المنتجات التي تهمك",
+      "quantity": "الكمية التقديرية",
+      "additionalInfo": "معلومات إضافية",
+      "submit": "تقديم الاستفسار",
+      "success": "تم تقديم استفسار الطلب بالجملة بنجاح",
+      "error": "فشل تقديم استفسار الطلب بالجملة"
+    }
+  },
+  "email": {
+    "subscription": {
+      "subject": "مرحبًا بك في النشرة الإخبارية لمزرعة نيتشر بريد",
+      "greeting": "مرحبًا،",
+      "body": "شكرًا لاشتراكك في نشرتنا الإخبارية. ستتلقى تحديثات حول المنتجات الجديدة والعروض الخاصة وأخبار المزرعة.",
+      "closing": "مع أطيب التحيات،",
+      "signature": "فريق مزرعة نيتشر بريد"
+    },
+    "order": {
+      "subject": "تأكيد الطلب - مزرعة نيتشر بريد",
+      "greeting": "عزيزي/عزيزتي {{name}}،",
+      "thankYou": "شكرًا على طلبك!",
+      "orderDetails": "تفاصيل الطلب:",
+      "orderNumber": "رقم الطلب: {{orderNumber}}",
+      "orderDate": "تاريخ الطلب: {{orderDate}}",
+      "paymentMethod": "طريقة الدفع: {{paymentMethod}}",
+      "shippingAddress": "عنوان الشحن:",
+      "items": "العناصر:",
+      "subtotal": "المجموع الفرعي:",
+      "shipping": "الشحن:",
+      "tax": "الضريبة:",
+      "total": "الإجمالي:",
+      "support": "إذا كان لديك أي أسئلة، يرجى الاتصال بفريق الدعم لدينا.",
+      "closing": "شكرًا للتسوق معنا!",
+      "signature": "فريق مزرعة نيتشر بريد"
+    },
+    "contact": {
+      "subject": "شكرًا للتواصل مع مزرعة نيتشر بريد",
+      "greeting": "عزيزي/عزيزتي {{name}}،",
+      "thankYou": "شكرًا للتواصل معنا!",
+      "message": "لقد تلقينا رسالتك وسنرد عليك في أقرب وقت ممكن.",
+      "query": "استفسارك: {{query}}",
+      "closing": "مع أطيب التحيات،",
+      "signature": "فريق مزرعة نيتشر بريد"
+    }
+  },
+  "errors": {
+    "required": "هذا الحقل مطلوب",
+    "invalidEmail": "يرجى إدخال عنوان بريد إلكتروني صالح",
+    "minLength": "يجب أن يحتوي هذا الحقل على {{count}} أحرف على الأقل",
+    "maxLength": "يجب ألا يتجاوز هذا الحقل {{count}} حرفًا",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "invalidNumber": "يرجى إدخال رقم صالح",
+    "serverError": "خطأ في الخادم، يرجى المحاولة لاحقًا",
+    "notFound": "غير موجود",
+    "unauthorized": "وصول غير مصرح به",
+    "forbidden": "وصول محظور",
+    "conflict": "تعارض في المورد",
+    "badRequest": "طلب غير صالح",
+    "timeout": "انتهى وقت الطلب",
+    "offline": "أنت غير متصل بالإنترنت",
+    "unknown": "حدث خطأ غير معروف"
+  }
+}
