@@ -34,7 +34,7 @@ function Router() {
         <Route path="/shop" component={ShopPage} />
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
-        <ProtectedRoute path="/rabbit-breeding" component={RabbitBreedingPage} />
+        <Route path="/rabbit-breeding" component={RabbitBreedingPage} />
         <Route path="/policies" component={PolicyPage} />
         <Route path="/policies/:policyType" component={PolicyPage} />
         <Route path="/policy" component={PolicyPage} />

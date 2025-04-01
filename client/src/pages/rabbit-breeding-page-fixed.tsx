@@ -1166,7 +1166,7 @@ export default function RabbitBreedingPage() {
                 </Dialog>
               </CardHeader>
               <CardContent>
-                {eventsLoading ? (
+                {breedingEventsLoading ? (
                   <div className="text-center p-4">Loading breeding events...</div>
                 ) : breedingEvents.length === 0 ? (
                   <div className="text-center p-8">
