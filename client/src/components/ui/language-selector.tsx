@@ -30,6 +30,10 @@ export default function LanguageSelector() {
     de: "Deutsch",
     fr: "Français",
     ar: "العربية",
+    sw: "Kiswahili",
+    ha: "Hausa",
+    yo: "Yorùbá",
+    ig: "Igbo"
   };
 
   return (

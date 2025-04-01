@@ -7,6 +7,10 @@ import translationEN from '../locales/en/translation.json';
 import translationDE from '../locales/de/translation.json';
 import translationFR from '../locales/fr/translation.json';
 import translationAR from '../locales/ar/translation.json';
+import translationSW from '../locales/sw/translation.json';
+import translationHA from '../locales/ha/translation.json';
+import translationYO from '../locales/yo/translation.json';
+import translationIG from '../locales/ig/translation.json';
 
 // The translations resources
 const resources = {
@@ -21,6 +25,18 @@ const resources = {
   },
   ar: {
     translation: translationAR
+  },
+  sw: {
+    translation: translationSW
+  },
+  ha: {
+    translation: translationHA
+  },
+  yo: {
+    translation: translationYO
+  },
+  ig: {
+    translation: translationIG
   }
 };
 
@@ -55,7 +71,11 @@ export const formatLocalCurrency = (amount: number, locale: string = i18n.langua
     'en': 'USD',
     'de': 'EUR',
     'fr': 'EUR',
-    'ar': 'AED'
+    'ar': 'AED',
+    'sw': 'KES', // Kenyan Shilling (commonly used in Swahili-speaking regions)
+    'ha': 'NGN', // Nigerian Naira (commonly used in Northern Nigeria where Hausa is spoken)
+    'yo': 'NGN', // Nigerian Naira (commonly used in Southern Nigeria where Yoruba is spoken)
+    'ig': 'NGN'  // Nigerian Naira (commonly used in Eastern Nigeria where Igbo is spoken)
   };
 
   // Get appropriate currency code for the locale

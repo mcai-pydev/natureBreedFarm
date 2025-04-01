@@ -1,0 +1,142 @@
+{
+  "app": {
+    "name": "Nature Breed Farm",
+    "loading": "Inapakia...",
+    "error": "Hitilafu imetokea",
+    "mobileMenu": "Menyu ya simu",
+    "close": "Funga",
+    "loadMore": "Pakia zaidi",
+    "goBack": "Rudi nyuma",
+    "save": "Hifadhi",
+    "cancel": "Ghairi",
+    "success": "Mafanikio",
+    "warning": "Onyo",
+    "info": "Habari"
+  },
+  "nav": {
+    "dashboard": "Dashibodi",
+    "shop": "Duka",
+    "home": "Nyumbani",
+    "animals": "Wanyama", 
+    "products": "Bidhaa",
+    "insights": "Ufahamu",
+    "reports": "Ripoti",
+    "about": "Kuhusu",
+    "contact": "Wasiliana",
+    "search": "Tafuta...",
+    "orders": "Maagizo",
+    "logout": "Toka",
+    "login": "Ingia",
+    "register": "Jiandikishe",
+    "myAccount": "Akaunti Yangu",
+    "admin": "Msimamizi"
+  },
+  "langSelector": {
+    "language": "Lugha"
+  },
+  "account": {
+    "profile": "Wasifu",
+    "settings": "Mipangilio",
+    "myOrders": "Maagizo Yangu",
+    "savedItems": "Vipengee Vilivyohifadhiwa"
+  },
+  "auth": {
+    "login": "Ingia",
+    "register": "Jiandikishe",
+    "email": "Barua pepe",
+    "password": "Nywila",
+    "confirmPassword": "Thibitisha Nywila",
+    "forgotPassword": "Umesahau Nywila?",
+    "username": "Jina la mtumiaji",
+    "passwordLength": "Nywila lazima iwe na angalau herufi 8",
+    "passwordMismatch": "Nywila hazifanani"
+  },
+  "shop": {
+    "title": "Duka",
+    "filters": "Vichujio",
+    "filter": "Chuja",
+    "sort": "Panga",
+    "search": "Tafuta...",
+    "category": "Kategoria",
+    "price": "Bei",
+    "stockStatus": "Hali ya Hisa",
+    "inStock": "Ipo",
+    "outOfStock": "Imekwisha",
+    "addToCart": "Ongeza kwenye Rukwama",
+    "viewDetails": "Tazama Maelezo",
+    "bulkOrder": "Agizo la Jumla",
+    "productType": "Aina ya Bidhaa",
+    "apply": "Tumia",
+    "reset": "Weka upya",
+    "sortBy": "Panga kwa",
+    "newest": "Mpya zaidi",
+    "priceLowToHigh": "Bei: Chini hadi Juu",
+    "priceHighToLow": "Bei: Juu hadi Chini",
+    "popularity": "Umaarufu",
+    "noProducts": "Hakuna bidhaa kupatikana"
+  },
+  "product": {
+    "details": "Maelezo ya Bidhaa",
+    "price": "Bei",
+    "stock": "Akiba",
+    "description": "Maelezo",
+    "quantity": "Kiasi",
+    "addToCart": "Ongeza kwenye Rukwama",
+    "viewDetails": "Tazama Maelezo",
+    "availableFrom": "Inapatikana kuanzia",
+    "farmLocation": "Eneo la Shamba",
+    "share": "Shiriki",
+    "related": "Bidhaa Zinazohusiana"
+  },
+  "cart": {
+    "title": "Rukwama la Ununuzi",
+    "empty": "Rukwama lako la ununuzi ni tupu",
+    "continueShopping": "Endelea Kununua",
+    "checkout": "Lipia",
+    "remove": "Ondoa",
+    "total": "Jumla",
+    "subtotal": "Jumla ndogo",
+    "shipping": "Usafirishaji",
+    "tax": "Kodi",
+    "itemsInCart": "Vipengee katika rukwama",
+    "quantity": "Kiasi",
+    "viewCart": "Tazama Rukwama",
+    "update": "Sasisha Rukwama"
+  },
+  "footer": {
+    "quickLinks": "Viungo vya Haraka",
+    "customerService": "Huduma kwa Wateja",
+    "newsletter": "Jarida",
+    "subscribeText": "Jiandikishe kwa ajili ya matoleo muhimu na matoleo mapya",
+    "subscribe": "Jiandikishe",
+    "copyright": "Hakimiliki",
+    "allRightsReserved": "Haki zote zimehifadhiwa",
+    "privacyPolicy": "Sera ya Faragha",
+    "termsOfService": "Masharti ya Huduma"
+  },
+  "form": {
+    "required": "Inahitajika",
+    "invalidEmail": "Barua pepe batili",
+    "submit": "Wasilisha",
+    "success": "Imewasilishwa kwa mafanikio",
+    "error": "Kuna hitilafu. Tafadhali jaribu tena"
+  },
+  "animalTypes": {
+    "goat": "Mbuzi",
+    "fish": "Samaki",
+    "duck": "Bata",
+    "chicken": "Kuku",
+    "rabbit": "Sungura"
+  },
+  "animalBreeding": {
+    "title": "Kuzalisha Wanyama",
+    "addAnimal": "Ongeza Mnyama",
+    "editAnimal": "Hariri Mnyama",
+    "deleteAnimal": "Futa Mnyama",
+    "animalDetails": "Maelezo ya Mnyama",
+    "addBreedingEvent": "Ongeza Tukio la Kuzalisha",
+    "breedingHistory": "Historia ya Kuzalisha",
+    "potentialMates": "Wenza wa Kuzalisha Wanaowezekana",
+    "inbreedingRisk": "Hatari ya Kuzalisha ndani"
+  }
+}

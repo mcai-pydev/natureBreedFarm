@@ -1,0 +1,142 @@
+{
+  "app": {
+    "name": "Nature Breed Farm",
+    "loading": "Ana loading...",
+    "error": "Kuskure ya faru",
+    "mobileMenu": "Menu na wayar hannu",
+    "close": "Rufe",
+    "loadMore": "Ƙara lodi",
+    "goBack": "Koma baya",
+    "save": "Ajiye",
+    "cancel": "Soke",
+    "success": "Nasara",
+    "warning": "Gargaɗi",
+    "info": "Bayani"
+  },
+  "nav": {
+    "dashboard": "Dashbord",
+    "shop": "Shago",
+    "home": "Gida",
+    "animals": "Dabbobi", 
+    "products": "Kayayyaki",
+    "insights": "Basira",
+    "reports": "Rahotanni",
+    "about": "Game da mu",
+    "contact": "Tuntuɓi mu",
+    "search": "Bincike...",
+    "orders": "Oda",
+    "logout": "Fita",
+    "login": "Shiga",
+    "register": "Yi rijista",
+    "myAccount": "Asusuna",
+    "admin": "Admin"
+  },
+  "langSelector": {
+    "language": "Harshe"
+  },
+  "account": {
+    "profile": "Bayani",
+    "settings": "Saituna",
+    "myOrders": "Odan na",
+    "savedItems": "Ajiyayun kaya"
+  },
+  "auth": {
+    "login": "Shiga",
+    "register": "Yi rijista",
+    "email": "Imel",
+    "password": "Kalmar sirri",
+    "confirmPassword": "Tabbatar da kalmar sirri",
+    "forgotPassword": "Ka manta kalmar sirri?",
+    "username": "Sunan mai amfani",
+    "passwordLength": "Kalmar sirri ya kamata ta kasance haruffa 8 ko fiye",
+    "passwordMismatch": "Kalmomin sirri ba su dace ba"
+  },
+  "shop": {
+    "title": "Shago",
+    "filters": "Tace",
+    "filter": "Tace",
+    "sort": "Shirya",
+    "search": "Bincike...",
+    "category": "Nau'i",
+    "price": "Farashin",
+    "stockStatus": "Matsayin ajiya",
+    "inStock": "Yana da shi",
+    "outOfStock": "Baya da shi",
+    "addToCart": "Ƙara zuwa kwandon",
+    "viewDetails": "Duba cikakken bayani",
+    "bulkOrder": "Odar yawa",
+    "productType": "Nau'in kaya",
+    "apply": "Aiwatar",
+    "reset": "Sake saiti",
+    "sortBy": "Shirya ta",
+    "newest": "Sabbin",
+    "priceLowToHigh": "Farashi: Ƙasa zuwa Sama",
+    "priceHighToLow": "Farashi: Sama zuwa Ƙasa",
+    "popularity": "Shahara",
+    "noProducts": "Babu kayayyaki da aka samu"
+  },
+  "product": {
+    "details": "Cikakken bayani",
+    "price": "Farashi",
+    "stock": "Ajiya",
+    "description": "Bayani",
+    "quantity": "Yawa",
+    "addToCart": "Ƙara zuwa kwandon",
+    "viewDetails": "Duba cikakken bayani",
+    "availableFrom": "Ana samunsa daga",
+    "farmLocation": "Wurin gona",
+    "share": "Raba",
+    "related": "Kayayyaki masu alaƙa"
+  },
+  "cart": {
+    "title": "Kwandon saye",
+    "empty": "Kwandon sayenka babu komai",
+    "continueShopping": "Ci gaba da saye",
+    "checkout": "Biyan kuɗi",
+    "remove": "Cire",
+    "total": "Jimla",
+    "subtotal": "Subtotal",
+    "shipping": "Jigilar kaya",
+    "tax": "Haraji",
+    "itemsInCart": "Kayayyaki a cikin kwando",
+    "quantity": "Yawa",
+    "viewCart": "Duba kwandon",
+    "update": "Sabunta kwandon"
+  },
+  "footer": {
+    "quickLinks": "Hanyoyin sauri",
+    "customerService": "Hidimar abokin ciniki",
+    "newsletter": "Jarida",
+    "subscribeText": "Yi rajista don karɓar sabbin bayanai da sanarwa",
+    "subscribe": "Yi rajista",
+    "copyright": "Hakkin mallaka",
+    "allRightsReserved": "Duk haƙƙoƙi ana adana su",
+    "privacyPolicy": "Manufar sirri",
+    "termsOfService": "Sharuɗɗan hidima"
+  },
+  "form": {
+    "required": "Ana buƙata",
+    "invalidEmail": "Imel mara inganci",
+    "submit": "Aika",
+    "success": "An mika cikin nasara",
+    "error": "Kuskure ya faru. Da fatan za a sake gwadawa"
+  },
+  "animalTypes": {
+    "goat": "Akuya",
+    "fish": "Kifi",
+    "duck": "Agwagwa",
+    "chicken": "Kaza",
+    "rabbit": "Zomo"
+  },
+  "animalBreeding": {
+    "title": "Ɗaukar Dabbobi",
+    "addAnimal": "Ƙara Dabba",
+    "editAnimal": "Gyara Dabba",
+    "deleteAnimal": "Share Dabba",
+    "animalDetails": "Cikakken bayani na dabba",
+    "addBreedingEvent": "Ƙara Ɓullar Haifuwa",
+    "breedingHistory": "Tarihin haifuwa",
+    "potentialMates": "Ma'aurata na yiwuwa",
+    "inbreedingRisk": "Haɗarin haifar da ciki a cikin iyali"
+  }
+}

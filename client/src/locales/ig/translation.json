@@ -1,0 +1,142 @@
+{
+  "app": {
+    "name": "Nature Breed Farm",
+    "loading": "Ọ na-ebudata...",
+    "error": "Nsogbu emeela",
+    "mobileMenu": "Menu ekwentị",
+    "close": "Mechie",
+    "loadMore": "Tinye ọzọ",
+    "goBack": "Laghachi azụ",
+    "save": "Chekwaa",
+    "cancel": "Kagbuo",
+    "success": "Ihe ịga nke ọma",
+    "warning": "Ịdọ aka ná ntị",
+    "info": "Ozi"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "shop": "Ụlọ ahịa",
+    "home": "Ụlọ",
+    "animals": "Anụmanụ", 
+    "products": "Ngwá ahịa",
+    "insights": "Uche",
+    "reports": "Akụkọ",
+    "about": "Banyere anyị",
+    "contact": "Kpọtụrụ anyị",
+    "search": "Chọọ...",
+    "orders": "Iwu",
+    "logout": "Pụọ",
+    "login": "Banye",
+    "register": "Debanye aha",
+    "myAccount": "Akaụntụ m",
+    "admin": "Nchịkwa"
+  },
+  "langSelector": {
+    "language": "Asụsụ"
+  },
+  "account": {
+    "profile": "Profaịlụ",
+    "settings": "Ntọala",
+    "myOrders": "Iwu m",
+    "savedItems": "Ihe edebere"
+  },
+  "auth": {
+    "login": "Banye",
+    "register": "Debanye aha",
+    "email": "Email",
+    "password": "Okwuntughe",
+    "confirmPassword": "Kwenye okwuntughe",
+    "forgotPassword": "Ị chefuru okwuntughe?",
+    "username": "Aha njirimara",
+    "passwordLength": "Okwuntughe ga-abụrịrị ihe karịrị mkpụrụedemede 8",
+    "passwordMismatch": "Okwuntughe adabaghị"
+  },
+  "shop": {
+    "title": "Ụlọ ahịa",
+    "filters": "Ihe nzacha",
+    "filter": "Zacha",
+    "sort": "Hazie",
+    "search": "Chọọ...",
+    "category": "Ngalaba",
+    "price": "Ọnụ ahịa",
+    "stockStatus": "Ọnọdụ akụrụngwa",
+    "inStock": "Ọ dị n'akụ",
+    "outOfStock": "Ọ dịghị n'akụ",
+    "addToCart": "Tinye na ụgbọ",
+    "viewDetails": "Lee nkọwa",
+    "bulkOrder": "Iwu nnukwu",
+    "productType": "Ụdị ngwaahịa",
+    "apply": "Tinye",
+    "reset": "Tọgharia",
+    "sortBy": "Hazie site na",
+    "newest": "Kacha ọhụrụ",
+    "priceLowToHigh": "Ọnụ ahịa: Ala ruo Elu",
+    "priceHighToLow": "Ọnụ ahịa: Elu ruo Ala",
+    "popularity": "Ọtụtụ mmadụ na-amakarị",
+    "noProducts": "Enweghị ngwaahịa a hụrụ"
+  },
+  "product": {
+    "details": "Nkọwa ngwaahịa",
+    "price": "Ọnụ ahịa",
+    "stock": "Akụ",
+    "description": "Nkọwa",
+    "quantity": "Ọnụ ọgụgụ",
+    "addToCart": "Tinye na ụgbọ",
+    "viewDetails": "Lee nkọwa",
+    "availableFrom": "Ọ dị site na",
+    "farmLocation": "Ọnọdụ ubi",
+    "share": "Kee",
+    "related": "Ngwaahịa yiri ya"
+  },
+  "cart": {
+    "title": "Ụgbọ azụmaahịa",
+    "empty": "Ụgbọ gị fọrọ afọ",
+    "continueShopping": "Gaa n'ihu na-azụ ahịa",
+    "checkout": "Kwalite",
+    "remove": "Wepụ",
+    "total": "Mkpokọta",
+    "subtotal": "Nkeji mkpokọta",
+    "shipping": "Mbupu",
+    "tax": "Ụtụ isi",
+    "itemsInCart": "Ihe dị n'ụgbọ",
+    "quantity": "Ọnụ ọgụgụ",
+    "viewCart": "Lee ụgbọ",
+    "update": "Kwalite ụgbọ"
+  },
+  "footer": {
+    "quickLinks": "Njikọ ngwa ngwa",
+    "customerService": "Ọrụ ndị ahịa",
+    "newsletter": "Akwụkwọ akụkọ",
+    "subscribeText": "Debanye aha maka ozi dị mkpa na mmepe ọhụrụ",
+    "subscribe": "Debanye aha",
+    "copyright": "Ikike ọrụaka",
+    "allRightsReserved": "Echekwara ikike niile",
+    "privacyPolicy": "Iwu nzuzo",
+    "termsOfService": "Usoro ọrụ"
+  },
+  "form": {
+    "required": "Ọ dị mkpa",
+    "invalidEmail": "Email na-ezighị ezi",
+    "submit": "Nyefee",
+    "success": "Enyere nke ọma",
+    "error": "Nsogbu emeela. Biko nwaa ọzọ"
+  },
+  "animalTypes": {
+    "goat": "Ewu",
+    "fish": "Azụ",
+    "duck": "Ọba",
+    "chicken": "Ọkụkọ",
+    "rabbit": "Ewi"
+  },
+  "animalBreeding": {
+    "title": "Ịzụlite anụmanụ",
+    "addAnimal": "Tinye anụmanụ",
+    "editAnimal": "Dezie anụmanụ",
+    "deleteAnimal": "Kpochapụ anụmanụ",
+    "animalDetails": "Nkọwa anụmanụ",
+    "addBreedingEvent": "Tinye mmemme ọmụmụ",
+    "breedingHistory": "Akụkọ ọmụmụ",
+    "potentialMates": "Ndị mwakọ dị egwu",
+    "inbreedingRisk": "Ihe egwu ọmụmụ ezinaụlọ"
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "app": {
+    "name": "Nature Breed Farm",
+    "loading": "Ń gbé...",
+    "error": "Àṣìṣe kan ṣẹlẹ̀",
+    "mobileMenu": "Àkójọ fóònù",
+    "close": "Pa",
+    "loadMore": "Fi síi",
+    "goBack": "Padà sẹ́yìn",
+    "save": "Fi pamọ́",
+    "cancel": "Fagilé",
+    "success": "Àṣeyọrí",
+    "warning": "Ìkìlọ̀",
+    "info": "Ìfitónilétí"
+  },
+  "nav": {
+    "dashboard": "Pánẹ́ẹ̀lì",
+    "shop": "Ìlé ọjà",
+    "home": "Ilé",
+    "animals": "Àwọn ẹranko", 
+    "products": "Àwọn ọjà",
+    "insights": "Àwọn ìmọ̀ràn",
+    "reports": "Àwọn ìjábọ̀",
+    "about": "Nípa wa",
+    "contact": "Kan sí wa",
+    "search": "Àwárí...",
+    "orders": "Àwọn àṣẹ",
+    "logout": "Jáde",
+    "login": "Wọlé",
+    "register": "Forúkọsílẹ̀",
+    "myAccount": "Àkáùntì mi",
+    "admin": "Alákòóso"
+  },
+  "langSelector": {
+    "language": "Èdè"
+  },
+  "account": {
+    "profile": "Pròfáìlì",
+    "settings": "Ètò",
+    "myOrders": "Àwọn àṣẹ mi",
+    "savedItems": "Àwọn ohun tí a fi pamọ́"
+  },
+  "auth": {
+    "login": "Wọlé",
+    "register": "Forúkọsílẹ̀",
+    "email": "Ímeèlì",
+    "password": "Ọ̀rọ̀ aṣínà",
+    "confirmPassword": "Jẹ́rìí ọ̀rọ̀ aṣínà",
+    "forgotPassword": "O gbàgbé ọ̀rọ̀ aṣínà?",
+    "username": "Orúkọ aṣàmúlò",
+    "passwordLength": "Ọ̀rọ̀ aṣínà gbọ́dọ̀ jẹ́ ó kéré jù lẹ́tà 8",
+    "passwordMismatch": "Àwọn ọ̀rọ̀ aṣínà kò bára wọn mu"
+  },
+  "shop": {
+    "title": "Ilé Ọjà",
+    "filters": "Àwọn asẹ",
+    "filter": "Àlẹ̀mọ́",
+    "sort": "Ìtò",
+    "search": "Àwárí...",
+    "category": "Ẹ̀ka",
+    "price": "Iye owó",
+    "stockStatus": "Ipò ìdúró",
+    "inStock": "Wà nínú ìpèsè",
+    "outOfStock": "Kò sí nínú ìpèsè",
+    "addToCart": "Fi kún kàtì",
+    "viewDetails": "Wo àwọn àlàyé",
+    "bulkOrder": "Àṣẹ púpọ̀",
+    "productType": "Irú ọjà",
+    "apply": "Lo",
+    "reset": "Tún ṣeto",
+    "sortBy": "Ṣe ìtò pẹ̀lú",
+    "newest": "Tuntun jùlọ",
+    "priceLowToHigh": "Iye owó: Kékeré sí ga",
+    "priceHighToLow": "Iye owó: Ga sí kékeré",
+    "popularity": "Gbajúmọ̀",
+    "noProducts": "Kò sí ọjà tí a rí"
+  },
+  "product": {
+    "details": "Àwọn àlàyé ọjà",
+    "price": "Iye owó",
+    "stock": "Ìpèsè",
+    "description": "Àlàyé",
+    "quantity": "Iye",
+    "addToCart": "Fi kún kàtì",
+    "viewDetails": "Wo àwọn àlàyé",
+    "availableFrom": "Wà láti",
+    "farmLocation": "Ibùdó oko",
+    "share": "Pín",
+    "related": "Àwọn ọjà tí ó jọra"
+  },
+  "cart": {
+    "title": "Kàtì rírà",
+    "empty": "Kàtì rírà rẹ̀ ṣófo",
+    "continueShopping": "Tẹ̀síwájú pẹ̀lú rírà",
+    "checkout": "San owó",
+    "remove": "Yọ kúrò",
+    "total": "Àpapọ̀",
+    "subtotal": "Àkójọpọ̀ iye kékeré",
+    "shipping": "Gbígbé lọ",
+    "tax": "Owó orí",
+    "itemsInCart": "Àwọn ohun nínú kàtì",
+    "quantity": "Iye",
+    "viewCart": "Wo kàtì",
+    "update": "Ṣe àfikún kàtì"
+  },
+  "footer": {
+    "quickLinks": "Àwọn ọ̀nà kíákíá",
+    "customerService": "Iṣẹ́ Aṣenilórí",
+    "newsletter": "Ìwé ìròyìn",
+    "subscribeText": "Forúkọsílẹ̀ fún àwọn ìfitónilétí pàtàkì àti àwọn ìṣelọ́pọ̀ tuntun",
+    "subscribe": "Forúkọsílẹ̀",
+    "copyright": "Ẹ̀tọ́ ìtẹ̀lé",
+    "allRightsReserved": "Gbogbo àwọn ẹ̀tọ́ wà ní àbò",
+    "privacyPolicy": "Ètò àṣírí",
+    "termsOfService": "Àwọn ìpìlẹ̀ iṣẹ́"
+  },
+  "form": {
+    "required": "O ṣe pàtàkì",
+    "invalidEmail": "Ímeèlì àìtọ́",
+    "submit": "Fifiránṣẹ́",
+    "success": "A fi ránṣẹ́ ní àṣeyọrí",
+    "error": "Àṣìṣe kan ṣẹlẹ̀. Jọ̀wọ́ gbìyànjú lẹ́ẹ̀kansi"
+  },
+  "animalTypes": {
+    "goat": "Ewúrẹ́",
+    "fish": "Ẹja",
+    "duck": "Pẹ́pẹ́yẹ",
+    "chicken": "Adìẹ",
+    "rabbit": "Ehoro"
+  },
+  "animalBreeding": {
+    "title": "Àwọn ẹran ọ̀sìn",
+    "addAnimal": "Fi ẹranko kún",
+    "editAnimal": "Ṣàtúnṣe ẹranko",
+    "deleteAnimal": "Pa ẹranko rẹ́",
+    "animalDetails": "Àwọn àlàyé ẹranko",
+    "addBreedingEvent": "Fi ìgbèsè ìbísí kún",
+    "breedingHistory": "Ìtàn ìbísí",
+    "potentialMates": "Àwọn olùfẹ́ tí ó ṣeéṣe",
+    "inbreedingRisk": "Ewu ìbísí ẹbí"
+  }
+}
