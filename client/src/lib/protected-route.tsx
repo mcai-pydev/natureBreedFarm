@@ -1,27 +1,7 @@
 import React from 'react';
 import { Route, Redirect, useLocation } from 'wouter';
 import { Loader2 } from 'lucide-react';
-
-// Using basic authentication check for now, will enhance with proper auth context later
-const isAuthenticated = () => {
-  // This will be replaced by proper auth check from auth context
-  return true;
-};
-
-// Helper function to check if user has required role
-const hasRequiredRole = (requiredRole?: string | string[]) => {
-  // This will be replaced by actual role check
-  if (!requiredRole) return true;
-  
-  // Mock user role for now
-  const userRole = 'admin';
-  
-  if (Array.isArray(requiredRole)) {
-    return requiredRole.includes(userRole);
-  }
-  
-  return requiredRole === userRole;
-};
+import { useAuth } from '@/hooks/use-auth';
 
 interface ProtectedRouteProps {
   path: string;
@@ -31,18 +11,21 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ path, component: Component, requiredRole }: ProtectedRouteProps) {
   const [, setLocation] = useLocation();
-
-  // Simulate loading state
-  const [isLoading, setIsLoading] = React.useState(true);
+  const { user, isLoading } = useAuth();
   
-  // Check authentication after simulated loading
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+  // Helper function to check if user has required role
+  const hasRequiredRole = (user: any, requiredRole?: string | string[]) => {
+    if (!requiredRole) return true;
+    if (!user) return false;
     
-    return () => clearTimeout(timer);
-  }, []);
+    const userRole = user.role;
+    
+    if (Array.isArray(requiredRole)) {
+      return requiredRole.includes(userRole);
+    }
+    
+    return requiredRole === userRole;
+  };
 
   return (
     <Route path={path}>
@@ -55,13 +38,13 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
           );
         }
         
-        if (!isAuthenticated()) {
+        if (!user) {
           // Redirect to login if not authenticated
           setLocation('/auth');
           return null;
         }
         
-        if (!hasRequiredRole(requiredRole)) {
+        if (!hasRequiredRole(user, requiredRole)) {
           // Redirect to unauthorized page if doesn't have required role
           return (
             <div className="flex flex-col items-center justify-center min-h-screen p-4">

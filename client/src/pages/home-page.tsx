@@ -1,9 +1,15 @@
 import React from 'react';
 import { Link } from 'wouter';
+import { Button } from '@/components/ui/button';
 
 export default function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-end mb-4">
+        <Button asChild variant="outline">
+          <Link href="/auth">Login / Register</Link>
+        </Button>
+      </div>
       <div className="max-w-3xl mx-auto text-center">
         <h1 className="text-4xl font-bold text-primary mb-6">Nature Breed Farm</h1>
         <p className="text-xl text-gray-600 mb-8">
