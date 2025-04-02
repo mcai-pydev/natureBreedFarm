@@ -12,7 +12,8 @@ export const queryClient = new QueryClient({
 
 // Default fetcher function for queries
 export const getQueryFn = (options?: { on401?: 'throw' | 'returnNull' }) => {
-  return async ({ queryKey }: { queryKey: string[] }) => {
+  return async ({ queryKey }: any) => {
+    // Use readonly array type for QueryKey compatibility
     const key = Array.isArray(queryKey) ? queryKey[0] : queryKey;
     
     console.log(`[DEBUG] Fetching data from: ${key}`);
