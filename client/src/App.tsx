@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { ResponsiveProvider } from './contexts/responsive-context';
+import { MobileProvider } from './hooks/use-mobile';
+import { CartProvider } from './hooks/use-cart';
 import NotFound from "@/pages/not-found";
 
 // Legacy pages (to be migrated)
@@ -92,14 +94,18 @@ function App() {
   return (
     <HelmetProvider>
       <ThemeProvider defaultTheme="system" storageKey="nature-breed-theme">
-        <ResponsiveProvider>
-          <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <Router />
-              <Toaster />
-            </AuthProvider>
-          </QueryClientProvider>
-        </ResponsiveProvider>
+        <MobileProvider>
+          <ResponsiveProvider>
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <CartProvider>
+                  <Router />
+                  <Toaster />
+                </CartProvider>
+              </AuthProvider>
+            </QueryClientProvider>
+          </ResponsiveProvider>
+        </MobileProvider>
       </ThemeProvider>
     </HelmetProvider>
   );
