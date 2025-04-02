@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AdminLayout } from '../components/admin-layout';
 import { ResponsiveContainer } from '@/components/layout/responsive-container';
 import { useResponsiveGrid } from '@/hooks/use-responsive-grid';
@@ -11,6 +11,8 @@ import { PullToRefresh } from '@/components/layout/pull-to-refresh';
 import { SwipeableContainer } from '@/components/layout/swipeable-container';
 import { CollapsibleSection, CollapsibleGroup } from '@/components/layout/collapsible-section';
 import { StickyActionBar, ActionBarButtonsContainer } from '@/components/navigation/sticky-action-bar';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
+import { ActivityFeed } from '@/components/notifications/activity-feed';
 import {
   ArrowUpRight, 
   ArrowDownRight, 
@@ -23,7 +25,11 @@ import {
   RefreshCw,
   PlusCircle,
   Filter,
-  Download
+  Download,
+  PieChart,
+  BarChart,
+  ListPlus,
+  Bell
 } from 'lucide-react';
 
 function StatCard({ 
@@ -39,6 +45,8 @@ function StatCard({
   changeType?: 'increase' | 'decrease' | 'neutral';
   icon: React.ElementType;
 }) {
+  const { isMobile } = useResponsive();
+  
   const changeColor = changeType === 'increase' 
     ? 'text-green-500' 
     : changeType === 'decrease' 
@@ -51,6 +59,31 @@ function StatCard({
       ? ArrowDownRight 
       : TrendingUp;
   
+  // Mobile optimized version with horizontal layout and better touch targets
+  if (isMobile) {
+    return (
+      <Card className="overflow-hidden">
+        <div className="flex items-stretch">
+          <div className={`w-2 ${changeType === 'increase' ? 'bg-green-500' : changeType === 'decrease' ? 'bg-red-500' : 'bg-blue-500'}`} />
+          <div className="flex-1 p-4">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <Icon className="h-5 w-5 text-muted-foreground" />
+                <p className="text-sm font-medium">{title}</p>
+              </div>
+              <div className={`flex items-center text-xs ${changeColor} bg-muted/50 rounded-full px-2 py-1`}>
+                <ChangeIcon className="mr-1 h-3 w-3" />
+                {change}
+              </div>
+            </div>
+            <div className="text-2xl font-bold">{value}</div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+  
+  // Desktop version
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -67,6 +100,33 @@ function StatCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Quick Filter Chip component
+interface FilterChipProps {
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+  icon?: React.ReactNode;
+}
+
+function FilterChip({ label, active = false, onClick, icon }: FilterChipProps) {
+  return (
+    <button
+      className={`
+        flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
+        transition-colors whitespace-nowrap
+        ${active 
+          ? 'bg-primary text-primary-foreground' 
+          : 'bg-muted/60 text-muted-foreground hover:bg-muted'
+        }
+      `}
+      onClick={onClick}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
 
@@ -95,8 +155,23 @@ export default function AdminDashboard() {
   const { isMobile, isTablet } = useResponsive();
   const ResponsiveGrid = useResponsiveGrid();
   
-  // Adapt columns based on screen size for better readability on mobile
-  const statsColumns = isMobile ? 1 : isTablet ? 2 : 4;
+  // State for the filter chips
+  const [activeTimeFilter, setActiveTimeFilter] = useState('today');
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  
+  // Filter data definitions
+  const timeFilterOptions = [
+    { id: 'today', label: t('Today'), icon: null },
+    { id: 'week', label: t('This Week'), icon: null },
+    { id: 'month', label: t('This Month'), icon: null },
+    { id: 'year', label: t('This Year'), icon: null },
+  ];
+  
+  const statusFilterOptions = [
+    { id: 'all', label: t('All Status'), icon: <Activity className="h-3.5 w-3.5" /> },
+    { id: 'active', label: t('Active'), icon: <TrendingUp className="h-3.5 w-3.5" /> },
+    { id: 'pending', label: t('Pending'), icon: <Package className="h-3.5 w-3.5" /> },
+  ];
   
   // Handle refresh action
   const handleRefresh = async () => {
@@ -117,6 +192,43 @@ export default function AdminDashboard() {
                 <Button>{t('Add New')}</Button>
               </div>
             )}
+          </div>
+          
+          {/* Quick Filter Section */}
+          <div className="bg-card rounded-lg p-3 border shadow-sm">
+            <div className="flex flex-col gap-3">
+              {/* Time range filters */}
+              <div className="overflow-x-auto pb-1">
+                <div className="flex gap-2">
+                  {timeFilterOptions.map(option => (
+                    <FilterChip 
+                      key={option.id}
+                      label={option.label}
+                      icon={option.icon}
+                      active={activeTimeFilter === option.id}
+                      onClick={() => setActiveTimeFilter(option.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Status filters */}
+              <div className="overflow-x-auto pb-1">
+                <div className="flex gap-2">
+                  {statusFilterOptions.map(option => (
+                    <FilterChip 
+                      key={option.id}
+                      label={option.label}
+                      icon={option.icon}
+                      active={activeStatusFilter === option.id}
+                      onClick={() => setActiveStatusFilter(
+                        activeStatusFilter === option.id ? null : option.id
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
           
           <Tabs defaultValue="overview" className="space-y-4">
@@ -179,10 +291,13 @@ export default function AdminDashboard() {
                         {t('Daily revenue for the past 30 days')}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-md">
-                      <div className="text-muted-foreground">
-                        {t('Chart would be displayed here')}
-                      </div>
+                    <CardContent className="h-[300px]">
+                      <EmptyState
+                        icon={<BarChart />}
+                        title={t('Revenue Trends')}
+                        description={t('Your revenue data will be visualized here')}
+                        compact={true}
+                      />
                     </CardContent>
                   </Card>
                   
@@ -236,10 +351,13 @@ export default function AdminDashboard() {
                         {t('Daily revenue for the past 30 days')}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-md">
-                      <div className="text-muted-foreground">
-                        {t('Chart would be displayed here')}
-                      </div>
+                    <CardContent className="h-[300px]">
+                      <EmptyState
+                        icon={<BarChart />}
+                        title={t('Revenue Analytics')}
+                        description={t('Your revenue data will be visualized here')}
+                        compact={false}
+                      />
                     </CardContent>
                   </Card>
                   <Card className="md:col-span-3">
@@ -343,22 +461,86 @@ export default function AdminDashboard() {
               )}
             </TabsContent>
             
-            <TabsContent value="analytics" className="h-[400px] flex items-center justify-center border-2 border-dashed rounded-md">
-              <div className="text-muted-foreground">
-                {t('Analytics content would be displayed here')}
-              </div>
+            <TabsContent value="analytics" className="h-[400px]">
+              <EmptyState
+                icon={<BarChart />}
+                title={t('Analytics')}
+                description={t('View detailed farm performance metrics and trends')}
+                action={{
+                  label: t('Generate Analytics'),
+                  onClick: () => console.log('Generate analytics clicked')
+                }}
+                compact={true}
+              />
             </TabsContent>
             
-            <TabsContent value="reports" className="h-[400px] flex items-center justify-center border-2 border-dashed rounded-md">
-              <div className="text-muted-foreground">
-                {t('Reports content would be displayed here')}
-              </div>
+            <TabsContent value="reports" className="h-[400px]">
+              <EmptyState
+                icon={<PieChart />}
+                title={t('Reports')}
+                description={t('Create custom reports to track farm performance')}
+                action={{
+                  label: t('Create Report'),
+                  onClick: () => console.log('Create report clicked')
+                }}
+                compact={true}
+              />
             </TabsContent>
             
-            <TabsContent value="notifications" className="h-[400px] flex items-center justify-center border-2 border-dashed rounded-md">
-              <div className="text-muted-foreground">
-                {t('Notifications content would be displayed here')}
-              </div>
+            <TabsContent value="notifications" className="min-h-[400px]">
+              {/* Activity Feed Component */}
+              <ActivityFeed 
+                notifications={[
+                  {
+                    id: '1',
+                    title: 'New Order Received',
+                    message: 'You received a new order for 5 bags of feed',
+                    time: '2 minutes ago',
+                    read: false,
+                    type: 'success',
+                    activityType: 'orders'
+                  },
+                  {
+                    id: '2',
+                    title: 'Payment Successful',
+                    message: 'Payment of $120.00 was received from John Mutua',
+                    time: '45 minutes ago',
+                    read: false,
+                    type: 'success',
+                    activityType: 'orders'
+                  },
+                  {
+                    id: '3',
+                    title: 'Inventory Alert',
+                    message: 'Goat feed is running low (5 units remaining)',
+                    time: '3 hours ago',
+                    read: true,
+                    type: 'warning',
+                    activityType: 'system'
+                  },
+                  {
+                    id: '4',
+                    title: 'New Comment',
+                    message: 'Sarah left a comment on your last post',
+                    time: '1 day ago',
+                    read: true,
+                    type: 'info',
+                    activityType: 'comments'
+                  },
+                  {
+                    id: '5',
+                    title: 'System Update',
+                    message: 'The system will undergo maintenance in 2 days',
+                    time: '2 days ago',
+                    read: true,
+                    type: 'info',
+                    activityType: 'system'
+                  }
+                ]}
+                onMarkAllRead={() => console.log('Marked all as read')}
+                onClearAll={() => console.log('Cleared all notifications')}
+                maxHeight={isMobile ? "300px" : "400px"}
+              />
             </TabsContent>
           </Tabs>
         </div>
