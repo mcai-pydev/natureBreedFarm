@@ -117,10 +117,23 @@ export default function MobileShopPage() {
   const filtersSheetRef = useRef<HTMLButtonElement>(null);
   
   // Fetch products from the API
-  const { data: products = [], isLoading, refetch } = useQuery<Product[]>({
+  const { 
+    data: products = [], 
+    isLoading, 
+    isError, 
+    error,
+    refetch 
+  } = useQuery<Product[]>({
     queryKey: ['/api/products'],
     queryFn: getQueryFn(),
+    onSuccess: (data) => console.log("Mobile - Successfully loaded products:", data),
+    onError: (err) => console.error("Mobile - Error loading products:", err)
   });
+  
+  // Debug information
+  console.log("[Mobile Shop Page] Products:", products);
+  console.log("[Mobile Shop Page] Loading:", isLoading);
+  console.log("[Mobile Shop Page] Error:", isError, error);
   
   // Update category chips when products load
   useEffect(() => {

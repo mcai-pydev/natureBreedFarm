@@ -63,10 +63,22 @@ export default function ShopPage() {
   const cartSheetRef = useRef<HTMLButtonElement>(null);
   
   // Fetch products from the API
-  const { data: products = [], isLoading } = useQuery<Product[]>({
+  const { 
+    data: products = [], 
+    isLoading, 
+    isError, 
+    error 
+  } = useQuery<Product[]>({
     queryKey: ["/api/products"],
     queryFn: getQueryFn(),
+    onSuccess: (data) => console.log("Successfully loaded products:", data),
+    onError: (err) => console.error("Error loading products:", err)
   });
+  
+  // Debug information
+  console.log("[Shop Page] Products:", products);
+  console.log("[Shop Page] Loading:", isLoading);
+  console.log("[Shop Page] Error:", isError, error);
   
   // Filter products based on search query and category
   const filteredProducts = products.filter(product => {
