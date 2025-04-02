@@ -6,9 +6,14 @@ export default function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between mb-4">
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/debug-onboarding">Test Onboarding</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/debug-onboarding">Debug Onboarding</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/onboarding?force=true">View Onboarding</Link>
+          </Button>
+        </div>
         
         <Button asChild variant="outline">
           <Link href="/auth">Login / Register</Link>
