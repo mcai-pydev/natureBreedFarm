@@ -24,6 +24,7 @@ import LandingPage from "@/pages/landing-page";
 import AdminDashboard from "@/modules/admin/pages/admin-dashboard";
 import ShopPage from "@/modules/customer/pages/shop-page";
 import CheckoutPage from "@/modules/customer/pages/checkout-page";
+import OrderConfirmationPage from "@/modules/customer/pages/order-confirmation-page";
 import AuthPage from "@/modules/common/pages/auth-page";
 
 import { ProtectedRoute } from "./lib/protected-route";
@@ -58,6 +59,7 @@ function Router() {
         {/* Customer routes (new) */}
         <Route path="/shop" component={ShopPage} />
         <Route path="/checkout" component={CheckoutPage} />
+        <Route path="/order-confirmation" component={OrderConfirmationPage} />
         
         {/* Admin routes (new) */}
         <ProtectedRoute path="/admin" component={AdminDashboard} />
