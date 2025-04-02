@@ -12,16 +12,16 @@ export default function HomePage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Link href="/shop">
-            <a className="bg-primary text-white p-6 rounded-lg shadow-md hover:bg-primary/90 transition-colors">
+            <div className="bg-primary text-white p-6 rounded-lg shadow-md hover:bg-primary/90 transition-colors cursor-pointer">
               <h2 className="text-2xl font-bold mb-2">Shop</h2>
               <p>Browse our selection of farm products</p>
-            </a>
+            </div>
           </Link>
           <Link href="/orders">
-            <a className="bg-secondary text-secondary-foreground p-6 rounded-lg shadow-md hover:bg-secondary/90 transition-colors">
+            <div className="bg-secondary text-secondary-foreground p-6 rounded-lg shadow-md hover:bg-secondary/90 transition-colors cursor-pointer">
               <h2 className="text-2xl font-bold mb-2">Order History</h2>
               <p>View your past orders and track shipments</p>
-            </a>
+            </div>
           </Link>
         </div>
         

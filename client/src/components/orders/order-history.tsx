@@ -235,9 +235,9 @@ export function OrderHistory() {
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <Link href={`/orders/${order.id}`}>
-                  <a className="text-blue-600 hover:text-blue-900">
+                  <div className="text-blue-600 hover:text-blue-900 cursor-pointer">
                     View Details
-                  </a>
+                  </div>
                 </Link>
               </td>
             </tr>
@@ -287,9 +287,9 @@ export function OrderHistory() {
           </div>
           <div className="border-t border-gray-200 p-4 bg-gray-50">
             <Link href={`/orders/${order.id}`}>
-              <a className="w-full block text-center text-blue-600 font-medium text-sm">
+              <div className="w-full block text-center text-blue-600 font-medium text-sm cursor-pointer">
                 View Details
-              </a>
+              </div>
             </Link>
           </div>
         </div>
