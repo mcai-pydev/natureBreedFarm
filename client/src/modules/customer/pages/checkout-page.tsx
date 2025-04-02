@@ -165,7 +165,7 @@ export default function CheckoutPage() {
           onClick={() => setLocation("/shop")}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {t("shop.backToShop")}
+          {t("shop.backToShop") || "Back to Shop"}
         </Button>
         <h1 className="text-2xl font-bold">{t("shop.checkout")}</h1>
       </div>
@@ -244,7 +244,7 @@ export default function CheckoutPage() {
                   }}
                   className="w-full md:w-auto"
                 >
-                  {t("shop.continueToPayment")}
+                  {t("shop.proceedToPayment") || "Proceed to Payment"}
                 </Button>
               </div>
             </div>
@@ -270,7 +270,7 @@ export default function CheckoutPage() {
                 <Button
                   onClick={() => setActiveStep("review")}
                 >
-                  {t("shop.continueToReview")}
+                  {t("shop.nextReviewOrder") || "Next: Review Order"}
                 </Button>
               </div>
             </div>
@@ -374,8 +374,8 @@ export default function CheckoutPage() {
               disabled={activeStep === "shipping" && !shippingInfo}
             >
               {activeStep === "shipping" 
-                ? t("shop.continueToPayment") 
-                : t("shop.continueToReview")}
+                ? t("shop.proceedToPayment") || "Proceed to Payment" 
+                : t("shop.nextReviewOrder") || "Next: Review Order"}
             </Button>
           )}
         </div>

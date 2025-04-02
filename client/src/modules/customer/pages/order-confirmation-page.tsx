@@ -72,7 +72,7 @@ export default function OrderConfirmationPage() {
             variant="default"
             className="flex-1"
           >
-            {t("shop.continueShopping")}
+            {t("shop.browseMoreProducts") || "Browse More Products"}
           </Button>
           
           <Button 
