@@ -53,6 +53,9 @@ import {
 import { QuantitySelector } from "@/components/ui/quantity-selector";
 import { EmailInput } from "@/modules/common/components/email-input";
 
+// Import mobile version of shop page
+import MobileShopPage from "./mobile-shop-page";
+
 interface CartItem extends Product {
   quantity: number;
 }
@@ -268,13 +271,19 @@ export default function ShopPage() {
   // Filter featured products for the carousel
   const featuredProducts = products.filter(product => product.featured);
 
+  // For mobile devices, render the mobile-optimized version
+  if (isMobile) {
+    return <MobileShopPage />;
+  }
+  
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
       <NavigationBar 
-        cartItemCount={cartItems.reduce((total, item) => total + item.quantity, 0)}
-        cartSheetRef={cartSheetRef}
-        onAuthClick={handleAuthNavigation}
+        cartItemsCount={cartItems.reduce((total, item) => total + item.quantity, 0)}
+        onCartClick={() => cartSheetRef.current?.click()}
+        onSearchChange={(query) => setSearchQuery(query)}
+        searchQuery={searchQuery}
       />
       
       {/* Hero Banner */}
