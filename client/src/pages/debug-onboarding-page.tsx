@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { OnboardingTour } from '@/components/onboarding/onboarding-tour';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
@@ -7,6 +7,13 @@ import { useLocation } from 'wouter';
 export default function DebugOnboardingPage() {
   const [, setLocation] = useLocation();
   
+  // Force reset onboarding state when this page loads
+  useEffect(() => {
+    localStorage.removeItem('onboardingCompleted');
+    localStorage.removeItem('hasVisitedBefore');
+    console.log('Debug mode: Onboarding state has been reset');
+  }, []);
+  
   const handleComplete = () => {
     console.log('Onboarding completed!');
     setLocation('/');
@@ -14,7 +21,7 @@ export default function DebugOnboardingPage() {
 
   return (
     <div>
-      <div className="fixed top-0 left-0 z-50 bg-white p-2 flex gap-2">
+      <div className="fixed top-0 left-0 z-50 bg-white p-2 flex gap-2 shadow-md">
         <Button
           size="sm"
           variant="outline"
@@ -23,18 +30,20 @@ export default function DebugOnboardingPage() {
           Back to Home
         </Button>
         <Button
-          size="sm"
-          variant="outline"
+          size="sm" 
+          variant="default"
           onClick={() => {
             localStorage.removeItem('onboardingCompleted');
             localStorage.removeItem('hasVisitedBefore');
-            alert('Onboarding state reset. Refresh the page to start over.');
+            window.location.reload();
           }}
         >
-          Reset Onboarding State
+          Reset & Reload
         </Button>
       </div>
-      <OnboardingTour onComplete={handleComplete} />
+      
+      {/* Always show the tour in debug mode, regardless of localStorage state */}
+      <OnboardingTour onComplete={handleComplete} showSkip={true} />
     </div>
   );
 }

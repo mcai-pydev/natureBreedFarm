@@ -5,7 +5,11 @@ import { Button } from '@/components/ui/button';
 export default function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between mb-4">
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/debug-onboarding">Test Onboarding</Link>
+        </Button>
+        
         <Button asChild variant="outline">
           <Link href="/auth">Login / Register</Link>
         </Button>
