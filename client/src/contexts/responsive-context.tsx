@@ -1,104 +1,84 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-
-// Screen breakpoints (matches Tailwind's defaults)
-const BREAKPOINTS = {
-  xs: 0,
-  sm: 640,
-  md: 768,
-  lg: 1024,
-  xl: 1280,
-  '2xl': 1536,
-};
-
-type BreakpointKey = keyof typeof BREAKPOINTS;
+import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import { useWindowSize } from '@/hooks/use-window-size';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ResponsiveContextType {
   isMobile: boolean;
   isTablet: boolean;
   isDesktop: boolean;
   isLargeDesktop: boolean;
-  breakpoint: BreakpointKey;
-  width: number;
-  height: number;
+  windowWidth: number;
+  windowHeight: number;
 }
 
-const ResponsiveContext = createContext<ResponsiveContextType>({
+const defaultContext: ResponsiveContextType = {
   isMobile: false,
   isTablet: false,
-  isDesktop: false,
+  isDesktop: true,
   isLargeDesktop: false,
-  breakpoint: 'lg',
-  width: 0,
-  height: 0,
-});
+  windowWidth: typeof window !== 'undefined' ? window.innerWidth : 1200,
+  windowHeight: typeof window !== 'undefined' ? window.innerHeight : 800
+};
+
+export const ResponsiveContext = createContext<ResponsiveContextType>(defaultContext);
 
 interface ResponsiveProviderProps {
   children: ReactNode;
+  mobileBreakpoint?: number;
+  tabletBreakpoint?: number;
+  desktopBreakpoint?: number;
 }
 
-export function ResponsiveProvider({ children }: ResponsiveProviderProps) {
-  const [dimensions, setDimensions] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 0,
-    height: typeof window !== 'undefined' ? window.innerHeight : 0,
+export function ResponsiveProvider({
+  children,
+  mobileBreakpoint = 640,
+  tabletBreakpoint = 768,
+  desktopBreakpoint = 1024,
+}: ResponsiveProviderProps) {
+  // Get window size for non-mobile devices
+  const { width, height } = useWindowSize();
+  
+  // Check if device is mobile
+  const detectedIsMobile = useIsMobile();
+  
+  // Calculated responsive states
+  const [responsive, setResponsive] = useState<ResponsiveContextType>({
+    ...defaultContext,
+    windowWidth: width,
+    windowHeight: height
   });
   
+  // Update responsive context when window size changes
   useEffect(() => {
-    // Skip if window is not available (e.g., during SSR)
-    if (typeof window === 'undefined') return;
+    const isMobile = detectedIsMobile || width <= mobileBreakpoint;
+    const isTablet = !isMobile && width <= tabletBreakpoint;
+    const isDesktop = !isMobile && !isTablet && width <= desktopBreakpoint;
+    const isLargeDesktop = !isMobile && !isTablet && !isDesktop;
     
-    const handleResize = () => {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-    
-    // Set dimensions on mount
-    handleResize();
-    
-    // Add event listener for window resize
-    window.addEventListener('resize', handleResize);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-  
-  // Get current breakpoint based on width
-  const getCurrentBreakpoint = (): BreakpointKey => {
-    if (dimensions.width >= BREAKPOINTS['2xl']) return '2xl';
-    if (dimensions.width >= BREAKPOINTS.xl) return 'xl';
-    if (dimensions.width >= BREAKPOINTS.lg) return 'lg';
-    if (dimensions.width >= BREAKPOINTS.md) return 'md';
-    if (dimensions.width >= BREAKPOINTS.sm) return 'sm';
-    return 'xs';
-  };
-  
-  const breakpoint = getCurrentBreakpoint();
-  
-  // Derived state
-  const contextValue: ResponsiveContextType = {
-    isMobile: dimensions.width < BREAKPOINTS.md,
-    isTablet: dimensions.width >= BREAKPOINTS.md && dimensions.width < BREAKPOINTS.lg,
-    isDesktop: dimensions.width >= BREAKPOINTS.lg && dimensions.width < BREAKPOINTS.xl,
-    isLargeDesktop: dimensions.width >= BREAKPOINTS.xl,
-    breakpoint,
-    width: dimensions.width,
-    height: dimensions.height,
-  };
+    setResponsive({
+      isMobile,
+      isTablet,
+      isDesktop,
+      isLargeDesktop,
+      windowWidth: width,
+      windowHeight: height
+    });
+  }, [width, height, detectedIsMobile, mobileBreakpoint, tabletBreakpoint, desktopBreakpoint]);
   
   return (
-    <ResponsiveContext.Provider value={contextValue}>
+    <ResponsiveContext.Provider value={responsive}>
       {children}
     </ResponsiveContext.Provider>
   );
 }
 
+// Custom hook to use the responsive context
 export function useResponsive() {
   const context = useContext(ResponsiveContext);
+  
   if (context === undefined) {
     throw new Error('useResponsive must be used within a ResponsiveProvider');
   }
+  
   return context;
 }

@@ -2,100 +2,125 @@ import React, { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { useResponsive } from '@/contexts/responsive-context';
 
-interface ResponsiveContainerProps {
+export interface ResponsiveContainerProps {
   children: ReactNode;
   className?: string;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full' | 'none';
-  as?: React.ElementType;
-  withPadding?: boolean;
-  withVerticalPadding?: boolean;
-  centered?: boolean;
-  fullHeight?: boolean;
+  fullWidth?: boolean;
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full' | 'screen';
+  padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  paddingX?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  paddingY?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  mobilePadding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  centerContent?: boolean;
+  adaptivePadding?: boolean;
 }
-
-const maxWidthClasses = {
-  sm: 'max-w-screen-sm',
-  md: 'max-w-screen-md',
-  lg: 'max-w-screen-lg',
-  xl: 'max-w-screen-xl',
-  '2xl': 'max-w-screen-2xl',
-  full: 'max-w-full',
-  none: ''
-};
 
 export function ResponsiveContainer({
   children,
   className,
+  fullWidth = false,
   maxWidth = 'lg',
-  as: Component = 'div',
-  withPadding = true,
-  withVerticalPadding = false,
-  centered = true,
-  fullHeight = false,
+  padding = 'md',
+  paddingX,
+  paddingY,
+  mobilePadding,
+  centerContent = false,
+  adaptivePadding = true
 }: ResponsiveContainerProps) {
   const { isMobile } = useResponsive();
   
+  // Maps for styling variations
+  const maxWidthMap = {
+    xs: 'max-w-xs',
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-xl',
+    '2xl': 'max-w-2xl',
+    full: 'max-w-full',
+    screen: 'max-w-screen-xl'
+  };
+  
+  const paddingMap = {
+    none: '',
+    sm: 'p-2',
+    md: 'p-4',
+    lg: 'p-6',
+    xl: 'p-8'
+  };
+  
+  const paddingXMap = {
+    none: '',
+    sm: 'px-2',
+    md: 'px-4',
+    lg: 'px-6',
+    xl: 'px-8'
+  };
+  
+  const paddingYMap = {
+    none: '',
+    sm: 'py-2',
+    md: 'py-4',
+    lg: 'py-6',
+    xl: 'py-8'
+  };
+  
+  // Get the correct padding based on screen size
+  const effectivePadding = isMobile && mobilePadding && adaptivePadding 
+    ? mobilePadding
+    : padding;
+  
   return (
-    <Component 
+    <div 
       className={cn(
-        maxWidthClasses[maxWidth],
-        withPadding && (isMobile ? 'px-4' : 'px-6'),
-        withVerticalPadding && (isMobile ? 'py-4' : 'py-6'),
-        centered && 'mx-auto',
-        fullHeight && 'h-full',
+        !fullWidth && !centerContent && "mx-auto",
+        !fullWidth && maxWidthMap[maxWidth],
+        (!paddingX && !paddingY) && paddingMap[effectivePadding],
+        paddingX && paddingXMap[paddingX],
+        paddingY && paddingYMap[paddingY],
+        centerContent && "flex justify-center",
         className
       )}
     >
       {children}
-    </Component>
+    </div>
   );
 }
 
-interface ResponsiveGridProps {
-  children: ReactNode;
-  className?: string;
-  cols?: number | { sm?: number; md?: number; lg?: number; xl?: number };
-  gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
-  itemClassName?: string;
+export interface ResponsiveSectionProps extends ResponsiveContainerProps {
+  id?: string;
+  background?: 'default' | 'muted' | 'primary' | 'dark';
+  fullHeight?: boolean;
 }
 
-export function ResponsiveGrid({
+export function ResponsiveSection({
+  id,
   children,
   className,
-  cols = { sm: 1, md: 2, lg: 3, xl: 4 },
-  gap = 'md',
-  itemClassName,
-}: ResponsiveGridProps) {
-  const gapClasses = {
-    none: 'gap-0',
-    sm: 'gap-2',
-    md: 'gap-4',
-    lg: 'gap-6',
-    xl: 'gap-8',
+  background = 'default',
+  fullHeight = false,
+  ...containerProps
+}: ResponsiveSectionProps) {
+  // Maps for background variations
+  const backgroundMap = {
+    default: 'bg-background',
+    muted: 'bg-muted',
+    primary: 'bg-primary text-primary-foreground',
+    dark: 'bg-card-foreground text-card'
   };
   
-  // Process columns configuration
-  let colClasses = '';
-  
-  if (typeof cols === 'number') {
-    colClasses = `grid-cols-1 sm:grid-cols-${Math.min(cols, 1)} md:grid-cols-${Math.min(cols, 2)} lg:grid-cols-${Math.min(cols, 3)} xl:grid-cols-${Math.min(cols, 4)}`;
-  } else {
-    colClasses = 'grid-cols-1';
-    if (cols.sm) colClasses += ` sm:grid-cols-${cols.sm}`;
-    if (cols.md) colClasses += ` md:grid-cols-${cols.md}`;
-    if (cols.lg) colClasses += ` lg:grid-cols-${cols.lg}`;
-    if (cols.xl) colClasses += ` xl:grid-cols-${cols.xl}`;
-  }
-  
   return (
-    <div className={cn('grid', colClasses, gapClasses[gap], className)}>
-      {React.Children.map(children, (child) => {
-        if (!React.isValidElement(child)) return child;
-        
-        return React.cloneElement(child as React.ReactElement, {
-          className: cn(itemClassName, (child as React.ReactElement).props.className),
-        });
-      })}
-    </div>
+    <section 
+      id={id}
+      className={cn(
+        backgroundMap[background],
+        fullHeight && "min-h-screen",
+        className
+      )}
+    >
+      <ResponsiveContainer {...containerProps}>
+        {children}
+      </ResponsiveContainer>
+    </section>
   );
 }

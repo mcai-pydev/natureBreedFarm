@@ -1,239 +1,212 @@
-import React, { 
-  useState, 
-  useRef, 
-  useEffect, 
-  ReactNode, 
-  TouchEvent, 
-  CSSProperties 
-} from 'react';
+import React, { ReactNode, useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SwipeableContainerProps {
-  children: ReactNode | ReactNode[];
+  children: ReactNode[];
   className?: string;
-  onSwipeLeft?: () => void;
-  onSwipeRight?: () => void;
-  onSwipeUp?: () => void;
-  onSwipeDown?: () => void;
-  threshold?: number;
-  preventDefaultTouchmove?: boolean;
-  disabled?: boolean;
-  allowVerticalSwipe?: boolean;
-  allowHorizontalSwipe?: boolean;
-  showSwipeIndicator?: boolean;
-  style?: CSSProperties;
+  showIndicator?: boolean;
+  showArrows?: boolean;
+  loop?: boolean;
+  initialSlide?: number;
+  itemClassName?: string;
+  onChange?: (index: number) => void;
+  swipeThreshold?: number;
+  animationDuration?: number;
 }
 
 export function SwipeableContainer({
   children,
   className,
-  onSwipeLeft,
-  onSwipeRight,
-  onSwipeUp,
-  onSwipeDown,
-  threshold = 50,
-  preventDefaultTouchmove = true,
-  disabled = false,
-  allowVerticalSwipe = false,
-  allowHorizontalSwipe = true,
-  showSwipeIndicator = false,
-  style,
+  showIndicator = true,
+  showArrows = false,
+  loop = false,
+  initialSlide = 0,
+  itemClassName,
+  onChange,
+  swipeThreshold = 50,
+  animationDuration = 300
 }: SwipeableContainerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const touchStartXRef = useRef<number | null>(null);
-  const touchStartYRef = useRef<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState(initialSlide);
+  const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'up' | 'down' | null>(null);
-
-  const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
-    if (disabled) return;
-    
-    touchStartXRef.current = e.touches[0].clientX;
-    touchStartYRef.current = e.touches[0].clientY;
-    setIsDragging(true);
-    setDragOffset({ x: 0, y: 0 });
-    setSwipeDirection(null);
-  };
-
-  const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
-    if (disabled || touchStartXRef.current === null || touchStartYRef.current === null) return;
-    
-    const touchX = e.touches[0].clientX;
-    const touchY = e.touches[0].clientY;
-    const diffX = touchX - touchStartXRef.current;
-    const diffY = touchY - touchStartYRef.current;
-    
-    // Determine primary direction of movement
-    const isHorizontal = Math.abs(diffX) > Math.abs(diffY);
-    
-    if (isHorizontal && allowHorizontalSwipe) {
-      if (preventDefaultTouchmove) e.preventDefault();
-      setDragOffset({ x: diffX * 0.5, y: 0 });
-      setSwipeDirection(diffX > 0 ? 'right' : 'left');
-    } else if (!isHorizontal && allowVerticalSwipe) {
-      if (preventDefaultTouchmove) e.preventDefault();
-      setDragOffset({ x: 0, y: diffY * 0.5 });
-      setSwipeDirection(diffY > 0 ? 'down' : 'up');
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (disabled || touchStartXRef.current === null || touchStartYRef.current === null) return;
-    
-    const diffX = dragOffset.x;
-    const diffY = dragOffset.y;
-    const absX = Math.abs(diffX);
-    const absY = Math.abs(diffY);
-    
-    // Handle swipe events if they exceed the threshold
-    if (absX > absY && absX > threshold && allowHorizontalSwipe) {
-      if (diffX > 0 && onSwipeRight) {
-        onSwipeRight();
-      } else if (diffX < 0 && onSwipeLeft) {
-        onSwipeLeft();
-      }
-    } else if (absY > absX && absY > threshold && allowVerticalSwipe) {
-      if (diffY > 0 && onSwipeDown) {
-        onSwipeDown();
-      } else if (diffY < 0 && onSwipeUp) {
-        onSwipeUp();
-      }
-    }
-    
-    // Reset state
-    touchStartXRef.current = null;
-    touchStartYRef.current = null;
-    setIsDragging(false);
-    setDragOffset({ x: 0, y: 0 });
-    setSwipeDirection(null);
-  };
-
-  // Clean up touch handlers when unmounting
-  useEffect(() => {
-    return () => {
-      touchStartXRef.current = null;
-      touchStartYRef.current = null;
-    };
-  }, []);
-
-  // Apply transform styles based on drag offset during touch
-  const transformStyle: CSSProperties = isDragging
-    ? {
-        transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
-        transition: 'none',
-      }
-    : {
-        transform: 'translate(0, 0)',
-        transition: 'transform 0.3s ease',
-      };
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startX = useRef(0);
+  const currentX = useRef(0);
+  const childrenArray = React.Children.toArray(children);
   
-  // Combine our dynamic styles with provided styles
-  const combinedStyle = {
-    ...style,
-    ...transformStyle,
+  // Handle touch start event
+  const handleTouchStart = (e: TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    currentX.current = startX.current;
+    setIsDragging(true);
   };
-
-  return (
-    <div
-      ref={containerRef}
-      className={cn('relative touch-pan-y', className)}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
-      style={combinedStyle}
-    >
-      {children}
-      
-      {/* Optional swipe indicators */}
-      {showSwipeIndicator && isDragging && swipeDirection && (
-        <div className={cn(
-          'absolute pointer-events-none inset-0 flex items-center justify-center opacity-30',
-          swipeDirection === 'left' && 'justify-start pl-4',
-          swipeDirection === 'right' && 'justify-end pr-4',
-          swipeDirection === 'up' && 'items-start pt-4',
-          swipeDirection === 'down' && 'items-end pb-4',
-        )}>
-          <div className={cn(
-            'bg-primary text-primary-foreground rounded-full flex items-center justify-center',
-            swipeDirection === 'left' || swipeDirection === 'right' 
-              ? 'h-12 w-12' 
-              : 'h-12 w-12'
-          )}>
-            {swipeDirection === 'left' && '←'}
-            {swipeDirection === 'right' && '→'}
-            {swipeDirection === 'up' && '↑'}
-            {swipeDirection === 'down' && '↓'}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * A more specialized swipeable container specifically for tab-like content
- */
-interface SwipeableTabsProps {
-  children: ReactNode[];
-  activeIndex: number;
-  onChangeIndex: (index: number) => void;
-  className?: string;
-  style?: CSSProperties;
-  showIndicators?: boolean;
-}
-
-export function SwipeableTabs({
-  children,
-  activeIndex,
-  onChangeIndex,
-  className,
-  style,
-  showIndicators = false,
-}: SwipeableTabsProps) {
-  const handleSwipeLeft = () => {
-    if (activeIndex < React.Children.count(children) - 1) {
-      onChangeIndex(activeIndex + 1);
+  
+  // Handle touch move event
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!isDragging) return;
+    
+    currentX.current = e.touches[0].clientX;
+    const diff = currentX.current - startX.current;
+    
+    if (Math.abs(diff) > 10) {
+      // Prevent scrolling when swiping horizontally
+      e.preventDefault();
     }
+    
+    // Calculate the translate offset for the drag
+    setTranslateX(diff);
   };
-
-  const handleSwipeRight = () => {
-    if (activeIndex > 0) {
-      onChangeIndex(activeIndex - 1);
+  
+  // Handle touch end event
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    
+    const diff = currentX.current - startX.current;
+    
+    if (Math.abs(diff) >= swipeThreshold) {
+      // Swiped past threshold, change slide
+      if (diff > 0 && (activeIndex > 0 || loop)) {
+        // Swiped right (prev)
+        handlePrev();
+      } else if (diff < 0 && (activeIndex < childrenArray.length - 1 || loop)) {
+        // Swiped left (next)
+        handleNext();
+      }
     }
+    
+    // Reset drag state
+    setTranslateX(0);
+    setIsDragging(false);
   };
-
+  
+  // Handle next slide
+  const handleNext = () => {
+    let nextIndex: number;
+    
+    if (activeIndex >= childrenArray.length - 1) {
+      // If at the last slide
+      nextIndex = loop ? 0 : childrenArray.length - 1;
+    } else {
+      nextIndex = activeIndex + 1;
+    }
+    
+    setActiveIndex(nextIndex);
+    onChange?.(nextIndex);
+  };
+  
+  // Handle previous slide
+  const handlePrev = () => {
+    let prevIndex: number;
+    
+    if (activeIndex <= 0) {
+      // If at the first slide
+      prevIndex = loop ? childrenArray.length - 1 : 0;
+    } else {
+      prevIndex = activeIndex - 1;
+    }
+    
+    setActiveIndex(prevIndex);
+    onChange?.(prevIndex);
+  };
+  
+  // Set up touch event listeners
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    container.addEventListener('touchstart', handleTouchStart, { passive: false });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd);
+    
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isDragging, activeIndex, childrenArray.length, loop]);
+  
   return (
-    <div className={cn('relative', className)}>
-      <SwipeableContainer
-        onSwipeLeft={handleSwipeLeft}
-        onSwipeRight={handleSwipeRight}
-        style={style}
-        showSwipeIndicator={showIndicators}
-        allowHorizontalSwipe={true}
-        allowVerticalSwipe={false}
+    <div className={cn("relative overflow-hidden", className)}>
+      {/* Container with swipeable content */}
+      <div 
+        ref={containerRef}
+        className="w-full h-full overflow-hidden"
       >
-        {React.Children.toArray(children)[activeIndex]}
-      </SwipeableContainer>
+        <div
+          className="flex transition-transform"
+          style={{
+            transform: `translateX(calc(-${activeIndex * 100}% + ${translateX}px))`,
+            transitionDuration: isDragging ? '0ms' : `${animationDuration}ms`
+          }}
+        >
+          {childrenArray.map((child, index) => (
+            <div 
+              key={index} 
+              className={cn(
+                "flex-shrink-0 w-full", 
+                itemClassName
+              )}
+              aria-hidden={index !== activeIndex}
+            >
+              {child}
+            </div>
+          ))}
+        </div>
+      </div>
       
-      {/* Optional pagination indicators */}
-      {showIndicators && (
-        <div className="flex justify-center mt-4 gap-1">
-          {React.Children.map(children, (_, index) => (
+      {/* Slide indicators */}
+      {showIndicator && childrenArray.length > 1 && (
+        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1">
+          {childrenArray.map((_, index) => (
             <button
               key={index}
-              onClick={() => onChangeIndex(index)}
               className={cn(
                 "w-2 h-2 rounded-full transition-all",
                 index === activeIndex 
                   ? "bg-primary w-4" 
                   : "bg-muted-foreground/30"
               )}
+              onClick={() => {
+                setActiveIndex(index);
+                onChange?.(index);
+              }}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
         </div>
+      )}
+      
+      {/* Navigation arrows */}
+      {showArrows && childrenArray.length > 1 && (
+        <>
+          <Button
+            size="icon"
+            variant="ghost"
+            className={cn(
+              "absolute top-1/2 left-2 -translate-y-1/2 opacity-70 hover:opacity-100",
+              (!loop && activeIndex === 0) && "hidden"
+            )}
+            onClick={handlePrev}
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          
+          <Button
+            size="icon"
+            variant="ghost"
+            className={cn(
+              "absolute top-1/2 right-2 -translate-y-1/2 opacity-70 hover:opacity-100",
+              (!loop && activeIndex === childrenArray.length - 1) && "hidden"
+            )}
+            onClick={handleNext}
+            aria-label="Next slide"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </>
       )}
     </div>
   );

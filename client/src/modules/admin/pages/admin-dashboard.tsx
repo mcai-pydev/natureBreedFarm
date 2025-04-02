@@ -1,9 +1,7 @@
 import React from 'react';
 import { AdminLayout } from '../components/admin-layout';
-import { 
-  ResponsiveContainer,
-  ResponsiveGrid 
-} from '@/components/layout/responsive-container';
+import { ResponsiveContainer } from '@/components/layout/responsive-container';
+import { useResponsiveGrid } from '@/hooks/use-responsive-grid';
 import { useResponsive } from '@/contexts/responsive-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -87,6 +85,7 @@ function RecentSalesItem({
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const { isMobile, isTablet } = useResponsive();
+  const ResponsiveGrid = useResponsiveGrid();
   
   // Adapt columns based on screen size for better readability on mobile
   const statsColumns = isMobile ? 1 : isTablet ? 2 : 4;

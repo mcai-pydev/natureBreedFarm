@@ -1,86 +1,84 @@
 import React from 'react';
-import { useLocation } from 'wouter';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ArrowLeft } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { useLocation } from 'wouter';
+import { ChevronLeft, X } from 'lucide-react';
+import { Button, ButtonProps } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
-interface BackButtonProps {
-  fallbackPath?: string;
-  variant?: 'default' | 'ghost' | 'outline' | 'secondary';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-  className?: string;
+interface BackButtonProps extends Omit<ButtonProps, 'onClick'> {
+  onClick?: () => void;
+  to?: string;
+  fallbackRoute?: string;
+  showHomeIcon?: boolean;
   label?: string;
-  showLabel?: boolean;
-  onBack?: () => void;
-  icon?: 'chevron' | 'arrow';
+  iconVariant?: 'chevron' | 'x';
+  onClose?: () => void;
 }
 
 export function BackButton({
-  fallbackPath = '/',
-  variant = 'ghost',
-  size = 'icon',
-  className,
+  onClick,
+  to,
+  fallbackRoute = '/',
+  showHomeIcon = false,
   label,
-  showLabel = false,
-  onBack,
-  icon = 'chevron'
+  iconVariant = 'chevron',
+  onClose,
+  className,
+  variant = 'ghost',
+  size = 'sm',
+  ...props
 }: BackButtonProps) {
   const { t } = useTranslation();
-  const [, setLocation] = useLocation();
+  const [_, navigate] = useLocation();
   
-  const buttonLabel = label || t('Back');
-  
-  const Icon = icon === 'chevron' ? ChevronLeft : ArrowLeft;
-  
-  const handleClick = () => {
-    if (onBack) {
-      onBack();
-      return;
-    }
-    
-    // Try to use browser history first
-    if (window.history.length > 1) {
+  // Handle back navigation
+  const handleBack = () => {
+    if (onClick) {
+      // Use custom handler if provided
+      onClick();
+    } else if (onClose) {
+      // Use close handler if provided
+      onClose();
+    } else if (to) {
+      // Navigate to specific route if provided
+      navigate(to);
+    } else if (window.history.length > 1) {
+      // Go back in history if possible
       window.history.back();
     } else {
-      // Fallback to the provided path
-      setLocation(fallbackPath);
+      // Fallback to home route
+      navigate(fallbackRoute);
     }
   };
+  
+  const Icon = iconVariant === 'x' ? X : ChevronLeft;
   
   return (
     <Button
       variant={variant}
       size={size}
-      className={cn(
-        "group",
-        showLabel && size !== 'icon' && "gap-2",
-        className
-      )}
-      onClick={handleClick}
-      aria-label={buttonLabel}
+      onClick={handleBack}
+      className={cn("gap-1", className)}
+      {...props}
     >
-      <Icon className={cn(
-        "h-4 w-4",
-        size === 'lg' && "h-5 w-5",
-        "transition-transform group-hover:-translate-x-0.5"
-      )} />
-      {showLabel && size !== 'icon' && (
-        <span>{buttonLabel}</span>
-      )}
+      <Icon className="h-4 w-4" />
+      {label && <span>{t(label)}</span>}
+      {!label && showHomeIcon && <span>{t("Back")}</span>}
     </Button>
   );
 }
 
 interface PageHeaderWithBackProps {
   title: string;
-  backButtonProps?: Omit<BackButtonProps, 'showLabel'>;
+  subtitle?: string;
+  backButtonProps?: Omit<BackButtonProps, 'className' | 'size'>;
   className?: string;
   actions?: React.ReactNode;
 }
 
 export function PageHeaderWithBack({
   title,
+  subtitle,
   backButtonProps,
   className,
   actions
@@ -88,19 +86,22 @@ export function PageHeaderWithBack({
   const { t } = useTranslation();
   
   return (
-    <div className={cn(
-      "flex items-center justify-between border-b pb-4 mb-4",
-      className
-    )}>
-      <div className="flex items-center gap-2">
-        <BackButton {...backButtonProps} />
-        <h1 className="text-xl font-semibold">{t(title)}</h1>
-      </div>
-      
-      {actions && (
+    <div className={cn("flex flex-col space-y-1.5 pb-4", className)}>
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {actions}
+          <BackButton size="sm" {...backButtonProps} />
+          <h2 className="text-xl font-semibold leading-none tracking-tight">
+            {t(title)}
+          </h2>
         </div>
+        {actions && (
+          <div className="flex items-center gap-2">
+            {actions}
+          </div>
+        )}
+      </div>
+      {subtitle && (
+        <p className="text-sm text-muted-foreground">{t(subtitle)}</p>
       )}
     </div>
   );
