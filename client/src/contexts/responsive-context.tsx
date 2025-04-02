@@ -1,16 +1,10 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { breakpoints } from '@/hooks/use-mobile';
-
-type BreakpointKey = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-type Breakpoints = Record<BreakpointKey, number>;
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface ResponsiveContextType {
   isMobile: boolean;
   isTablet: boolean;
   isDesktop: boolean;
-  breakpointKey: BreakpointKey | null;
-  windowWidth: number;
-  windowHeight: number;
+  isLargeDesktop: boolean;
   orientation: 'portrait' | 'landscape';
 }
 
@@ -18,93 +12,77 @@ const defaultContext: ResponsiveContextType = {
   isMobile: false,
   isTablet: false,
   isDesktop: true,
-  breakpointKey: null,
-  windowWidth: 0,
-  windowHeight: 0,
-  orientation: 'landscape',
+  isLargeDesktop: false,
+  orientation: 'landscape'
 };
 
-const ResponsiveContext = createContext<ResponsiveContextType>(defaultContext);
-
-export function useResponsive() {
-  return useContext(ResponsiveContext);
-}
+export const ResponsiveContext = createContext<ResponsiveContextType>(defaultContext);
 
 interface ResponsiveProviderProps {
   children: ReactNode;
-  customBreakpoints?: Breakpoints;
+  mobileBreakpoint?: number;
+  tabletBreakpoint?: number;
+  desktopBreakpoint?: number;
 }
 
-export function ResponsiveProvider({ 
+export function ResponsiveProvider({
   children,
-  customBreakpoints
+  mobileBreakpoint = 640,
+  tabletBreakpoint = 768,
+  desktopBreakpoint = 1024
 }: ResponsiveProviderProps) {
-  const [windowDimensions, setWindowDimensions] = useState({
-    width: 0,
-    height: 0,
+  const [dimensions, setDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1200,
+    height: typeof window !== 'undefined' ? window.innerHeight : 800,
   });
-  
-  const [contextValue, setContextValue] = useState<ResponsiveContextType>({
-    ...defaultContext,
-  });
-
-  // Use custom or default breakpoints
-  const activeBreakpoints: Breakpoints = customBreakpoints || breakpoints as Breakpoints;
 
   useEffect(() => {
-    // Handle server-side rendering
-    if (typeof window === 'undefined') return;
-
-    const updateDimensions = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      
-      setWindowDimensions({ width, height });
-      
-      // Determine current breakpoint
-      let currentBreakpoint: BreakpointKey | null = null;
-      
-      if (width < activeBreakpoints.sm) {
-        currentBreakpoint = 'xs';
-      } else if (width < activeBreakpoints.md) {
-        currentBreakpoint = 'sm';
-      } else if (width < activeBreakpoints.lg) {
-        currentBreakpoint = 'md';
-      } else if (width < activeBreakpoints.xl) {
-        currentBreakpoint = 'lg';
-      } else if (width < activeBreakpoints['2xl']) {
-        currentBreakpoint = 'xl';
-      } else {
-        currentBreakpoint = '2xl';
-      }
-      
-      // Update context value
-      setContextValue({
-        isMobile: width < activeBreakpoints.md,
-        isTablet: width >= activeBreakpoints.md && width < activeBreakpoints.lg,
-        isDesktop: width >= activeBreakpoints.lg,
-        breakpointKey: currentBreakpoint,
-        windowWidth: width,
-        windowHeight: height,
-        orientation: height > width ? 'portrait' : 'landscape',
+    const handleResize = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
       });
     };
-    
-    // Initial call
-    updateDimensions();
-    
+
     // Add event listener
-    window.addEventListener('resize', updateDimensions);
+    window.addEventListener('resize', handleResize);
     
-    // Clean up
-    return () => {
-      window.removeEventListener('resize', updateDimensions);
-    };
-  }, [activeBreakpoints]);
+    // Call handler right away so state gets updated with initial window size
+    handleResize();
+    
+    // Remove event listener on cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const { width, height } = dimensions;
+  
+  const isMobile = width < mobileBreakpoint;
+  const isTablet = width >= mobileBreakpoint && width < tabletBreakpoint;
+  const isDesktop = width >= tabletBreakpoint && width < desktopBreakpoint;
+  const isLargeDesktop = width >= desktopBreakpoint;
+  const orientation: 'portrait' | 'landscape' = height > width ? 'portrait' : 'landscape';
+
+  const value: ResponsiveContextType = {
+    isMobile,
+    isTablet,
+    isDesktop,
+    isLargeDesktop,
+    orientation,
+  };
 
   return (
-    <ResponsiveContext.Provider value={contextValue}>
+    <ResponsiveContext.Provider value={value}>
       {children}
     </ResponsiveContext.Provider>
   );
+}
+
+export function useResponsive() {
+  const context = useContext(ResponsiveContext);
+  
+  if (context === undefined) {
+    throw new Error('useResponsive must be used within a ResponsiveProvider');
+  }
+  
+  return context;
 }

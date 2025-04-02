@@ -1,160 +1,214 @@
 import React, { ReactNode, useState } from 'react';
-import { useLocation, Link } from 'wouter';
-import { MobileMenuDrawer } from '@/components/layout/mobile-menu-drawer';
+import { Link, useLocation } from 'wouter';
+import { useResponsive } from '@/contexts/responsive-context';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { LanguageSelector } from '@/components/i18n/language-selector';
-import { useResponsive } from '@/contexts/responsive-context';
+import { ResponsiveContainer } from '@/components/layout/responsive-container';
+import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from 'react-i18next';
-import { 
-  Home, ShoppingCart, Heart, User, 
-  LifeBuoy, Mail, Phone, ExternalLink,
-  Search, Instagram, Facebook, Twitter
-} from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  TwoColumnLayout 
-} from '@/components/layout/responsive-container';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Logo } from '@/components/brand/logo';
+import {
+  Home,
+  ShoppingBag,
+  Phone,
+  Info,
+  LogIn,
+  Menu,
+  X,
+  Search,
+  ShoppingCart
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger
+} from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 interface CustomerLayoutProps {
   children: ReactNode;
-  showFooter?: boolean;
-  showHeader?: boolean;
-  cartCount?: number;
+  hideFooter?: boolean;
 }
 
-export function CustomerLayout({
-  children,
-  showFooter = true,
-  showHeader = true,
-  cartCount = 0,
-}: CustomerLayoutProps) {
+interface NavItem {
+  title: string;
+  href: string;
+  icon: React.ReactNode;
+}
+
+export function CustomerLayout({ children, hideFooter = false }: CustomerLayoutProps) {
   const { t } = useTranslation();
-  const { isMobile, isTablet } = useResponsive();
-  const [location, navigate] = useLocation();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { isMobile } = useResponsive();
+  const { user } = useAuth();
+  const [location] = useLocation();
+  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery('');
-    }
-  };
-  
-  const handleCartClick = () => {
-    navigate('/checkout');
-  };
-  
-  const navItems = [
-    { label: t('Home'), href: '/', icon: <Home className="w-5 h-5" /> },
-    { label: t('Shop'), href: '/shop', icon: <ShoppingCart className="w-5 h-5" /> },
-    { label: t('Favorites'), href: '/favorites', icon: <Heart className="w-5 h-5" /> },
-    { label: t('Account'), href: '/auth', icon: <User className="w-5 h-5" /> },
+  const navItems: NavItem[] = [
+    {
+      title: t('Home'),
+      href: '/',
+      icon: <Home className="h-5 w-5" />,
+    },
+    {
+      title: t('Shop'),
+      href: '/shop',
+      icon: <ShoppingBag className="h-5 w-5" />,
+    },
+    {
+      title: t('About'),
+      href: '/about',
+      icon: <Info className="h-5 w-5" />,
+    },
+    {
+      title: t('Contact'),
+      href: '/contact',
+      icon: <Phone className="h-5 w-5" />,
+    },
   ];
   
+  // Determine if a nav item is active
+  const isActive = (href: string) => {
+    return location === href || location.startsWith(`${href}/`);
+  };
+  
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex min-h-screen flex-col">
       {/* Header */}
-      {showHeader && (
-        <header className="border-b bg-card">
-          <div className="container mx-auto">
-            {/* Top header with logo and actions */}
-            <div className="py-3 px-4 flex items-center justify-between">
-              {/* Logo */}
+      <header className="sticky top-0 z-40 w-full bg-background shadow-sm">
+        <div className="relative border-b">
+          <ResponsiveContainer fullWidth className="flex h-16 items-center justify-between">
+            {/* Left side: Logo */}
+            <div className="flex items-center gap-2">
               <Link href="/">
                 <a className="flex items-center gap-2">
-                  <Logo />
-                  <span className="font-bold text-xl hidden md:block">Nature Breed Farm</span>
+                  <Logo size={isMobile ? 'sm' : 'md'} showText={!isMobile} />
                 </a>
               </Link>
-              
-              {/* Desktop Actions */}
-              {!isMobile && (
-                <div className="flex items-center gap-4">
-                  <div className="relative w-64">
-                    <Input
-                      type="text"
-                      placeholder={t('Search...')}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                      className="pr-10"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full"
-                      onClick={handleSearch}
-                    >
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <ThemeToggle />
-                  <LanguageSelector />
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="relative"
-                    onClick={handleCartClick}
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    {t('Cart')}
-                    {cartCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                        {cartCount}
-                      </span>
-                    )}
-                  </Button>
-                  
-                  <Link href="/auth">
-                    <Button variant="default" size="sm">
-                      {t('Sign In')}
-                    </Button>
-                  </Link>
-                </div>
-              )}
-              
-              {/* Mobile menu */}
-              {isMobile && (
-                <MobileMenuDrawer
-                  navItems={navItems}
-                  cartCount={cartCount}
-                  onCartClick={handleCartClick}
-                  showSearchBar={true}
-                  onSearch={(query) => navigate(`/shop?search=${encodeURIComponent(query)}`)}
-                />
-              )}
             </div>
             
-            {/* Desktop Navigation */}
+            {/* Center: Desktop navigation */}
             {!isMobile && (
-              <nav className="hidden md:flex items-center justify-between py-3 px-4">
-                <div className="flex items-center gap-6">
-                  {navItems.map((item, index) => (
-                    <Link key={index} href={item.href}>
-                      <a className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors">
-                        {item.icon}
-                        <span>{item.label}</span>
-                      </a>
-                    </Link>
-                  ))}
-                </div>
-                
-                <div className="text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Phone className="h-4 w-4" />
-                    +234 123 456 7890
-                  </span>
-                </div>
+              <nav className="mx-4 hidden md:flex space-x-4 lg:space-x-6">
+                {navItems.map((item, i) => (
+                  <Link key={i} href={item.href}>
+                    <a
+                      className={cn(
+                        "text-sm font-medium transition-colors hover:text-primary",
+                        isActive(item.href)
+                          ? "text-foreground"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {item.title}
+                    </a>
+                  </Link>
+                ))}
               </nav>
             )}
-          </div>
-        </header>
-      )}
+            
+            {/* Right side: Cart, Theme, Languages, Login */}
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                  3
+                </Badge>
+              </Button>
+              
+              <Button variant="ghost" size="icon">
+                <Search className="h-5 w-5" />
+              </Button>
+              
+              <ThemeToggle />
+              <LanguageSelector />
+              
+              {!user ? (
+                <Button asChild variant="outline" size="sm" className="ml-4 hidden md:flex">
+                  <Link href="/auth">
+                    <a className="flex items-center gap-2">
+                      <LogIn className="h-4 w-4" />
+                      {t('Login')}
+                    </a>
+                  </Link>
+                </Button>
+              ) : (
+                <Avatar className="ml-2">
+                  <AvatarFallback>
+                    {user.name ? user.name.substring(0, 2).toUpperCase() : 'UN'}
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              
+              {/* Mobile menu button */}
+              {isMobile && (
+                <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="md:hidden">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right">
+                    <SheetHeader className="mb-4">
+                      <SheetTitle>{t('Menu')}</SheetTitle>
+                    </SheetHeader>
+                    <nav className="flex flex-col space-y-3">
+                      {navItems.map((item, i) => (
+                        <SheetClose key={i} asChild>
+                          <Link href={item.href}>
+                            <a
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors rounded-md",
+                                isActive(item.href)
+                                  ? "bg-primary/10 text-primary"
+                                  : "hover:bg-muted"
+                              )}
+                            >
+                              {item.icon}
+                              {item.title}
+                            </a>
+                          </Link>
+                        </SheetClose>
+                      ))}
+                      
+                      <Separator />
+                      
+                      {!user ? (
+                        <SheetClose asChild>
+                          <Link href="/auth">
+                            <a className="flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors rounded-md hover:bg-muted">
+                              <LogIn className="h-5 w-5" />
+                              {t('Login / Register')}
+                            </a>
+                          </Link>
+                        </SheetClose>
+                      ) : (
+                        <div className="flex items-center gap-3 px-3 py-2">
+                          <Avatar>
+                            <AvatarFallback>
+                              {user.name ? user.name.substring(0, 2).toUpperCase() : 'UN'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">{user.name}</span>
+                            <span className="text-xs text-muted-foreground">{user.username}</span>
+                          </div>
+                        </div>
+                      )}
+                    </nav>
+                  </SheetContent>
+                </Sheet>
+              )}
+            </div>
+          </ResponsiveContainer>
+        </div>
+      </header>
       
       {/* Main content */}
       <main className="flex-1">
@@ -162,85 +216,97 @@ export function CustomerLayout({
       </main>
       
       {/* Footer */}
-      {showFooter && (
-        <footer className="bg-muted py-12 mt-auto">
-          <div className="container mx-auto px-4">
-            <ResponsiveContainer>
-              <TwoColumnLayout
-                stackOnMobile={true}
-                gap="lg"
-                leftWidth="w-full md:w-2/5"
-                rightWidth="w-full md:w-3/5"
-                left={
-                  <div className="space-y-6">
-                    <Link href="/">
-                      <a className="flex items-center gap-2">
-                        <Logo size="lg" />
-                        <span className="font-bold text-xl">Nature Breed Farm</span>
+      {!hideFooter && (
+        <footer className="border-t bg-muted/40">
+          <ResponsiveContainer className="py-8 md:py-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+              <div>
+                <Logo size="md" />
+                <p className="mt-4 text-sm text-muted-foreground max-w-xs">
+                  {t('Nature Breed Farm provides sustainable farming solutions and high-quality livestock for farmers worldwide.')}
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-3">{t('Quick Links')}</h3>
+                <ul className="space-y-2 text-sm">
+                  {navItems.map((item, i) => (
+                    <li key={i}>
+                      <Link href={item.href}>
+                        <a className="text-muted-foreground hover:text-foreground transition-colors">
+                          {item.title}
+                        </a>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-3">{t('Our Products')}</h3>
+                <ul className="space-y-2 text-sm">
+                  <li>
+                    <Link href="/shop/goats">
+                      <a className="text-muted-foreground hover:text-foreground transition-colors">
+                        {t('Goats')}
                       </a>
                     </Link>
-                    <p className="text-muted-foreground">
-                      {t('Empowering farmers with sustainable solutions for optimal agricultural operations and enhanced productivity.')}
-                    </p>
-                    <div className="flex gap-4">
-                      <Button variant="ghost" size="icon">
-                        <Facebook className="h-5 w-5" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Instagram className="h-5 w-5" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Twitter className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  </div>
-                }
-                right={
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg">{t('Shop')}</h3>
-                      <ul className="space-y-2">
-                        <li><Link href="/shop?category=goat"><a className="hover:underline">{t('Goats')}</a></Link></li>
-                        <li><Link href="/shop?category=fish"><a className="hover:underline">{t('Fish')}</a></Link></li>
-                        <li><Link href="/shop?category=duck"><a className="hover:underline">{t('Ducks')}</a></Link></li>
-                        <li><Link href="/shop?category=chicken"><a className="hover:underline">{t('Chickens')}</a></Link></li>
-                        <li><Link href="/shop?category=rabbit"><a className="hover:underline">{t('Rabbits')}</a></Link></li>
-                      </ul>
-                    </div>
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg">{t('Company')}</h3>
-                      <ul className="space-y-2">
-                        <li><Link href="/about"><a className="hover:underline">{t('About Us')}</a></Link></li>
-                        <li><Link href="/contact"><a className="hover:underline">{t('Contact')}</a></Link></li>
-                        <li><Link href="/blog"><a className="hover:underline">{t('Blog')}</a></Link></li>
-                        <li><Link href="/careers"><a className="hover:underline">{t('Careers')}</a></Link></li>
-                      </ul>
-                    </div>
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg">{t('Support')}</h3>
-                      <ul className="space-y-2">
-                        <li><Link href="/help"><a className="hover:underline">{t('Help Center')}</a></Link></li>
-                        <li><Link href="/policy/privacy"><a className="hover:underline">{t('Privacy Policy')}</a></Link></li>
-                        <li><Link href="/policy/terms"><a className="hover:underline">{t('Terms of Service')}</a></Link></li>
-                        <li><Link href="/policy/shipping"><a className="hover:underline">{t('Shipping Policy')}</a></Link></li>
-                      </ul>
-                    </div>
-                  </div>
-                }
-              />
-              
-              <div className="border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                <p className="text-sm text-muted-foreground">
-                  &copy; {new Date().getFullYear()} Nature Breed Farm. {t('All rights reserved.')}
-                </p>
-                <div className="flex gap-4 text-sm">
-                  <Link href="/policy/privacy"><a className="hover:underline">{t('Privacy')}</a></Link>
-                  <Link href="/policy/terms"><a className="hover:underline">{t('Terms')}</a></Link>
-                  <Link href="/sitemap"><a className="hover:underline">{t('Sitemap')}</a></Link>
-                </div>
+                  </li>
+                  <li>
+                    <Link href="/shop/fish">
+                      <a className="text-muted-foreground hover:text-foreground transition-colors">
+                        {t('Fish')}
+                      </a>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/shop/ducks">
+                      <a className="text-muted-foreground hover:text-foreground transition-colors">
+                        {t('Ducks')}
+                      </a>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/shop/chickens">
+                      <a className="text-muted-foreground hover:text-foreground transition-colors">
+                        {t('Chickens')}
+                      </a>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/shop/rabbits">
+                      <a className="text-muted-foreground hover:text-foreground transition-colors">
+                        {t('Rabbits')}
+                      </a>
+                    </Link>
+                  </li>
+                </ul>
               </div>
-            </ResponsiveContainer>
-          </div>
+              
+              <div>
+                <h3 className="font-semibold mb-3">{t('Contact')}</h3>
+                <address className="not-italic text-sm text-muted-foreground space-y-2">
+                  <p>123 Farm Lane</p>
+                  <p>Agriculture District</p>
+                  <p>contact@naturebreed.com</p>
+                  <p>+234 123 456 7890</p>
+                </address>
+              </div>
+            </div>
+            
+            <Separator className="my-6" />
+            
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-sm text-muted-foreground">
+                © {new Date().getFullYear()} Nature Breed Farm. {t('All rights reserved.')}
+              </p>
+              
+              <div className="flex items-center gap-2">
+                <ThemeToggle size="sm" />
+                <LanguageSelector size="sm" />
+              </div>
+            </div>
+          </ResponsiveContainer>
         </footer>
       )}
     </div>

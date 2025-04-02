@@ -1,0 +1,36 @@
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s 
+
+Check the render method of `SlotClone`. 
+    at PasswordInput (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/src/modules/common/components/password-input.tsx:22:33)
+    at https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-DKHUMOWT.js?v=f3e45a19:52:11
+    at https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-DKHUMOWT.js?v=f3e45a19:33:11
+    at https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/src/components/ui/form.tsx:129:9
+    at div
+    at https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/src/components/ui/form.tsx:71:6
+    at Controller (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=f3e45a19:313:35)
+    at FormField (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/src/components/ui/form.tsx:32:6)
+    at form
+    at FormProvider (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=f3e45a19:102:11)
+    at div
+    at https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-CPFL7ZFD.js?v=f3e45a19:41:13
+    at Presence (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-S7EWQZ7Q.js?v=f3e45a19:24:11)
+    at https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=f3e45a19:175:13
+    at _c5 (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/src/components/ui/tabs.tsx:72:12)
+    at div
+    at https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-CPFL7ZFD.js?v=f3e45a19:41:13
+    at Provider (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JJS7DLG7.js?v=f3e45a19:38:15)
+    at https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=f3e45a19:53:7
+    at div
+    at div
+    at div
+    at div
+    at AuthPage (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/src/modules/common/pages/auth-page.tsx:68:53)
+    at Route (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f3e45a19:323:16)
+    at Switch (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f3e45a19:379:17)
+    at Router (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/src/App.tsx?v=X3OSvfLsG1dYxv1XXPmqa:45:22)
+    at AuthProvider (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=f3e45a19:2805:3)
+    at ResponsiveProvider (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/src/contexts/responsive-context.tsx:36:3)
+    at ThemeProvider (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/src/components/theme/theme-provider.tsx:25:3)
+    at _a (https://be70dd85-7f3b-475b-b8b7-fa50ff9f211f-00-1ji25u6157rb5.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-helmet-async.js?v=f3e45a19:624:5)
+    at App

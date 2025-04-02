@@ -7,66 +7,88 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Check, Globe } from 'lucide-react';
+import { Languages } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface LanguageSelectorProps {
+  size?: 'sm' | 'md' | 'lg';
+  variant?: 'minimal' | 'full';
+}
 
 interface Language {
   code: string;
   name: string;
-  nativeName: string;
-  flag?: string;
-  direction?: 'ltr' | 'rtl';
+  flag: string;
 }
 
-const languages: Language[] = [
-  { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' },
-  { code: 'ar', name: 'Arabic', nativeName: 'العربية', flag: '🇦🇪', direction: 'rtl' },
-  { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
-  { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili', flag: '🇰🇪' },
-  { code: 'ha', name: 'Hausa', nativeName: 'Hausa', flag: '🇳🇬' },
-  { code: 'yo', name: 'Yoruba', nativeName: 'Yorùbá', flag: '🇳🇬' },
-  { code: 'ig', name: 'Igbo', nativeName: 'Igbo', flag: '🇳🇬' },
-];
-
-export function LanguageSelector() {
+export function LanguageSelector({ 
+  size = 'md',
+  variant = 'minimal' 
+}: LanguageSelectorProps) {
   const { i18n } = useTranslation();
-  const currentLang = i18n.language;
 
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-    
-    // Handle RTL for Arabic
-    const isRTL = languages.find(l => l.code === lng)?.direction === 'rtl';
-    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
-    
-    // Store language preference
-    localStorage.setItem('preferredLanguage', lng);
+  const languages: Language[] = [
+    { code: 'en', name: 'English', flag: '🇬🇧' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+    { code: 'sw', name: 'Kiswahili', flag: '🇰🇪' },
+    { code: 'ha', name: 'Hausa', flag: '🇳🇬' },
+    { code: 'yo', name: 'Yorùbá', flag: '🇳🇬' },
+    { code: 'ig', name: 'Igbo', flag: '🇳🇬' },
+  ];
+
+  const iconSizes = {
+    sm: 'h-4 w-4',
+    md: 'h-5 w-5',
+    lg: 'h-6 w-6'
+  };
+  
+  const buttonSizes = {
+    sm: variant === 'minimal' ? 'h-8 w-8' : 'h-8',
+    md: variant === 'minimal' ? 'h-9 w-9' : 'h-9',
+    lg: variant === 'minimal' ? 'h-10 w-10' : 'h-10'
   };
 
-  // Find current language details
-  const currentLanguage = languages.find(lang => lang.code === currentLang) || languages[0];
+  const getCurrentLanguage = () => {
+    return languages.find(lang => lang.code === i18n.language) || languages[0];
+  };
+
+  const handleLanguageChange = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Globe className="h-5 w-5" />
+        <Button 
+          variant="ghost" 
+          size={variant === 'minimal' ? 'icon' : 'sm'}
+          className={cn(buttonSizes[size])}
+        >
+          {variant === 'minimal' ? (
+            <Languages className={iconSizes[size]} />
+          ) : (
+            <div className="flex items-center gap-2">
+              <Languages className={iconSizes[size]} />
+              <span>{getCurrentLanguage().name}</span>
+            </div>
+          )}
           <span className="sr-only">Select language</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[12rem]">
-        {languages.map((language) => (
+      <DropdownMenuContent align="end">
+        {languages.map((lang) => (
           <DropdownMenuItem
-            key={language.code}
-            className="flex items-center justify-between cursor-pointer"
-            onClick={() => changeLanguage(language.code)}
-          >
-            <span className="flex items-center gap-2">
-              <span className="text-base">{language.flag}</span>
-              <span>{language.nativeName}</span>
-            </span>
-            {currentLang === language.code && (
-              <Check className="h-4 w-4 text-primary" />
+            key={lang.code}
+            className={cn(
+              "flex items-center gap-2 cursor-pointer",
+              lang.code === i18n.language && "bg-primary/10 text-primary"
             )}
+            onClick={() => handleLanguageChange(lang.code)}
+          >
+            <span>{lang.flag}</span>
+            <span>{lang.name}</span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
