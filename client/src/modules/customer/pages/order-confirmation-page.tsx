@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ResponsiveContainer } from "@/components/layout/responsive-container";
 import { Card, CardContent } from "@/components/ui/card";
 import { useMobile } from "@/hooks/use-mobile";
+import { EcoTips } from "@/components/shop/eco-tips";
 
 export default function OrderConfirmationPage() {
   const [, setLocation] = useLocation();
@@ -116,7 +117,10 @@ export default function OrderConfirmationPage() {
           </CardContent>
         </Card>
         
-        <div className="flex flex-col sm:flex-row justify-center gap-4 w-full">
+        {/* Eco-friendly tips */}
+        <EcoTips />
+        
+        <div className="flex flex-col sm:flex-row justify-center gap-4 w-full mt-8">
           <Button 
             onClick={() => setLocation("/shop")}
             variant="default"
