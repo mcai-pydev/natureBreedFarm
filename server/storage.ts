@@ -7,6 +7,8 @@ import {
   socialShares, type SocialShare, type InsertSocialShare,
   animals, type Animal, type InsertAnimal,
   breedingEvents, type BreedingEvent, type InsertBreedingEvent,
+  orders, type Order, type InsertOrder,
+  orderItems, type OrderItem, type InsertOrderItem,
   type TransactionWithProduct,
 } from "@shared/schema";
 import session from "express-session";
@@ -104,6 +106,16 @@ export interface IStorage {
     totalAuctions: number
   }>;
   
+  // Order methods
+  getOrders(): Promise<Order[]>;
+  getOrder(id: number): Promise<Order | undefined>;
+  getOrderWithItems(id: number): Promise<Order & { items: OrderItem[] } | undefined>;
+  createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
+  updateOrder(id: number, order: Partial<InsertOrder>): Promise<Order | undefined>;
+  deleteOrder(id: number): Promise<boolean>;
+  getOrdersByCustomerEmail(email: string): Promise<Order[]>;
+  getRecentOrders(limit: number): Promise<Order[]>;
+  
   // Session store
   sessionStore: SessionStore;
 }
@@ -118,6 +130,8 @@ export class MemStorage implements IStorage {
   private socialShares: Map<number, SocialShare>;
   private animals: Map<number, Animal>;
   private breedingEvents: Map<number, BreedingEvent>;
+  private orders: Map<number, Order>;
+  private orderItems: Map<number, OrderItem>;
   
   currentUserId: number;
   currentProductId: number;
@@ -127,6 +141,8 @@ export class MemStorage implements IStorage {
   currentSocialShareId: number;
   currentAnimalId: number;
   currentBreedingEventId: number;
+  currentOrderId: number;
+  currentOrderItemId: number;
   
   sessionStore: SessionStore;
 
@@ -139,6 +155,8 @@ export class MemStorage implements IStorage {
     this.socialShares = new Map();
     this.animals = new Map();
     this.breedingEvents = new Map();
+    this.orders = new Map();
+    this.orderItems = new Map();
     
     this.currentUserId = 1;
     this.currentProductId = 1;
@@ -148,6 +166,8 @@ export class MemStorage implements IStorage {
     this.currentSocialShareId = 1;
     this.currentAnimalId = 1;
     this.currentBreedingEventId = 1;
+    this.currentOrderId = 1;
+    this.currentOrderItemId = 1;
     
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h
@@ -1653,6 +1673,114 @@ export class MemStorage implements IStorage {
     return summary;
   }
 
+  // Order methods
+  async getOrders(): Promise<Order[]> {
+    return Array.from(this.orders.values());
+  }
+
+  async getOrder(id: number): Promise<Order | undefined> {
+    return this.orders.get(id);
+  }
+
+  async getOrderWithItems(id: number): Promise<Order & { items: OrderItem[] } | undefined> {
+    const order = this.orders.get(id);
+    if (!order) return undefined;
+
+    const items = Array.from(this.orderItems.values()).filter(item => item.orderId === id);
+    return { ...order, items };
+  }
+
+  async createOrder(order: InsertOrder, items: { productId: number, productName: string, unitPrice: number, quantity: number, subtotal: number, notes?: string | null }[]): Promise<Order> {
+    const id = this.currentOrderId++;
+    const newOrder: Order = {
+      id,
+      userId: order.userId || null,
+      customerName: order.customerName,
+      customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone || null,
+      shippingAddress: order.shippingAddress,
+      billingAddress: order.billingAddress || null,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus || "pending",
+      shippingMethod: order.shippingMethod || null,
+      shippingFee: order.shippingFee || 0,
+      subtotal: order.subtotal,
+      taxAmount: order.taxAmount || 0,
+      discountAmount: order.discountAmount || 0,
+      totalAmount: order.totalAmount,
+      orderNotes: order.orderNotes || null,
+      status: order.status || 'pending',
+      orderDate: new Date(),
+      estimatedDeliveryDate: order.estimatedDeliveryDate || null,
+      actualDeliveryDate: null,
+      trackingCode: order.trackingCode || null,
+      referralSource: order.referralSource || null
+    };
+    this.orders.set(id, newOrder);
+
+    // Add order items
+    for (const item of items) {
+      const itemId = this.currentOrderItemId++;
+      const orderItem: OrderItem = {
+        id: itemId,
+        orderId: id,
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        subtotal: item.subtotal,
+        notes: item.notes || null
+      };
+      this.orderItems.set(itemId, orderItem);
+
+      // Update product stock
+      const product = this.products.get(item.productId);
+      if (product) {
+        product.stock = Math.max(0, (product.stock || 0) - item.quantity);
+        this.products.set(product.id, product);
+      }
+    }
+
+    return newOrder;
+  }
+
+  async updateOrder(id: number, orderUpdate: Partial<InsertOrder>): Promise<Order | undefined> {
+    const existingOrder = this.orders.get(id);
+    if (!existingOrder) return undefined;
+
+    const updatedOrder: Order = {
+      ...existingOrder,
+      ...orderUpdate
+    };
+    this.orders.set(id, updatedOrder);
+    return updatedOrder;
+  }
+
+  async deleteOrder(id: number): Promise<boolean> {
+    // First delete all order items associated with this order
+    const orderItems = Array.from(this.orderItems.values()).filter(item => item.orderId === id);
+    for (const item of orderItems) {
+      this.orderItems.delete(item.id);
+    }
+
+    return this.orders.delete(id);
+  }
+
+  async getOrdersByCustomerEmail(email: string): Promise<Order[]> {
+    return Array.from(this.orders.values())
+      .filter(order => order.customerEmail === email);
+  }
+
+  async getRecentOrders(limit: number): Promise<Order[]> {
+    return Array.from(this.orders.values())
+      .sort((a, b) => {
+        const dateA = a.orderDate || new Date(0);
+        const dateB = b.orderDate || new Date(0);
+        return dateB.getTime() - dateA.getTime();
+      })
+      .slice(0, limit);
+  }
+
   // Initialize with sample data
   private async initSampleData() {
     // Create a test admin user
@@ -1879,6 +2007,172 @@ export class MemStorage implements IStorage {
       quantity: 50,
       status: "pending"
     });
+
+    // Add some sample orders
+    // Create first sample order
+    const order1Id = this.currentOrderId++;
+    const order1: Order = {
+      id: order1Id,
+      userId: null,
+      customerName: "Jane Smith",
+      customerEmail: "jane.smith@example.com",
+      customerPhone: "+1-555-111-2222",
+      shippingAddress: "123 Main St, Anytown, USA",
+      billingAddress: null,
+      paymentMethod: "credit_card",
+      paymentStatus: "paid",
+      shippingMethod: null,
+      shippingFee: 10.00,
+      subtotal: 79.95,
+      taxAmount: 6.40,
+      discountAmount: 0,
+      totalAmount: 96.35,
+      orderNotes: "Please deliver in the morning",
+      status: "processing",
+      orderDate: new Date(),
+      estimatedDeliveryDate: null,
+      actualDeliveryDate: null,
+      trackingCode: null,
+      referralSource: null
+    };
+    this.orders.set(order1Id, order1);
+    
+    // Add order 1 items
+    const order1Item1Id = this.currentOrderItemId++;
+    const order1Item1: OrderItem = {
+      id: order1Item1Id,
+      orderId: order1Id,
+      productId: chicken.id,
+      productName: chicken.name,
+      quantity: 3,
+      unitPrice: chicken.price,
+      subtotal: 3 * chicken.price,
+      notes: null
+    };
+    this.orderItems.set(order1Item1Id, order1Item1);
+    
+    const order1Item2Id = this.currentOrderItemId++;
+    const order1Item2: OrderItem = {
+      id: order1Item2Id,
+      orderId: order1Id,
+      productId: eggs.id,
+      productName: eggs.name,
+      quantity: 2,
+      unitPrice: eggs.price,
+      subtotal: 2 * eggs.price,
+      notes: null
+    };
+    this.orderItems.set(order1Item2Id, order1Item2);
+
+    // Create second sample order
+    const order2Id = this.currentOrderId++;
+    const order2: Order = {
+      id: order2Id,
+      userId: null,
+      customerName: "Robert Johnson",
+      customerEmail: "robert.j@example.com",
+      customerPhone: "+1-555-333-4444",
+      shippingAddress: "456 Oak Ave, Somewhere, USA",
+      billingAddress: null,
+      paymentMethod: "paypal",
+      paymentStatus: "paid",
+      shippingMethod: null,
+      shippingFee: 15.00,
+      subtotal: 255.99,
+      taxAmount: 20.48,
+      discountAmount: 0,
+      totalAmount: 291.47,
+      orderNotes: "Call before delivery",
+      status: "shipped",
+      orderDate: new Date(),
+      estimatedDeliveryDate: null,
+      actualDeliveryDate: null,
+      trackingCode: "ABC123456",
+      referralSource: null
+    };
+    this.orders.set(order2Id, order2);
+    
+    // Add order 2 items
+    const order2Item1Id = this.currentOrderItemId++;
+    const order2Item1: OrderItem = {
+      id: order2Item1Id,
+      orderId: order2Id,
+      productId: goat.id,
+      productName: goat.name,
+      quantity: 1,
+      unitPrice: goat.price,
+      subtotal: goat.price,
+      notes: null
+    };
+    this.orderItems.set(order2Item1Id, order2Item1);
+    
+    const order2Item2Id = this.currentOrderItemId++;
+    const order2Item2: OrderItem = {
+      id: order2Item2Id,
+      orderId: order2Id,
+      productId: chickenFeed.id,
+      productName: chickenFeed.name,
+      quantity: 1,
+      unitPrice: chickenFeed.price,
+      subtotal: chickenFeed.price,
+      notes: null
+    };
+    this.orderItems.set(order2Item2Id, order2Item2);
+
+    // Create third sample order
+    const order3Id = this.currentOrderId++;
+    const order3: Order = {
+      id: order3Id,
+      userId: null,
+      customerName: "Maria Garcia",
+      customerEmail: "maria.g@example.com",
+      customerPhone: "+1-555-777-8888",
+      shippingAddress: "789 Pine St, Elsewhere, USA",
+      billingAddress: null,
+      paymentMethod: "cash",
+      paymentStatus: "pending",
+      shippingMethod: null,
+      shippingFee: 8.00,
+      subtotal: 42.97,
+      taxAmount: 3.44,
+      discountAmount: 0,
+      totalAmount: 54.41,
+      orderNotes: "Leave at front porch",
+      status: "pending",
+      orderDate: new Date(),
+      estimatedDeliveryDate: null,
+      actualDeliveryDate: null,
+      trackingCode: null,
+      referralSource: null
+    };
+    this.orders.set(order3Id, order3);
+    
+    // Add order 3 items
+    const order3Item1Id = this.currentOrderItemId++;
+    const order3Item1: OrderItem = {
+      id: order3Item1Id,
+      orderId: order3Id,
+      productId: rabbit.id,
+      productName: rabbit.name,
+      quantity: 1,
+      unitPrice: rabbit.price,
+      subtotal: rabbit.price,
+      notes: null
+    };
+    this.orderItems.set(order3Item1Id, order3Item1);
+    
+    const order3Item2Id = this.currentOrderItemId++;
+    const order3Item2: OrderItem = {
+      id: order3Item2Id,
+      orderId: order3Id,
+      productId: goatMilk.id,
+      productName: goatMilk.name,
+      quantity: 1,
+      unitPrice: goatMilk.price,
+      subtotal: goatMilk.price,
+      notes: null
+    };
+    this.orderItems.set(order3Item2Id, order3Item2);
   }
 }
 

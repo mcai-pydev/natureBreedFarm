@@ -584,6 +584,76 @@ export const insertBreedingEventSchema = createInsertSchema(breedingEvents).pick
   images: true,
 });
 
+// Orders table for customer purchases
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"), // Optional - allows for guest checkout
+  customerName: text("customer_name").notNull(),
+  customerEmail: text("customer_email").notNull(),
+  customerPhone: text("customer_phone"),
+  shippingAddress: text("shipping_address").notNull(),
+  billingAddress: text("billing_address"),
+  paymentMethod: text("payment_method").notNull(), // "card", "bank_transfer", "cash_on_delivery", "crypto", etc.
+  paymentStatus: text("payment_status").default("pending"), // "pending", "paid", "failed", "refunded"
+  shippingMethod: text("shipping_method"),
+  shippingFee: real("shipping_fee").default(0),
+  subtotal: real("subtotal").notNull(),
+  taxAmount: real("tax_amount").default(0),
+  discountAmount: real("discount_amount").default(0),
+  totalAmount: real("total_amount").notNull(),
+  orderNotes: text("order_notes"),
+  status: text("status").default("pending"), // "pending", "processing", "shipped", "delivered", "cancelled"
+  orderDate: timestamp("order_date").defaultNow(),
+  estimatedDeliveryDate: timestamp("estimated_delivery_date"),
+  actualDeliveryDate: timestamp("actual_delivery_date"),
+  trackingCode: text("tracking_code"),
+  referralSource: text("referral_source"),
+});
+
+export const insertOrderSchema = createInsertSchema(orders).pick({
+  userId: true,
+  customerName: true,
+  customerEmail: true,
+  customerPhone: true,
+  shippingAddress: true,
+  billingAddress: true,
+  paymentMethod: true,
+  paymentStatus: true,
+  shippingMethod: true,
+  shippingFee: true,
+  subtotal: true,
+  taxAmount: true,
+  discountAmount: true,
+  totalAmount: true,
+  orderNotes: true,
+  status: true,
+  estimatedDeliveryDate: true,
+  trackingCode: true,
+  referralSource: true,
+});
+
+// Order items table for individual products in an order
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id),
+  productId: integer("product_id").notNull().references(() => products.id),
+  productName: text("product_name").notNull(), // Store name at time of purchase
+  quantity: real("quantity").notNull(),
+  unitPrice: real("unit_price").notNull(), // Store price at time of purchase
+  subtotal: real("subtotal").notNull(),
+  notes: text("notes"),
+});
+
+export const insertOrderItemSchema = createInsertSchema(orderItems).pick({
+  orderId: true,
+  productId: true,
+  productName: true,
+  quantity: true,
+  unitPrice: true,
+  subtotal: true,
+  notes: true,
+});
+
 // Create insert schemas
 export const insertRabbitBreedSchema = createInsertSchema(rabbitBreeds).pick({
   name: true,
@@ -662,3 +732,35 @@ export type InsertAnimal = z.infer<typeof insertAnimalSchema>;
 
 export type BreedingEvent = typeof breedingEvents.$inferSelect;
 export type InsertBreedingEvent = z.infer<typeof insertBreedingEventSchema>;
+
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+
+export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+
+// Checkout form validation schema for mobile checkout
+export const checkoutFormSchema = z.object({
+  customerName: z.string().min(2, "Name must be at least 2 characters"),
+  customerEmail: z.string().email("Please enter a valid email address"),
+  customerPhone: z.string().optional(),
+  shippingAddress: z.string().min(5, "Please enter a valid shipping address"),
+  billingAddress: z.string().optional(),
+  sameAsShipping: z.boolean().default(true),
+  paymentMethod: z.enum([
+    "card", 
+    "bank_transfer", 
+    "cash_on_delivery", 
+    "crypto", 
+    "mobile_money"
+  ]),
+  shippingMethod: z.enum([
+    "standard", 
+    "express", 
+    "pickup"
+  ]).default("standard"),
+  orderNotes: z.string().optional(),
+  acceptTerms: z.boolean().refine(val => val === true, {
+    message: "You must accept the terms and conditions",
+  }),
+});

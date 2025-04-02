@@ -60,12 +60,16 @@ import {
   insertSocialShareSchema,
   insertAnimalSchema,
   insertBreedingEventSchema,
+  insertOrderSchema,
+  insertOrderItemSchema,
   animalFormSchema,
   breedingEventFormSchema,
   type InsertNewsletter,
   type InsertProduct,
   type InsertAnimal,
-  type InsertBreedingEvent
+  type InsertBreedingEvent,
+  type InsertOrder,
+  type InsertOrderItem
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1502,6 +1506,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(riskAssessment);
     } catch (error) {
       res.status(500).json({ error: "Failed to check inbreeding risk" });
+    }
+  });
+
+  // Order API routes
+  app.get("/api/orders", async (req, res) => {
+    try {
+      const orders = await storage.getOrders();
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch orders" });
+    }
+  });
+
+  app.get("/api/orders/recent", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 5;
+      const recentOrders = await storage.getRecentOrders(limit);
+      res.json(recentOrders);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch recent orders" });
+    }
+  });
+
+  app.get("/api/orders/customer/:email", async (req, res) => {
+    try {
+      const { email } = req.params;
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      
+      const orders = await storage.getOrdersByCustomerEmail(email);
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch customer orders" });
+    }
+  });
+
+  app.get("/api/orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const order = await storage.getOrderWithItems(id);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch order" });
+    }
+  });
+
+  app.post("/api/orders", async (req, res) => {
+    try {
+      const { order, items } = req.body;
+      
+      if (!order || !items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: "Order must include both order details and at least one item" });
+      }
+      
+      // Validate order data
+      const orderData = insertOrderSchema.parse(order);
+      
+      // Validate each order item
+      for (const item of items) {
+        // We don't add orderId here since it will be set in createOrder
+        const itemWithoutOrderId = { ...item };
+        delete itemWithoutOrderId.orderId;
+        
+        // Custom validation for order items without orderId
+        const { productId, productName, quantity, unitPrice, subtotal } = itemWithoutOrderId;
+        
+        // Basic validation for required fields
+        if (!productId || !productName || !quantity || !unitPrice || subtotal === undefined) {
+          return res.status(400).json({ error: "Each order item must have productId, productName, quantity, unitPrice, and subtotal" });
+        }
+      }
+      
+      const newOrder = await storage.createOrder(orderData, items);
+      res.status(201).json(newOrder);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Order creation error:", error);
+      res.status(500).json({ error: "Failed to create order" });
+    }
+  });
+
+  app.put("/api/orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const orderData = insertOrderSchema.partial().parse(req.body);
+      const updatedOrder = await storage.updateOrder(id, orderData);
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      
+      res.json(updatedOrder);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update order" });
+    }
+  });
+
+  app.delete("/api/orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const success = await storage.deleteOrder(id);
+      if (!success) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete order" });
     }
   });
 
