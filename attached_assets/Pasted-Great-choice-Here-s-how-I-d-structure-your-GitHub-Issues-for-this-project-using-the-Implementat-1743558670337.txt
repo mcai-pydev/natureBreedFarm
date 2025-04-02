@@ -1,0 +1,139 @@
+Great choice! Here's how I’d structure your **GitHub Issues** for this project using the Implementation Strategy. Each phase becomes a **milestone**, and each task becomes an **issue** with clear checklists, labels, and assignees.
+
+---
+
+## 🗂️ GitHub Issues Breakdown
+
+### 🧭 **Milestones**
+1. Mobile-First Modularization
+2. Dashboard Optimization
+3. Shop Module Enhancement
+4. Rabbit Breeding Optimization
+5. Testing & Refinement
+
+---
+
+## ✅ **Example GitHub Issues (per milestone)**
+
+---
+
+### 🧱 Issue 1: `Create mobile detection utility`
+
+**Title:** `feat: Create mobile detection utility for responsive logic`
+
+**Description:**
+Develop a centralized utility (`useIsMobile()` or context) to detect mobile devices and standardize behavior across components.
+
+**Checklist:**
+- [ ] Create hook or context: `useIsMobile()`
+- [ ] Add breakpoints for screen widths
+- [ ] Test across components using mobile conditions
+
+**Labels:** `feature`, `frontend`, `phase:1`
+
+**Assignee:** `@frontend-lead`
+
+---
+
+### 📱 Issue 2: `Standardize mobile menu component`
+
+**Title:** `refactor: Implement standardized mobile menu component`
+
+**Description:**
+Refactor all modules to use a consistent mobile menu. Convert scattered menus into a reusable component.
+
+**Checklist:**
+- [ ] Build `MenuMobile.tsx`
+- [ ] Replace per-page implementations
+- [ ] Test open/close transitions and touch accessibility
+
+**Labels:** `refactor`, `frontend`, `phase:1`
+
+**Assignee:** `@ui-dev`
+
+---
+
+### 📊 Issue 3: `Make dashboard cards mobile-friendly`
+
+**Title:** `feat: Make dashboard cards responsive and stackable`
+
+**Description:**
+Ensure all cards in the dashboard stack vertically and look clean on mobile viewports.
+
+**Checklist:**
+- [ ] Add CSS grid/flex responsive behavior
+- [ ] Test at 320px, 375px, and 768px breakpoints
+- [ ] Maintain card readability and spacing
+
+**Labels:** `ui`, `responsive`, `phase:2`
+
+---
+
+### 🛍️ Issue 4: `Fix TypeScript errors in ShopPage.tsx`
+
+**Title:** `fix: Resolve all type issues in shop components`
+
+**Description:**
+Ensure all product components and forms in the shop are strictly typed to avoid runtime issues.
+
+**Checklist:**
+- [ ] Type all props and API responses
+- [ ] Add interfaces/types as needed
+- [ ] Run full TypeScript check
+
+**Labels:** `bug`, `typescript`, `phase:3`
+
+---
+
+### 🐰 Issue 5: `Redesign breeding UI for mobile`
+
+**Title:** `design: Simplify rabbit breeding module for mobile users`
+
+**Description:**
+Rework the rabbit pairing and family tree layout for mobile usability.
+
+**Checklist:**
+- [ ] Convert pair selection to card interface
+- [ ] Optimize family tree view for scrolling
+- [ ] Add mobile gesture support if needed
+
+**Labels:** `design`, `responsive`, `phase:4`
+
+---
+
+### 🔍 Issue 6: `Mobile testing & visual QA pass`
+
+**Title:** `test: Conduct full mobile device testing & polish UI`
+
+**Description:**
+Final pass of testing on mobile devices. Check for performance, layout consistency, and polish UI details.
+
+**Checklist:**
+- [ ] Test on iPhone, Android, small tablets
+- [ ] Run Lighthouse audit (mobile)
+- [ ] Adjust padding, font size, and contrast as needed
+
+**Labels:** `qa`, `testing`, `phase:5`
+
+---
+
+## 🧷 Bonus: Labels to Use
+
+| Label | Purpose |
+|-------|---------|
+| `phase:1`, `phase:2`... | Organize issues by project phase |
+| `bug` | For type or behavior issues |
+| `feature` | For new additions like gestures, UI |
+| `refactor` | For standardizations or code cleanup |
+| `responsive`, `ui`, `qa` | Functional grouping |
+
+---
+
+## ✅ Next Step
+
+Would you like:
+- A **Markdown file** with all issues pre-written (ready to paste into GitHub)?
+- A **JSON format** for GitHub’s issue importer?
+- Or I can help you **auto-generate these using GitHub CLI scripts**?
+
+Let me know your preferred workflow.

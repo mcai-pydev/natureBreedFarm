@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from '@/components/theme/theme-provider';
+import { ResponsiveProvider } from './contexts/responsive-context';
 import NotFound from "@/pages/not-found";
 
 // Legacy pages (to be migrated)
@@ -91,12 +92,14 @@ function App() {
   return (
     <HelmetProvider>
       <ThemeProvider defaultTheme="system" storageKey="nature-breed-theme">
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <Router />
-            <Toaster />
-          </AuthProvider>
-        </QueryClientProvider>
+        <ResponsiveProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <Router />
+              <Toaster />
+            </AuthProvider>
+          </QueryClientProvider>
+        </ResponsiveProvider>
       </ThemeProvider>
     </HelmetProvider>
   );

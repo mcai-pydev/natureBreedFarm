@@ -1,0 +1,104 @@
+Perfect — let’s continue with how I’d **carry out the rest of the implementation**, phase by phase, keeping the mobile-first strategy and user experience in focus:
+
+---
+
+### 📊 **Phase 2: Dashboard Mobile Optimization (1–2 days)**
+
+#### Goals:
+- Ensure key metrics and views are **readable and usable** on small screens.
+- Make interactions **intuitive** using collapsible sections and swipe navigation.
+
+#### Implementation Steps:
+1. **Responsive Dashboard Cards**
+   - Use flexbox/grid with breakpoints to stack cards vertically on smaller screens.
+   - Prioritize what’s visible “above the fold.”
+
+2. **Collapsible Sections**
+   - Convert panels or groups of metrics into collapsible accordions for mobile.
+   - Helps reduce clutter and cognitive load.
+
+3. **Swipe Navigation**
+   - Use a gesture library (like `react-swipeable` or native touch events) to allow left/right swipe between dashboards or tabs.
+   - Optional: Add a visual cue (dot indicator or arrows) for navigation hints.
+
+#### Why This Phase Now?
+- After laying the groundwork in Phase 1, we can now make **user-facing modules shine** on mobile.
+- The dashboard is often the **first thing users see** — it should be mobile-optimized early to boost first impressions.
+
+---
+
+### 🛒 **Phase 3: Shop Module Enhancement (2–3 days)**
+
+#### Goals:
+- Fix stability issues (type errors) and improve mobile shopping experience.
+- Ensure mobile users can easily browse, filter, and checkout.
+
+#### Implementation Steps:
+1. **Fix Type Errors**
+   - Resolve TypeScript issues or runtime errors to ensure stability.
+   - Focus on forms, API types, and product structures.
+
+2. **Touch-Friendly Filters**
+   - Replace dropdowns or checkboxes with **slidable chips**, toggle buttons, or tap-friendly UI.
+   - Prioritize thumb-friendly interaction zones.
+
+3. **Mobile Checkout Flow**
+   - Break checkout into **scrollable steps** or a vertical wizard.
+   - Ensure all buttons are clearly tappable, avoid form overload.
+
+#### Why Now?
+- E-commerce flows on mobile are **conversion-critical** — poor UX leads to drop-offs.
+- Cleaning up errors early improves developer velocity and testability.
+
+---
+
+### 🐰 **Phase 4: Rabbit Breeding Module (2–3 days)**
+
+#### Goals:
+- Adapt a potentially complex feature for small screens.
+- Maintain clarity in data-heavy UI (pairing, family trees).
+
+#### Implementation Steps:
+1. **Simplify Breeding Interface**
+   - Use card-based selection for breeding pairs.
+   - Prioritize readability: larger fonts, less dense info per view.
+
+2. **Touch-Friendly Selection**
+   - Use icons, sliders, or draggable components to pair rabbits.
+
+3. **Optimize Family Tree View**
+   - Use vertical layout or scrollable tree (e.g., mind-map style).
+   - Consider a modal or overlay for deeper views.
+
+#### Why in Phase 4?
+- This module is more **niche or advanced**, and likely used by fewer users early on.
+- Complex UIs require prior layout and gesture systems to be stable (from earlier phases).
+
+---
+
+### ✅ **Phase 5: Testing & Refinement (1 day)**
+
+#### Tasks:
+- **Cross-device testing:** Use real devices + simulators.
+- **Performance Profiling:** Lighthouse mobile audit, load times.
+- **Visual QA:** Consistency check for fonts, spacing, padding, colors.
+
+#### Output:
+- Fix any performance bottlenecks.
+- Polish UI elements, check button tap zones, scroll behaviors.
+
+---
+
+### Summary Timeline (Effort-based):
+
+| Phase | Task                                 | Estimated Time |
+|-------|--------------------------------------|----------------|
+| 1     | Mobile-First Modularization          | 1–2 days       |
+| 2     | Dashboard Optimization               | 1–2 days       |
+| 3     | Shop Enhancements                    | 2–3 days       |
+| 4     | Rabbit Breeding Optimization         | 2–3 days       |
+| 5     | Testing & Final Fixes                | 1 day          |
+
+---
+
+Would you like me to turn this into a project plan with deliverables and task owners, or create a ready-to-import **Trello board / Notion table / Gantt chart** for planning?
