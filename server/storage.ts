@@ -16,7 +16,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import createMemoryStore from "memorystore";
-import { getDefaultPermissionsForRole } from "./middleware/rbac";
+import { getDefaultPermissionsForRole } from "./types/roles";
 
 // Explicitly import and define the memory store constructor
 const MemoryStore = createMemoryStore(session);

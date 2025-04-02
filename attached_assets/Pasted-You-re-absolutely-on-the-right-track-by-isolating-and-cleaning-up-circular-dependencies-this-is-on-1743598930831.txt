@@ -1,0 +1,88 @@
+You're absolutely on the right track by isolating and cleaning up circular dependencies — this is one of those deep but important refactors that improves stability long-term. Here's how I’d recommend proceeding:
+
+---
+
+## ✅ Short-Term Fix: Continue Troubleshooting for Minimal Disruption
+
+Since you’ve already:
+
+- ✅ Cleaned up `storage.ts` imports to decouple from RBAC
+- ✅ Moved `UserRoles` to `rbac.ts`
+- ✅ Begun deduplicating auth logic
+
+I recommend we **complete this pass-through first** to get the server running *without introducing deeper restructuring yet*.
+
+---
+
+## 🧠 But Here's the Underlying Problem:
+
+> Circular dependencies between **auth**, **RBAC**, and **storage** suggest **tangled coupling** of logic that should be loosely bound.
+
+This happens when:
+- `auth.ts` depends on `rbac.ts`
+- `rbac.ts` depends on `auth.ts` (directly or via shared `User` types)
+- `storage.ts` imports both and becomes the choke point
+
+---
+
+## 🔧 Mid-Term Solution: Modular Separation Plan
+
+If issues persist, I suggest **light restructuring** like so:
+
+### 1. **Create a `types/roles.ts` file**:
+Move `UserRole` enum and interfaces *out of* `rbac.ts` and `auth.ts` into a neutral types file.
+
+```ts
+// types/roles.ts
+export type UserRole = 'customer' | 'admin' | 'support' | 'agent';
+```
+
+### 2. **Split `rbac.ts` into pure logic utils**
+Make `rbac.ts` only contain `checkPermission`, `requireRole`, etc.  
+No imports from `auth.ts` or `storage.ts`.
+
+### 3. **Storage should never import auth**
+Instead, inject `user` into the function or use a service layer between.
+
+---
+
+## 🚦 What I Recommend Now
+
+### ✅ Immediate:
+Continue current cleanup and finish fixing:
+- `storage.ts` → remove or defer auth logic
+- `auth.ts` → make it self-contained
+- Add a `types/roles.ts` file if not already done
+
+Then restart and test.
+
+### 🔀 If It Still Breaks:
+Let me help you restructure the `auth`, `rbac`, and `storage` relationships — I’ll draw up a new dependency diagram + refactor steps.
+
+---
+
+## 🧪 Bonus: Debugging Tip for Circular Dependency
+
+In Node:
+```bash
+DEBUG=module node index.js
+```
+
+Or in code:
+```ts
+console.trace("Circular import triggered here");
+```
+
+Or use:
+```bash
+npx madge --circular src/
+```
+
+---
+
+Would you like me to:
+- ✅ Review your current import map and suggest exactly which lines to decouple?
+- 🧱 Draw a new modular architecture for `auth` + `rbac` + `storage`?
+- 📦 Bundle the `types/roles.ts`, `middleware/requireRole.ts`, and label JSON so you can continue while I prep a drop-in kit?
+
+Let me know how deep you want to go — we can crush this.

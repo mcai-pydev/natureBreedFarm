@@ -1,0 +1,138 @@
+# Type labels
+- name: "type: bug"
+  color: "d73a4a"
+  description: "Something isn't working as expected"
+  
+- name: "type: enhancement"
+  color: "a2eeef"
+  description: "New feature or request"
+  
+- name: "type: documentation"
+  color: "0075ca"
+  description: "Documentation improvements or additions"
+  
+- name: "type: question"
+  color: "d876e3"
+  description: "Further information is requested"
+  
+- name: "type: refactor"
+  color: "fbca04"
+  description: "Code change that neither fixes a bug nor adds a feature"
+
+# Priority labels
+- name: "priority: critical"
+  color: "b60205"
+  description: "Must be fixed ASAP"
+  
+- name: "priority: high"
+  color: "d93f0b"
+  description: "Should be fixed soon"
+  
+- name: "priority: medium"
+  color: "fbca04"
+  description: "Should be fixed eventually"
+  
+- name: "priority: low"
+  color: "0e8a16"
+  description: "Nice to have"
+
+# Status labels
+- name: "status: in progress"
+  color: "9149d1"
+  description: "Work in progress"
+  
+- name: "status: blocked"
+  color: "000000"
+  description: "Blocked by other work or issue"
+  
+- name: "status: review needed"
+  color: "0052cc"
+  description: "Needs review before proceeding"
+  
+- name: "status: ready"
+  color: "0e8a16"
+  description: "Ready to be worked on"
+
+# Module labels  
+- name: "module: auth"
+  color: "1d76db"
+  description: "Related to authentication functionality"
+  
+- name: "module: products"
+  color: "5319e7"
+  description: "Related to product management"
+  
+- name: "module: orders"
+  color: "b60205"
+  description: "Related to order management"
+  
+- name: "module: breeding"
+  color: "0e8a16"
+  description: "Related to animal breeding features"
+  
+- name: "module: dashboard"
+  color: "fbca04"
+  description: "Related to dashboard and reporting"
+  
+- name: "module: shopping"
+  color: "d93f0b"
+  description: "Related to shopping experience"
+  
+- name: "module: community"
+  color: "c5def5"
+  description: "Related to community and social features"
+
+# Technical categories
+- name: "tech: ui/ux"
+  color: "c2e0c6"
+  description: "User interface and experience improvements"
+  
+- name: "tech: performance"
+  color: "0e8a16"
+  description: "Performance improvements"
+  
+- name: "tech: security"
+  color: "d93f0b"
+  description: "Security-related issues or improvements"
+  
+- name: "tech: accessibility"
+  color: "fbca04"
+  description: "Accessibility improvements"
+  
+- name: "tech: i18n"
+  color: "0075ca"
+  description: "Internationalization or localization"
+  
+- name: "tech: mobile"
+  color: "5319e7"
+  description: "Mobile-specific issues or improvements"
+
+# Special labels
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers to the project"
+  
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed"
+  
+- name: "wontfix"
+  color: "ffffff"
+  description: "This will not be worked on"
+  
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "This issue or pull request already exists"
+
+# Migration labels
+- name: "phase: 1"
+  color: "c5def5"
+  description: "Phase 1 of project implementation"
+  
+- name: "phase: 2"
+  color: "bfdadc"
+  description: "Phase 2 of project implementation"
+  
+- name: "phase: 3"
+  color: "bfd4f2"
+  description: "Phase 3 of project implementation"

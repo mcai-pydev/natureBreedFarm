@@ -1,0 +1,39 @@
+# Example code ownership definitions - update with actual users
+
+# Default owners for everything
+*                               @project-admin
+
+# Frontend code
+/client/                        @frontend-team-lead
+/client/src/pages/              @frontend-team-lead
+/client/src/components/         @frontend-team-lead
+/client/src/hooks/              @frontend-team-lead
+
+# Backend code
+/server/                        @backend-team-lead
+/server/routes/                 @backend-team-lead
+/server/middleware/             @backend-team-lead
+
+# Shared code
+/shared/                        @project-architect
+
+# Animal breeding module
+/client/src/modules/breeding/   @animal-specialist
+/server/routes/breeding-routes.ts @animal-specialist
+
+# Shopping module
+/client/src/modules/customer/   @customer-experience-lead
+
+# GitHub configuration
+/.github/                       @devops-lead
+
+# Database and data models
+/shared/schema.ts               @data-architect
+/server/storage.ts              @data-architect
+
+# CI/CD configuration
+/.github/workflows/             @devops-lead
+
+# Documentation
+/docs/                          @documentation-team
+/README.md                      @documentation-team

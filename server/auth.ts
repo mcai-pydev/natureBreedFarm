@@ -7,7 +7,8 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { emailService } from "./email";
 import { User as SelectUser } from "@shared/schema";
-import { requirePermission, Permissions, UserRoles } from "./middleware/rbac";
+import { requirePermission } from "./middleware/rbac";
+import { Permissions, UserRoles } from "./types/roles";
 
 declare global {
   namespace Express {
