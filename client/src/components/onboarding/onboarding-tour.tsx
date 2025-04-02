@@ -10,7 +10,8 @@ import {
   ChevronRight, 
   ChevronLeft,
   Check,
-  X
+  X,
+  Sprout
 } from 'lucide-react';
 
 // Farm mascot character that will guide users
@@ -22,7 +23,7 @@ const FarmMascot = () => (
     transition={{ delay: 0.2, duration: 0.5 }}
   >
     <div className="bg-green-100 rounded-full w-24 h-24 flex items-center justify-center">
-      <Home className="h-12 w-12 text-green-600" />
+      <Sprout className="h-12 w-12 text-green-600" />
     </div>
     <motion.div 
       className="absolute -bottom-2 -right-2 bg-yellow-400 rounded-full w-8 h-8 flex items-center justify-center text-white font-bold shadow-md"

@@ -14,6 +14,7 @@ import NotFoundPage from '@/pages/not-found-page';
 import AuthPage from '@/pages/auth-page';
 import ShopPage from '@/pages/shop-page';
 import OnboardingPage from '@/pages/onboarding-page';
+import DebugOnboardingPage from '@/pages/debug-onboarding-page';
 import { Loader2 } from 'lucide-react';
 
 // Main App component
@@ -71,6 +72,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/shop" component={ShopPage} />
       <Route path="/onboarding" component={OnboardingPage} />
+      <Route path="/debug-onboarding" component={DebugOnboardingPage} />
       <ProtectedOrderHistoryPage />
       <ProtectedOrderDetailPage />
       <Route component={NotFoundPage} />
