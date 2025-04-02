@@ -4,7 +4,7 @@ import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { QuantitySelector } from "@/components/ui/quantity-selector";
 
 interface ProductCardProps {
@@ -15,6 +15,7 @@ interface ProductCardProps {
   onToggleFavorite?: (product: Product) => void;
   onQuickView?: (product: Product) => void;
   isFavorite?: boolean;
+  className?: string;
 }
 
 export function ProductCard({
@@ -24,7 +25,8 @@ export function ProductCard({
   onBuyNow,
   onToggleFavorite,
   onQuickView,
-  isFavorite = false
+  isFavorite = false,
+  className = ""
 }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1);
   const isCompact = variant === "compact";
@@ -51,7 +53,7 @@ export function ProductCard({
   // Card layout varies based on variant
   if (isCompact) {
     return (
-      <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
+      <Card className={cn("h-full overflow-hidden hover:shadow-md transition-shadow", className)}>
         <div className="relative">
           {product.imageUrl ? (
             <img 
@@ -109,7 +111,7 @@ export function ProductCard({
   }
   
   return (
-    <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
+    <Card className={cn("h-full overflow-hidden hover:shadow-md transition-shadow", className)}>
       <div className="relative">
         {product.imageUrl ? (
           <img 

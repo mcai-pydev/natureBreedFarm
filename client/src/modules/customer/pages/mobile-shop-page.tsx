@@ -6,6 +6,7 @@ import {
   ShoppingCart,
   Search,
   ChevronLeft,
+  ChevronRight,
   ArrowLeft,
   Plus,
   Minus,
@@ -696,24 +697,52 @@ export default function MobileShopPage() {
           {featuredProducts.length > 0 && (
             <div className="px-4 py-6">
               <h2 className="text-xl font-bold mb-3">{t("Featured")}</h2>
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {featuredProducts.map(product => (
-                    <CarouselItem key={product.id} className="basis-3/4 md:basis-1/2 lg:basis-1/3">
-                      <ProductCard
-                        product={product}
-                        variant="featured"
-                        isFavorite={favoriteProducts.includes(product.id)}
-                        onQuickView={() => handleQuickView(product)}
-                        onAddToCart={() => handleAddToCart(product)}
-                        onToggleFavorite={() => handleToggleFavorite(product.id)}
-                      />
-                    </CarouselItem>
+              <div className="relative">
+                {/* Swipe indicator animation - left side */}
+                <div className="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-10 bg-gradient-to-r from-background to-transparent opacity-70 flex items-center">
+                  <div className="animate-pulse-slow h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center ml-1">
+                    <ChevronLeft className="h-5 w-5 text-foreground/70" />
+                  </div>
+                </div>
+                
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    {featuredProducts.map(product => (
+                      <CarouselItem key={product.id} className="basis-3/4 md:basis-1/2 lg:basis-1/3">
+                        <ProductCard
+                          product={product}
+                          variant="featured"
+                          isFavorite={favoriteProducts.includes(product.id)}
+                          onQuickView={() => handleQuickView(product)}
+                          onAddToCart={() => handleAddToCart(product)}
+                          onToggleFavorite={() => handleToggleFavorite(product.id)}
+                        />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="left-1 h-7 w-7 bg-background/80 backdrop-blur-sm shadow-md" />
+                  <CarouselNext className="right-1 h-7 w-7 bg-background/80 backdrop-blur-sm shadow-md" />
+                </Carousel>
+                
+                {/* Swipe indicator animation - right side */}
+                <div className="absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-10 bg-gradient-to-l from-background to-transparent opacity-70 flex items-center justify-end">
+                  <div className="animate-pulse-slow h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center mr-1">
+                    <ChevronRight className="h-5 w-5 text-foreground/70" />
+                  </div>
+                </div>
+                
+                {/* Pagination dots */}
+                <div className="flex justify-center mt-3 gap-1">
+                  {featuredProducts.slice(0, 5).map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === 0 ? 'w-4 bg-primary' : 'w-1.5 bg-primary/30'
+                      }`}
+                    />
                   ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-2 h-8 w-8" />
-                <CarouselNext className="right-2 h-8 w-8" />
-              </Carousel>
+                </div>
+              </div>
             </div>
           )}
           
@@ -742,20 +771,28 @@ export default function MobileShopPage() {
           <div className="px-4 pb-20">
             {isLoading ? (
               // Skeleton loaders
-              <ResponsiveGrid mobileColumns={2} gap="md">
+              <ResponsiveGrid 
+                mobileColumns={2} 
+                gap="md" 
+                className="mx-auto justify-items-center"
+              >
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <Card key={i} className="animate-pulse">
-                    <div className="h-48 bg-muted rounded-t-lg"></div>
-                    <CardContent className="p-4">
-                      <div className="h-6 bg-muted rounded mb-2"></div>
-                      <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
-                      <div className="h-8 bg-muted rounded"></div>
+                  <Card key={i} className="animate-pulse w-full max-w-[180px]">
+                    <div className="aspect-square bg-muted rounded-t-lg"></div>
+                    <CardContent className="p-3">
+                      <div className="h-5 bg-muted rounded mb-2"></div>
+                      <div className="h-3 bg-muted rounded w-3/4 mb-3"></div>
+                      <div className="h-7 bg-muted rounded"></div>
                     </CardContent>
                   </Card>
                 ))}
               </ResponsiveGrid>
             ) : getFilteredProducts().length > 0 ? (
-              <ResponsiveGrid mobileColumns={2} gap="md">
+              <ResponsiveGrid 
+                mobileColumns={2} 
+                gap="md" 
+                className="mx-auto justify-items-center"
+              >
                 {getFilteredProducts().map(product => (
                   <ProductCard
                     key={product.id}
@@ -765,6 +802,7 @@ export default function MobileShopPage() {
                     onQuickView={() => handleQuickView(product)}
                     onAddToCart={() => handleAddToCart(product)}
                     onToggleFavorite={() => handleToggleFavorite(product.id)}
+                    className="w-full max-w-[180px]"
                   />
                 ))}
               </ResponsiveGrid>
