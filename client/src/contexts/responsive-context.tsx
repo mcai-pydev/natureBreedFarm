@@ -1,77 +1,95 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+
+// Screen breakpoints (matches Tailwind's defaults)
+const BREAKPOINTS = {
+  xs: 0,
+  sm: 640,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
+  '2xl': 1536,
+};
+
+type BreakpointKey = keyof typeof BREAKPOINTS;
 
 interface ResponsiveContextType {
   isMobile: boolean;
   isTablet: boolean;
   isDesktop: boolean;
   isLargeDesktop: boolean;
-  orientation: 'portrait' | 'landscape';
+  breakpoint: BreakpointKey;
+  width: number;
+  height: number;
 }
 
-const defaultContext: ResponsiveContextType = {
+const ResponsiveContext = createContext<ResponsiveContextType>({
   isMobile: false,
   isTablet: false,
-  isDesktop: true,
+  isDesktop: false,
   isLargeDesktop: false,
-  orientation: 'landscape'
-};
-
-export const ResponsiveContext = createContext<ResponsiveContextType>(defaultContext);
+  breakpoint: 'lg',
+  width: 0,
+  height: 0,
+});
 
 interface ResponsiveProviderProps {
   children: ReactNode;
-  mobileBreakpoint?: number;
-  tabletBreakpoint?: number;
-  desktopBreakpoint?: number;
 }
 
-export function ResponsiveProvider({
-  children,
-  mobileBreakpoint = 640,
-  tabletBreakpoint = 768,
-  desktopBreakpoint = 1024
-}: ResponsiveProviderProps) {
+export function ResponsiveProvider({ children }: ResponsiveProviderProps) {
   const [dimensions, setDimensions] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1200,
-    height: typeof window !== 'undefined' ? window.innerHeight : 800,
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
   });
-
+  
   useEffect(() => {
+    // Skip if window is not available (e.g., during SSR)
+    if (typeof window === 'undefined') return;
+    
     const handleResize = () => {
       setDimensions({
         width: window.innerWidth,
         height: window.innerHeight,
       });
     };
-
-    // Add event listener
-    window.addEventListener('resize', handleResize);
     
-    // Call handler right away so state gets updated with initial window size
+    // Set dimensions on mount
     handleResize();
     
-    // Remove event listener on cleanup
-    return () => window.removeEventListener('resize', handleResize);
+    // Add event listener for window resize
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
-
-  const { width, height } = dimensions;
   
-  const isMobile = width < mobileBreakpoint;
-  const isTablet = width >= mobileBreakpoint && width < tabletBreakpoint;
-  const isDesktop = width >= tabletBreakpoint && width < desktopBreakpoint;
-  const isLargeDesktop = width >= desktopBreakpoint;
-  const orientation: 'portrait' | 'landscape' = height > width ? 'portrait' : 'landscape';
-
-  const value: ResponsiveContextType = {
-    isMobile,
-    isTablet,
-    isDesktop,
-    isLargeDesktop,
-    orientation,
+  // Get current breakpoint based on width
+  const getCurrentBreakpoint = (): BreakpointKey => {
+    if (dimensions.width >= BREAKPOINTS['2xl']) return '2xl';
+    if (dimensions.width >= BREAKPOINTS.xl) return 'xl';
+    if (dimensions.width >= BREAKPOINTS.lg) return 'lg';
+    if (dimensions.width >= BREAKPOINTS.md) return 'md';
+    if (dimensions.width >= BREAKPOINTS.sm) return 'sm';
+    return 'xs';
   };
-
+  
+  const breakpoint = getCurrentBreakpoint();
+  
+  // Derived state
+  const contextValue: ResponsiveContextType = {
+    isMobile: dimensions.width < BREAKPOINTS.md,
+    isTablet: dimensions.width >= BREAKPOINTS.md && dimensions.width < BREAKPOINTS.lg,
+    isDesktop: dimensions.width >= BREAKPOINTS.lg && dimensions.width < BREAKPOINTS.xl,
+    isLargeDesktop: dimensions.width >= BREAKPOINTS.xl,
+    breakpoint,
+    width: dimensions.width,
+    height: dimensions.height,
+  };
+  
   return (
-    <ResponsiveContext.Provider value={value}>
+    <ResponsiveContext.Provider value={contextValue}>
       {children}
     </ResponsiveContext.Provider>
   );
@@ -79,10 +97,8 @@ export function ResponsiveProvider({
 
 export function useResponsive() {
   const context = useContext(ResponsiveContext);
-  
   if (context === undefined) {
     throw new Error('useResponsive must be used within a ResponsiveProvider');
   }
-  
   return context;
 }

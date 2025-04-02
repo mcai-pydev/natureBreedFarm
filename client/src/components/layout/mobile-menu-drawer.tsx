@@ -1,148 +1,222 @@
 import React, { ReactNode, useState } from 'react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useLocation } from 'wouter';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Menu, X, ShoppingCart } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Link } from 'wouter';
-import { Input } from '@/components/ui/input';
-import { ThemeToggle } from '@/components/theme/theme-toggle';
-import { LanguageSelector } from '@/components/i18n/language-selector';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useResponsive } from '@/contexts/responsive-context';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
+import { useTranslation } from 'react-i18next';
 
-interface MobileMenuProps {
-  navItems?: Array<{
-    label: string;
-    href: string;
-    icon?: ReactNode;
-  }>;
-  showThemeToggle?: boolean;
-  showLanguageSelector?: boolean;
-  showSearchBar?: boolean;
-  onSearch?: (query: string) => void;
-  cartCount?: number;
-  onCartClick?: () => void;
-  className?: string;
+export interface MobileMenuItem {
+  title: string;
+  href: string;
+  icon?: ReactNode;
+  disabled?: boolean;
+  onClick?: () => void;
+  childItems?: MobileMenuItem[];
+}
+
+export interface MobileMenuSection {
+  title?: string;
+  items: MobileMenuItem[];
+}
+
+interface MobileMenuDrawerProps {
+  sections: MobileMenuSection[];
+  title?: string;
+  trigger?: ReactNode;
+  footer?: ReactNode;
+  side?: 'left' | 'right' | 'top' | 'bottom';
+  width?: string;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showBackButton?: boolean;
+  onBackClick?: () => void;
+  backButtonLabel?: string;
 }
 
 export function MobileMenuDrawer({
-  navItems = [],
-  showThemeToggle = true,
-  showLanguageSelector = true,
-  showSearchBar = false,
-  onSearch,
-  cartCount = 0,
-  onCartClick,
-  className = '',
-}: MobileMenuProps) {
-  const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const { isMobile, orientation } = useResponsive();
+  sections,
+  title = "Menu",
+  trigger,
+  footer,
+  side = 'left',
+  width = "w-[280px]",
+  isOpen,
+  onOpenChange,
+  showBackButton = false,
+  onBackClick,
+  backButtonLabel = "Back"
+}: MobileMenuDrawerProps) {
+  const [location, setLocation] = useLocation();
+  const { t } = useTranslation();
+  const [activeSection, setActiveSection] = useState<string | null>(null);
   
-  const handleSearch = () => {
-    if (onSearch && searchQuery.trim()) {
-      onSearch(searchQuery);
-      setSearchQuery('');
+  // Function to handle link clicks
+  const handleLinkClick = (href: string, onClick?: () => void) => {
+    // Close the menu
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
+    
+    // Navigate to the href
+    setLocation(href);
+    
+    // Call the onClick handler if provided
+    if (onClick) {
+      onClick();
     }
   };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
+  
+  // Function to check if an item is active
+  const isActive = (href: string) => {
+    return location === href || location.startsWith(`${href}/`);
   };
-
-  // Use a smaller width for the menu in portrait orientation on mobile
-  const menuWidth = isMobile && orientation === 'portrait' ? 'w-[85vw]' : 'w-[350px]';
-
-  return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <div className={`flex items-center gap-2 ${className}`}>
-        {/* Cart button - only show if onCartClick is provided */}
-        {onCartClick && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onCartClick}
-            className="relative"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {cartCount > 0 && (
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              >
-                {cartCount}
-              </Badge>
-            )}
-          </Button>
+  
+  // Render menu items
+  const renderMenuItem = (item: MobileMenuItem) => {
+    const active = isActive(item.href);
+    const hasChildren = item.childItems && item.childItems.length > 0;
+    
+    return (
+      <div
+        key={item.href}
+        className={cn(
+          "flex items-center px-2 py-2 rounded-md",
+          active ? "bg-accent/50" : "hover:bg-accent/20",
+          item.disabled && "opacity-50 pointer-events-none"
         )}
-        
-        {/* Menu trigger */}
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
+      >
+        {hasChildren ? (
+          <button
+            className="flex items-center justify-between w-full"
+            onClick={() => setActiveSection(item.title)}
+            disabled={item.disabled}
+          >
+            <div className="flex items-center gap-3">
+              {item.icon && <span className="text-muted-foreground">{item.icon}</span>}
+              <span className={active ? "font-medium" : ""}>{t(item.title)}</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        ) : (
+          <button
+            className="flex items-center gap-3 w-full"
+            onClick={() => handleLinkClick(item.href, item.onClick)}
+            disabled={item.disabled}
+          >
+            {item.icon && <span className="text-muted-foreground">{item.icon}</span>}
+            <span className={active ? "font-medium" : ""}>{t(item.title)}</span>
+          </button>
+        )}
       </div>
-      
-      <SheetContent side="right" className={`p-0 ${menuWidth}`}>
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
-            <h2 className="font-semibold text-lg">Menu</h2>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-          
-          {/* Search bar */}
-          {showSearchBar && (
-            <div className="p-4 border-b">
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  className="flex-1"
-                />
-                <Button onClick={handleSearch}>Search</Button>
-              </div>
-            </div>
-          )}
-          
-          {/* Navigation items */}
-          <div className="flex-1 overflow-auto py-2">
-            <nav className="space-y-1">
-              {navItems.map((item, index) => (
-                <Link 
-                  key={index} 
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                >
-                  <a className="flex items-center gap-3 px-4 py-3 hover:bg-accent rounded-md mx-2 transition-colors duration-200">
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </a>
-                </Link>
-              ))}
-            </nav>
-          </div>
-          
-          {/* Footer with theme toggle and language selector */}
-          <div className="p-4 border-t">
-            <div className="flex items-center justify-between">
-              {showThemeToggle && <ThemeToggle />}
-              {showLanguageSelector && <LanguageSelector />}
-            </div>
-          </div>
+    );
+  };
+  
+  // Render submenu view
+  const renderSubMenu = () => {
+    if (!activeSection) return null;
+    
+    const section = sections.find(s => 
+      s.items.some(item => item.title === activeSection)
+    );
+    
+    if (!section) return null;
+    
+    const parentItem = section.items.find(item => item.title === activeSection);
+    
+    if (!parentItem || !parentItem.childItems) return null;
+    
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-0 h-8 w-8"
+            onClick={() => setActiveSection(null)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h3 className="font-medium">{t(parentItem.title)}</h3>
         </div>
+        
+        <div className="space-y-1">
+          {parentItem.childItems.map(renderMenuItem)}
+        </div>
+      </div>
+    );
+  };
+  
+  // Render main menu view
+  const renderMainMenu = () => {
+    return (
+      <>
+        {sections.map((section, index) => (
+          <div key={index} className="space-y-4">
+            {section.title && (
+              <h3 className="px-2 text-sm font-medium text-muted-foreground">
+                {t(section.title)}
+              </h3>
+            )}
+            
+            <div className="space-y-1">
+              {section.items.map(renderMenuItem)}
+            </div>
+            
+            {index < sections.length - 1 && (
+              <Separator className="my-4" />
+            )}
+          </div>
+        ))}
+      </>
+    );
+  };
+  
+  return (
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
+      
+      <SheetContent
+        side={side}
+        className={cn("p-0", width)}
+      >
+        <SheetHeader className="p-4 border-b">
+          <div className="flex items-center">
+            {showBackButton && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mr-2 h-8 w-8 p-0"
+                onClick={onBackClick}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <SheetTitle className={showBackButton ? "ml-2" : ""}>
+              {t(title)}
+            </SheetTitle>
+          </div>
+        </SheetHeader>
+        
+        <ScrollArea className="h-[calc(100vh-8rem)]">
+          <div className="p-4 space-y-4">
+            {activeSection ? renderSubMenu() : renderMainMenu()}
+          </div>
+        </ScrollArea>
+        
+        {footer && (
+          <div className="p-4 border-t">
+            {footer}
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
