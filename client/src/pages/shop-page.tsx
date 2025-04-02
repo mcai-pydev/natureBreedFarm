@@ -7,6 +7,7 @@ import {
   Eye
 } from "lucide-react";
 import { Product } from "@shared/schema";
+import { getQueryFn } from "@/lib/queryClient";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -64,6 +65,7 @@ export default function ShopPage() {
   // Fetch products from the API
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+    queryFn: getQueryFn(),
   });
   
   // Filter products based on search query and category

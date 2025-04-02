@@ -15,6 +15,7 @@ import {
   Eye
 } from 'lucide-react';
 import { Product } from '@shared/schema';
+import { getQueryFn } from '@/lib/queryClient';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 
@@ -118,6 +119,7 @@ export default function MobileShopPage() {
   // Fetch products from the API
   const { data: products = [], isLoading, refetch } = useQuery<Product[]>({
     queryKey: ['/api/products'],
+    queryFn: getQueryFn(),
   });
   
   // Update category chips when products load
