@@ -1,282 +1,233 @@
-import React from "react";
-import { useLocation, Link } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
-import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import LanguageSelector from "@/components/ui/language-selector";
-import {
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
-  BarChart3,
-  Settings,
-  PawPrint,
-  Users,
-  MessageSquare,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  Mail,
-  Menu,
-  X,
-  Leaf
-} from "lucide-react";
+import React, { ReactNode, useState } from 'react';
+import { Link, useLocation } from 'wouter';
+import { useResponsive } from '@/contexts/responsive-context';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
+import { LanguageSelector } from '@/components/i18n/language-selector';
+import { useAuth } from '@/hooks/use-auth';
+import { useTranslation } from 'react-i18next';
+import { 
+  LayoutDashboard, Package, Receipt, BarChart, Settings, 
+  Users, MessageSquare, Book, LifeBuoy, LogOut, Menu, X, Bell
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Logo } from '@/components/brand/logo';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface AdminLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
+}
+
+interface SideNavItem {
+  title: string;
+  href: string;
+  icon: ReactNode;
+  badge?: string | number;
+  submenu?: Array<{
+    title: string;
+    href: string;
+  }>;
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const [, navigate] = useLocation();
+  const { t } = useTranslation();
+  const { isMobile } = useResponsive();
   const { user, logoutMutation } = useAuth();
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [location] = useLocation();
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
   
-  // Redirect to auth page if not logged in
-  React.useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-    }
-  }, [user, navigate]);
-
-  // Handle logout
   const handleLogout = () => {
     logoutMutation.mutate();
   };
-
-  // Navigation items
-  const navItems = [
-    { icon: <LayoutDashboard className="h-5 w-5" />, label: "Dashboard", href: "/admin" },
-    { icon: <Package className="h-5 w-5" />, label: "Products", href: "/admin/products" },
-    { icon: <ShoppingCart className="h-5 w-5" />, label: "Orders", href: "/admin/orders" },
-    { icon: <BarChart3 className="h-5 w-5" />, label: "Reports", href: "/admin/reports" },
-    { icon: <PawPrint className="h-5 w-5" />, label: "Breeding", href: "/admin/breeding" },
-    { icon: <Users className="h-5 w-5" />, label: "Customers", href: "/admin/customers" },
-    { icon: <Mail className="h-5 w-5" />, label: "Email", href: "/admin/email" },
-    { icon: <MessageSquare className="h-5 w-5" />, label: "Chat", href: "/admin/chat" },
-    { icon: <Settings className="h-5 w-5" />, label: "Settings", href: "/admin/settings" },
+  
+  const navItems: SideNavItem[] = [
+    {
+      title: t('Dashboard'),
+      href: '/admin',
+      icon: <LayoutDashboard className="h-5 w-5" />,
+    },
+    {
+      title: t('Products'),
+      href: '/admin/products',
+      icon: <Package className="h-5 w-5" />,
+      badge: 3,
+    },
+    {
+      title: t('Transactions'),
+      href: '/admin/transactions',
+      icon: <Receipt className="h-5 w-5" />,
+    },
+    {
+      title: t('Reports'),
+      href: '/admin/reports',
+      icon: <BarChart className="h-5 w-5" />,
+    },
+    {
+      title: t('Customers'),
+      href: '/admin/customers',
+      icon: <Users className="h-5 w-5" />,
+    },
+    {
+      title: t('Breeding'),
+      href: '/admin/breeding',
+      icon: <Book className="h-5 w-5" />,
+    },
+    {
+      title: t('Messages'),
+      href: '/admin/messages',
+      icon: <MessageSquare className="h-5 w-5" />,
+      badge: 5,
+    },
+    {
+      title: t('Settings'),
+      href: '/admin/settings',
+      icon: <Settings className="h-5 w-5" />,
+    },
   ];
-
-  // Function to determine if a nav item is active
+  
+  // Determine if a nav item is active
   const isActive = (href: string) => {
-    const [location] = useLocation();
-    return location === href || 
-      (href !== "/admin" && location.startsWith(href));
+    return location === href || location.startsWith(`${href}/`);
   };
-
-  // Navigate back to landing page
-  const handleBackToLanding = () => {
-    navigate("/");
-  };
-
-  return (
-    <div className="flex h-screen bg-background">
-      {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+  
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      <div className="p-6">
+        <Link href="/admin">
+          <a className="flex items-center gap-2">
+            <Logo />
+            <span className="font-bold text-xl">Admin</span>
+          </a>
+        </Link>
+      </div>
+      
+      <Separator />
+      
+      <div className="flex-1 overflow-auto py-2">
+        <nav className="space-y-1 px-2">
+          {navItems.map((item, idx) => (
+            <Link key={idx} href={item.href}>
+              <a
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  isActive(item.href)
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                )}
+              >
+                {item.icon}
+                <span>{item.title}</span>
+                {item.badge && (
+                  <Badge 
+                    variant={isActive(item.href) ? "outline" : "secondary"} 
+                    className="ml-auto"
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
+              </a>
+            </Link>
+          ))}
+        </nav>
+      </div>
+      
+      <Separator />
+      
+      <div className="p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <Avatar>
+            <AvatarFallback>
+              {user?.name ? user.name.substring(0, 2).toUpperCase() : 'UN'}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="font-medium">{user?.name || t('Admin User')}</div>
+            <div className="text-sm text-muted-foreground">{user?.username || 'admin'}</div>
+          </div>
+        </div>
         <Button 
           variant="outline" 
-          size="icon"
-          onClick={() => setMobileMenuOpen(true)}
+          size="sm" 
+          className="w-full justify-start gap-2 text-destructive"
+          onClick={handleLogout}
         >
-          <Menu className="h-5 w-5" />
+          <LogOut className="h-4 w-4" />
+          {t('Logout')}
         </Button>
       </div>
-
-      {/* Mobile sidebar */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          {/* Overlay */}
-          <div 
-            className="fixed inset-0 bg-foreground/20" 
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          
-          {/* Sidebar */}
-          <div className="fixed inset-y-0 left-0 w-64 bg-card shadow-lg">
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center">
-                <Leaf className="h-6 w-6 text-primary mr-2" />
-                <span className="font-bold text-lg">Farm Admin</span>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            
-            <ScrollArea className="h-[calc(100%-8rem)]">
-              <div className="px-3 py-2">
-                <nav className="space-y-1">
-                  {navItems.map((item) => (
-                    <Link key={item.href} href={item.href}>
-                      <a 
-                        className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                          isActive(item.href) 
-                            ? "bg-primary/10 text-primary" 
-                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {item.icon}
-                        <span className="ml-3">{item.label}</span>
-                      </a>
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-            </ScrollArea>
-            
-            <div className="absolute bottom-0 w-full p-4 border-t">
-              <div className="flex items-center mb-3">
-                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  {user?.name?.charAt(0).toUpperCase() || "U"}
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium">{user?.name || "User"}</p>
-                  <p className="text-xs text-muted-foreground">{user?.role || "Admin"}</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={handleBackToLanding}
-                >
-                  Public Site
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+    </div>
+  );
+  
+  return (
+    <div className="flex min-h-screen bg-muted/30">
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <aside className="w-64 border-r bg-card hidden md:block">
+          <SidebarContent />
+        </aside>
       )}
-
-      {/* Desktop sidebar */}
-      <div 
-        className={`hidden lg:flex h-full flex-col bg-card border-r transition-all duration-300 ${
-          sidebarCollapsed ? "w-16" : "w-64"
-        }`}
-      >
-        <div className={`p-4 flex ${sidebarCollapsed ? "justify-center" : "justify-between"}`}>
-          {!sidebarCollapsed && (
-            <div className="flex items-center">
-              <Leaf className="h-6 w-6 text-primary mr-2" />
-              <span className="font-bold text-lg">Farm Admin</span>
+      
+      {/* Main content */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <header className="h-14 border-b bg-card flex items-center px-4 sticky top-0 z-10">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              {isMobile && (
+                <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="p-0 w-64">
+                    <SidebarContent />
+                  </SheetContent>
+                </Sheet>
+              )}
+              
+              <h1 className="text-lg font-semibold">
+                {navItems.find(item => isActive(item.href))?.title || t('Admin')}
+              </h1>
             </div>
-          )}
-          {sidebarCollapsed && <Leaf className="h-6 w-6 text-primary" />}
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={sidebarCollapsed ? "mt-2" : ""}
-          >
-            {sidebarCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
-          </Button>
-        </div>
-
-        <ScrollArea className="flex-1">
-          <div className={`px-3 py-2 ${sidebarCollapsed ? "flex flex-col items-center" : ""}`}>
-            <nav className={`space-y-1 ${sidebarCollapsed ? "w-full" : ""}`}>
-              {navItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <a 
-                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive(item.href) 
-                        ? "bg-primary/10 text-primary" 
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    } ${sidebarCollapsed ? "justify-center" : ""}`}
-                  >
-                    {item.icon}
-                    {!sidebarCollapsed && <span className="ml-3">{item.label}</span>}
-                  </a>
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </ScrollArea>
-
-        <div className={`p-4 border-t ${sidebarCollapsed ? "flex justify-center" : ""}`}>
-          {!sidebarCollapsed && (
-            <div className="flex items-center mb-4">
-              <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                {user?.name?.charAt(0).toUpperCase() || "U"}
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium">{user?.name || "User"}</p>
-                <p className="text-xs text-muted-foreground">{user?.role || "Admin"}</p>
-              </div>
-            </div>
-          )}
-          <div className={`flex ${sidebarCollapsed ? "flex-col gap-2" : "gap-2"}`}>
-            {sidebarCollapsed ? (
-              <>
+            
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                  3
+                </span>
+              </Button>
+              
+              <ThemeToggle />
+              <LanguageSelector />
+              
+              {!isMobile && (
                 <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={handleBackToLanding}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  size="icon" 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-2 ml-4"
                   onClick={handleLogout}
                 >
                   <LogOut className="h-4 w-4" />
+                  {t('Logout')}
                 </Button>
-              </>
-            ) : (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={handleBackToLanding}
-                >
-                  Public Site
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-background z-10 border-b h-16 flex items-center justify-between px-4 lg:px-6">
-          <div className="flex items-center space-x-2">
-            <h1 className="text-lg font-semibold hidden md:inline-block">
-              {useTranslation().t('dashboard.welcome')}
-            </h1>
-          </div>
-          <div className="flex items-center space-x-2">
-            <LanguageSelector />
+              )}
+            </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-4 lg:p-6">
+        
+        {/* Page content */}
+        <main className="flex-1 p-4 md:p-6 max-w-full overflow-auto">
           {children}
         </main>
       </div>

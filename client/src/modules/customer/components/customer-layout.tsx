@@ -1,371 +1,245 @@
-import React from "react";
-import { useLocation, Link } from "wouter";
-import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { CurrencyDisplay } from "@/components/ui/currency-display";
-import LanguageSelector from "@/components/ui/language-selector";
-import {
-  ShoppingBag,
-  Search,
-  User,
-  Menu,
-  X,
-  Leaf,
-  Heart,
-  ShoppingCart,
-  Facebook,
-  Twitter,
-  Instagram
-} from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import CustomerNavbar from './customer-navbar';
+import React, { ReactNode, useState } from 'react';
+import { useLocation, Link } from 'wouter';
+import { MobileMenuDrawer } from '@/components/layout/mobile-menu-drawer';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
+import { LanguageSelector } from '@/components/i18n/language-selector';
+import { useResponsive } from '@/contexts/responsive-context';
+import { useTranslation } from 'react-i18next';
+import { 
+  Home, ShoppingCart, Heart, User, 
+  LifeBuoy, Mail, Phone, ExternalLink,
+  Search, Instagram, Facebook, Twitter
+} from 'lucide-react';
+import { 
+  ResponsiveContainer, 
+  TwoColumnLayout 
+} from '@/components/layout/responsive-container';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Logo } from '@/components/brand/logo';
 
 interface CustomerLayoutProps {
-  children: React.ReactNode;
-  showHeader?: boolean;
+  children: ReactNode;
   showFooter?: boolean;
-  useSimpleHeader?: boolean;
+  showHeader?: boolean;
+  cartCount?: number;
 }
 
-export function CustomerLayout({ 
-  children, 
-  showHeader = true,
+export function CustomerLayout({
+  children,
   showFooter = true,
-  useSimpleHeader = false
+  showHeader = true,
+  cartCount = 0,
 }: CustomerLayoutProps) {
-  const [, navigate] = useLocation();
-  const { user } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [cartCount, setCartCount] = React.useState(0);
-
   const { t } = useTranslation();
+  const { isMobile, isTablet } = useResponsive();
+  const [location, navigate] = useLocation();
+  const [searchQuery, setSearchQuery] = useState('');
   
-  // Navigation items
-  const navItems = [
-    { label: t('nav.home'), href: "/" },
-    { label: t('nav.shop'), href: "/shop" },
-    { label: t('nav.about'), href: "/about" },
-    { label: t('nav.blog'), href: "/blog" },
-    { label: t('nav.contact'), href: "/contact" },
-  ];
-
-  // Function to determine if a nav item is active
-  const isActive = (href: string) => {
-    const [location] = useLocation();
-    return location === href || 
-      (href !== "/" && location.startsWith(href));
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery('');
+    }
   };
-
+  
+  const handleCartClick = () => {
+    navigate('/checkout');
+  };
+  
+  const navItems = [
+    { label: t('Home'), href: '/', icon: <Home className="w-5 h-5" /> },
+    { label: t('Shop'), href: '/shop', icon: <ShoppingCart className="w-5 h-5" /> },
+    { label: t('Favorites'), href: '/favorites', icon: <Heart className="w-5 h-5" /> },
+    { label: t('Account'), href: '/auth', icon: <User className="w-5 h-5" /> },
+  ];
+  
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      {showHeader && useSimpleHeader && (
-        <CustomerNavbar onAuthClick={() => navigate('/auth')} />
-      )}
-      
-      {showHeader && !useSimpleHeader && (
-        <header className="border-b">
-          {/* Top Bar */}
-          <div className="bg-primary/5 py-2 px-4">
-            <div className="max-w-7xl mx-auto flex justify-between items-center">
-              <p className="text-xs text-muted-foreground">
-                {useTranslation().t('shop.freeShipping')} <CurrencyDisplay amount={100} />
-              </p>
-              <div className="flex items-center space-x-4">
-                <a href="tel:+1234567890" className="text-xs text-foreground hover:text-primary">
-                  {useTranslation().t('shop.callUs')}: (123) 456-7890
-                </a>
-                <LanguageSelector />
-              </div>
-            </div>
-          </div>
-          
-          {/* Main Header */}
-          <div className="py-4 px-4">
-            <div className="max-w-7xl mx-auto flex justify-between items-center">
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
+      {showHeader && (
+        <header className="border-b bg-card">
+          <div className="container mx-auto">
+            {/* Top header with logo and actions */}
+            <div className="py-3 px-4 flex items-center justify-between">
               {/* Logo */}
-              <div className="flex items-center">
-                <Link href="/">
-                  <a className="flex items-center">
-                    <Leaf className="h-8 w-8 text-primary mr-2" />
-                    <span className="font-bold text-xl hidden sm:inline-block">Nature Breed Farm</span>
-                  </a>
-                </Link>
-              </div>
+              <Link href="/">
+                <a className="flex items-center gap-2">
+                  <Logo />
+                  <span className="font-bold text-xl hidden md:block">Nature Breed Farm</span>
+                </a>
+              </Link>
               
-              {/* Desktop Navigation */}
-              <div className="hidden md:flex space-x-8 items-center">
-                {navItems.map((item) => (
-                  <Link key={item.href} href={item.href}>
-                    <a className={`text-sm font-medium transition-colors ${
-                      isActive(item.href) 
-                        ? "text-primary" 
-                        : "text-foreground hover:text-primary"
-                    }`}>
-                      {item.label}
-                    </a>
-                  </Link>
-                ))}
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="icon" className="hidden md:flex">
-                  <Search className="h-5 w-5" />
-                </Button>
-                
-                <Link href="/favorites">
-                  <a className="hidden md:flex relative">
-                    <Button variant="ghost" size="icon">
-                      <Heart className="h-5 w-5" />
-                    </Button>
-                  </a>
-                </Link>
-                
-                <Link href="/cart">
-                  <a className="relative">
-                    <Button variant="ghost" size="icon">
-                      <ShoppingCart className="h-5 w-5" />
-                      {cartCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                          {cartCount}
-                        </span>
-                      )}
-                    </Button>
-                  </a>
-                </Link>
-                
-                {user ? (
-                  <Link href="/account">
-                    <a>
-                      <Button variant="ghost" size="icon">
-                        <User className="h-5 w-5" />
-                      </Button>
-                    </a>
-                  </Link>
-                ) : (
-                  <Link href="/auth">
-                    <a>
-                      <Button variant="outline" size="sm" className="hidden md:flex">
-                        {useTranslation().t('auth.loginOrRegister')}
-                      </Button>
-                    </a>
-                  </Link>
-                )}
-                
-                {/* Mobile menu button */}
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="md:hidden"
-                  onClick={() => setMobileMenuOpen(true)}
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-          </div>
-          
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <div className="fixed inset-0 z-50 md:hidden">
-              {/* Overlay */}
-              <div 
-                className="fixed inset-0 bg-foreground/20" 
-                onClick={() => setMobileMenuOpen(false)}
-              />
-              
-              {/* Sidebar */}
-              <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-background shadow-lg p-6">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center">
-                    <Leaf className="h-6 w-6 text-primary mr-2" />
-                    <span className="font-bold text-lg">Nature Breed Farm</span>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
-                
-                <div className="mb-6">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <input 
-                      type="search" 
-                      placeholder={t('shop.search')} 
-                      className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              {/* Desktop Actions */}
+              {!isMobile && (
+                <div className="flex items-center gap-4">
+                  <div className="relative w-64">
+                    <Input
+                      type="text"
+                      placeholder={t('Search...')}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                      className="pr-10"
                     />
-                  </div>
-                </div>
-                
-                <nav className="space-y-6">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t('nav.menu')}</p>
-                    {navItems.map((item) => (
-                      <Link key={item.href} href={item.href}>
-                        <a 
-                          className={`block py-2 text-base font-medium transition-colors ${
-                            isActive(item.href) 
-                              ? "text-primary" 
-                              : "text-foreground hover:text-primary"
-                          }`}
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          {item.label}
-                        </a>
-                      </Link>
-                    ))}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full"
+                      onClick={handleSearch}
+                    >
+                      <Search className="h-4 w-4" />
+                    </Button>
                   </div>
                   
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t('auth.account')}</p>
-                    {user ? (
-                      <>
-                        <Link href="/account">
-                          <a 
-                            className="block py-2 text-base font-medium text-foreground hover:text-primary"
-                            onClick={() => setMobileMenuOpen(false)}
-                          >
-                            My Account
-                          </a>
-                        </Link>
-                        <Link href="/orders">
-                          <a 
-                            className="block py-2 text-base font-medium text-foreground hover:text-primary"
-                            onClick={() => setMobileMenuOpen(false)}
-                          >
-                            Orders
-                          </a>
-                        </Link>
-                        <Link href="/favorites">
-                          <a 
-                            className="block py-2 text-base font-medium text-foreground hover:text-primary"
-                            onClick={() => setMobileMenuOpen(false)}
-                          >
-                            Favorites
-                          </a>
-                        </Link>
-                        <button 
-                          className="block py-2 text-base font-medium text-foreground hover:text-primary w-full text-left"
-                        >
-                          Logout
-                        </button>
-                      </>
-                    ) : (
-                      <Link href="/auth">
-                        <a 
-                          className="block py-2 text-base font-medium text-foreground hover:text-primary"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          {useTranslation().t('auth.loginOrRegister')}
-                        </a>
-                      </Link>
+                  <ThemeToggle />
+                  <LanguageSelector />
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="relative"
+                    onClick={handleCartClick}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    {t('Cart')}
+                    {cartCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {cartCount}
+                      </span>
                     )}
-                  </div>
-                </nav>
-                
-                <div className="mt-8 pt-6 border-t">
-                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">{t('footer.connectWithUs')}</p>
-                  <div className="flex space-x-4">
-                    <a href="#" className="text-foreground hover:text-primary">
-                      <Facebook className="h-5 w-5" />
-                    </a>
-                    <a href="#" className="text-foreground hover:text-primary">
-                      <Twitter className="h-5 w-5" />
-                    </a>
-                    <a href="#" className="text-foreground hover:text-primary">
-                      <Instagram className="h-5 w-5" />
-                    </a>
-                  </div>
+                  </Button>
+                  
+                  <Link href="/auth">
+                    <Button variant="default" size="sm">
+                      {t('Sign In')}
+                    </Button>
+                  </Link>
                 </div>
-              </div>
+              )}
+              
+              {/* Mobile menu */}
+              {isMobile && (
+                <MobileMenuDrawer
+                  navItems={navItems}
+                  cartCount={cartCount}
+                  onCartClick={handleCartClick}
+                  showSearchBar={true}
+                  onSearch={(query) => navigate(`/shop?search=${encodeURIComponent(query)}`)}
+                />
+              )}
             </div>
-          )}
+            
+            {/* Desktop Navigation */}
+            {!isMobile && (
+              <nav className="hidden md:flex items-center justify-between py-3 px-4">
+                <div className="flex items-center gap-6">
+                  {navItems.map((item, index) => (
+                    <Link key={index} href={item.href}>
+                      <a className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors">
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </a>
+                    </Link>
+                  ))}
+                </div>
+                
+                <div className="text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Phone className="h-4 w-4" />
+                    +234 123 456 7890
+                  </span>
+                </div>
+              </nav>
+            )}
+          </div>
         </header>
       )}
       
-      {/* Main Content */}
+      {/* Main content */}
       <main className="flex-1">
         {children}
       </main>
-
+      
       {/* Footer */}
       {showFooter && (
-        <footer className="bg-muted text-muted-foreground">
-          {/* Main Footer */}
-          <div className="max-w-7xl mx-auto py-12 px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center mb-4">
-                <Leaf className="h-6 w-6 text-primary mr-2" />
-                <span className="font-bold text-foreground">Nature Breed Farm</span>
-              </div>
-              <p className="mb-4 text-sm">
-                Sustainable farming with a focus on healthy livestock and ethical practices.
-              </p>
-              <div className="flex space-x-4">
-                <a href="#" className="text-muted-foreground hover:text-primary">
-                  <Facebook className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-muted-foreground hover:text-primary">
-                  <Twitter className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-muted-foreground hover:text-primary">
-                  <Instagram className="h-5 w-5" />
-                </a>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">{t('footer.quickLinks')}</h3>
-              <ul className="space-y-2 text-sm">
-                {navItems.map((item) => (
-                  <li key={item.href}>
-                    <Link href={item.href}>
-                      <a className="hover:text-primary">
-                        {item.label}
+        <footer className="bg-muted py-12 mt-auto">
+          <div className="container mx-auto px-4">
+            <ResponsiveContainer>
+              <TwoColumnLayout
+                stackOnMobile={true}
+                gap="lg"
+                leftWidth="w-full md:w-2/5"
+                rightWidth="w-full md:w-3/5"
+                left={
+                  <div className="space-y-6">
+                    <Link href="/">
+                      <a className="flex items-center gap-2">
+                        <Logo size="lg" />
+                        <span className="font-bold text-xl">Nature Breed Farm</span>
                       </a>
                     </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">{t('footer.customerService')}</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-primary">FAQs</a></li>
-                <li><a href="#" className="hover:text-primary">Shipping & Returns</a></li>
-                <li><a href="#" className="hover:text-primary">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-primary">Terms & Conditions</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">{t('nav.contact')}</h3>
-              <address className="not-italic text-sm space-y-2">
-                <p>123 Farm Road, Countryside</p>
-                <p>State, Country, 12345</p>
-                <p>Phone: (123) 456-7890</p>
-                <p>Email: info@naturebreed.farm</p>
-              </address>
-            </div>
-          </div>
-          
-          {/* Bottom Footer */}
-          <div className="border-t border-border">
-            <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center">
-              <p className="text-sm mb-4 md:mb-0">
-                &copy; {new Date().getFullYear()} Nature Breed Farm. All rights reserved.
-              </p>
-              <div className="flex space-x-4 text-sm">
-                <a href="#" className="hover:text-primary">Privacy Policy</a>
-                <a href="#" className="hover:text-primary">Terms of Service</a>
-                <a href="#" className="hover:text-primary">Sitemap</a>
+                    <p className="text-muted-foreground">
+                      {t('Empowering farmers with sustainable solutions for optimal agricultural operations and enhanced productivity.')}
+                    </p>
+                    <div className="flex gap-4">
+                      <Button variant="ghost" size="icon">
+                        <Facebook className="h-5 w-5" />
+                      </Button>
+                      <Button variant="ghost" size="icon">
+                        <Instagram className="h-5 w-5" />
+                      </Button>
+                      <Button variant="ghost" size="icon">
+                        <Twitter className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </div>
+                }
+                right={
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">{t('Shop')}</h3>
+                      <ul className="space-y-2">
+                        <li><Link href="/shop?category=goat"><a className="hover:underline">{t('Goats')}</a></Link></li>
+                        <li><Link href="/shop?category=fish"><a className="hover:underline">{t('Fish')}</a></Link></li>
+                        <li><Link href="/shop?category=duck"><a className="hover:underline">{t('Ducks')}</a></Link></li>
+                        <li><Link href="/shop?category=chicken"><a className="hover:underline">{t('Chickens')}</a></Link></li>
+                        <li><Link href="/shop?category=rabbit"><a className="hover:underline">{t('Rabbits')}</a></Link></li>
+                      </ul>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">{t('Company')}</h3>
+                      <ul className="space-y-2">
+                        <li><Link href="/about"><a className="hover:underline">{t('About Us')}</a></Link></li>
+                        <li><Link href="/contact"><a className="hover:underline">{t('Contact')}</a></Link></li>
+                        <li><Link href="/blog"><a className="hover:underline">{t('Blog')}</a></Link></li>
+                        <li><Link href="/careers"><a className="hover:underline">{t('Careers')}</a></Link></li>
+                      </ul>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">{t('Support')}</h3>
+                      <ul className="space-y-2">
+                        <li><Link href="/help"><a className="hover:underline">{t('Help Center')}</a></Link></li>
+                        <li><Link href="/policy/privacy"><a className="hover:underline">{t('Privacy Policy')}</a></Link></li>
+                        <li><Link href="/policy/terms"><a className="hover:underline">{t('Terms of Service')}</a></Link></li>
+                        <li><Link href="/policy/shipping"><a className="hover:underline">{t('Shipping Policy')}</a></Link></li>
+                      </ul>
+                    </div>
+                  </div>
+                }
+              />
+              
+              <div className="border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p className="text-sm text-muted-foreground">
+                  &copy; {new Date().getFullYear()} Nature Breed Farm. {t('All rights reserved.')}
+                </p>
+                <div className="flex gap-4 text-sm">
+                  <Link href="/policy/privacy"><a className="hover:underline">{t('Privacy')}</a></Link>
+                  <Link href="/policy/terms"><a className="hover:underline">{t('Terms')}</a></Link>
+                  <Link href="/sitemap"><a className="hover:underline">{t('Sitemap')}</a></Link>
+                </div>
               </div>
-            </div>
+            </ResponsiveContainer>
           </div>
         </footer>
       )}
