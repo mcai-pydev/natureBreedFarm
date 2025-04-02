@@ -5,6 +5,7 @@ import { queryClient } from '@/lib/queryClient';
 import { ResponsiveProvider } from '@/contexts/responsive-context';
 import { ToastProvider } from '@/hooks/use-toast';
 import { AuthProvider } from '@/hooks/use-auth';
+import { MobileProvider } from '@/hooks/use-mobile';
 
 // Pages
 import HomePage from '@/pages/home-page';
@@ -22,11 +23,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ResponsiveProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <Router />
-          </AuthProvider>
-        </ToastProvider>
+        <MobileProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <Router />
+            </AuthProvider>
+          </ToastProvider>
+        </MobileProvider>
       </ResponsiveProvider>
     </QueryClientProvider>
   );
