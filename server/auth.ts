@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { emailService } from "./email";
 import { User as SelectUser } from "@shared/schema";
+import { requirePermission, Permissions, UserRoles } from "./middleware/rbac";
 
 declare global {
   namespace Express {
@@ -39,11 +40,32 @@ export const requireAuth = (req: any, res: any, next: any) => {
 
 // Middleware to ensure user is admin
 export const requireAdmin = (req: any, res: any, next: any) => {
-  if (!req.isAuthenticated() || req.user.role !== "Admin") {
+  if (!req.isAuthenticated() || req.user.role !== UserRoles.ADMIN) {
     return res.status(403).json({ error: "Admin privileges required" });
   }
   next();
 };
+
+// Export permission-based middleware functions for common operations
+export const requireReadProduct = requirePermission(Permissions.READ_PRODUCT);
+export const requireCreateProduct = requirePermission(Permissions.CREATE_PRODUCT);
+export const requireUpdateProduct = requirePermission(Permissions.UPDATE_PRODUCT);
+export const requireDeleteProduct = requirePermission(Permissions.DELETE_PRODUCT);
+
+export const requireReadOrder = requirePermission(Permissions.READ_ORDER);
+export const requireReadAllOrders = requirePermission(Permissions.READ_ALL_ORDERS);
+export const requireCreateOrder = requirePermission(Permissions.CREATE_ORDER);
+export const requireUpdateOrder = requirePermission(Permissions.UPDATE_ORDER);
+export const requireDeleteOrder = requirePermission(Permissions.DELETE_ORDER);
+
+export const requireReadAnimal = requirePermission(Permissions.READ_ANIMAL);
+export const requireCreateAnimal = requirePermission(Permissions.CREATE_ANIMAL);
+export const requireUpdateAnimal = requirePermission(Permissions.UPDATE_ANIMAL);
+export const requireDeleteAnimal = requirePermission(Permissions.DELETE_ANIMAL);
+
+export const requireReadAnalytics = requirePermission(Permissions.READ_ANALYTICS);
+export const requireManageNewsletters = requirePermission(Permissions.MANAGE_NEWSLETTERS);
+export const requireManageBulkOrders = requirePermission(Permissions.MANAGE_BULK_ORDERS);
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {

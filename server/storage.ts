@@ -10,11 +10,13 @@ import {
   orders, type Order, type InsertOrder,
   orderItems, type OrderItem, type InsertOrderItem,
   type TransactionWithProduct,
+  UserRoles,
 } from "@shared/schema";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import createMemoryStore from "memorystore";
+import { getDefaultPermissionsForRole } from "./middleware/rbac";
 
 // Explicitly import and define the memory store constructor
 const MemoryStore = createMemoryStore(session);
@@ -1117,12 +1119,24 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
+    
+    // Set default permissions based on role if not explicitly provided
+    let permissions = insertUser.permissions;
+    if (!permissions && insertUser.role) {
+      permissions = getDefaultPermissionsForRole(insertUser.role);
+    }
+    
     const user: User = { 
       ...insertUser, 
       id,
-      role: insertUser.role || null,
-      avatar: insertUser.avatar || null
+      role: insertUser.role || UserRoles.CUSTOMER,
+      permissions: permissions || [],
+      avatar: insertUser.avatar || null,
+      isActive: insertUser.isActive !== undefined ? insertUser.isActive : true,
+      lastLogin: null,
+      createdAt: new Date()
     };
+    
     this.users.set(id, user);
     return user;
   }
@@ -1130,6 +1144,12 @@ export class MemStorage implements IStorage {
   async updateUser(id: number, userUpdate: Partial<InsertUser>): Promise<User | undefined> {
     const existingUser = this.users.get(id);
     if (!existingUser) return undefined;
+    
+    // Handle role change - update permissions if role changes and permissions aren't explicitly set
+    if (userUpdate.role && userUpdate.role !== existingUser.role && !userUpdate.permissions) {
+      // Use the imported getDefaultPermissionsForRole function
+      userUpdate.permissions = getDefaultPermissionsForRole(userUpdate.role);
+    }
     
     const updatedUser = { ...existingUser, ...userUpdate };
     this.users.set(id, updatedUser);

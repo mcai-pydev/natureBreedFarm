@@ -1,84 +1,69 @@
-import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import { useWindowSize } from '@/hooks/use-window-size';
-import { useIsMobile } from '@/hooks/use-mobile';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
-interface ResponsiveContextType {
+type ResponsiveContextType = {
   isMobile: boolean;
   isTablet: boolean;
   isDesktop: boolean;
-  isLargeDesktop: boolean;
   windowWidth: number;
   windowHeight: number;
-}
+};
 
 const defaultContext: ResponsiveContextType = {
   isMobile: false,
   isTablet: false,
   isDesktop: true,
-  isLargeDesktop: false,
   windowWidth: typeof window !== 'undefined' ? window.innerWidth : 1200,
-  windowHeight: typeof window !== 'undefined' ? window.innerHeight : 800
+  windowHeight: typeof window !== 'undefined' ? window.innerHeight : 800,
 };
 
-export const ResponsiveContext = createContext<ResponsiveContextType>(defaultContext);
+const ResponsiveContext = createContext<ResponsiveContextType>(defaultContext);
 
-interface ResponsiveProviderProps {
-  children: ReactNode;
-  mobileBreakpoint?: number;
-  tabletBreakpoint?: number;
-  desktopBreakpoint?: number;
-}
+export const useResponsive = () => useContext(ResponsiveContext);
 
-export function ResponsiveProvider({
-  children,
-  mobileBreakpoint = 640,
-  tabletBreakpoint = 768,
-  desktopBreakpoint = 1024,
-}: ResponsiveProviderProps) {
-  // Get window size for non-mobile devices
-  const { width, height } = useWindowSize();
-  
-  // Check if device is mobile
-  const detectedIsMobile = useIsMobile();
-  
-  // Calculated responsive states
-  const [responsive, setResponsive] = useState<ResponsiveContextType>({
-    ...defaultContext,
-    windowWidth: width,
-    windowHeight: height
+export const ResponsiveProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
   });
-  
-  // Update responsive context when window size changes
+
   useEffect(() => {
-    const isMobile = detectedIsMobile || width <= mobileBreakpoint;
-    const isTablet = !isMobile && width <= tabletBreakpoint;
-    const isDesktop = !isMobile && !isTablet && width <= desktopBreakpoint;
-    const isLargeDesktop = !isMobile && !isTablet && !isDesktop;
-    
-    setResponsive({
-      isMobile,
-      isTablet,
-      isDesktop,
-      isLargeDesktop,
-      windowWidth: width,
-      windowHeight: height
-    });
-  }, [width, height, detectedIsMobile, mobileBreakpoint, tabletBreakpoint, desktopBreakpoint]);
-  
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+
+    const handleResize = () => {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    // Set initial dimensions
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Remove event listener on cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Calculate device type based on window width
+  const isMobile = windowDimensions.width < 768;
+  const isTablet = windowDimensions.width >= 768 && windowDimensions.width < 1024;
+  const isDesktop = windowDimensions.width >= 1024;
+
+  // Context value
+  const value = {
+    isMobile,
+    isTablet,
+    isDesktop,
+    windowWidth: windowDimensions.width,
+    windowHeight: windowDimensions.height,
+  };
+
   return (
-    <ResponsiveContext.Provider value={responsive}>
+    <ResponsiveContext.Provider value={value}>
       {children}
     </ResponsiveContext.Provider>
   );
-}
-
-// Custom hook to use the responsive context
-export function useResponsive() {
-  const context = useContext(ResponsiveContext);
-  
-  if (context === undefined) {
-    throw new Error('useResponsive must be used within a ResponsiveProvider');
-  }
-  
-  return context;
-}
+};

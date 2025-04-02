@@ -2,14 +2,79 @@ import { pgTable, text, serial, integer, boolean, real, timestamp, varchar, json
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Define available user roles
+export const UserRoles = {
+  ADMIN: 'Admin',
+  MANAGER: 'Manager',
+  FARMER: 'Farmer',
+  CUSTOMER: 'Customer',
+  SUPPORT: 'Support',
+  GUEST: 'Guest',
+} as const;
+
+// Define user permissions
+export const Permissions = {
+  // Product permissions
+  CREATE_PRODUCT: 'create:product',
+  READ_PRODUCT: 'read:product',
+  UPDATE_PRODUCT: 'update:product',
+  DELETE_PRODUCT: 'delete:product',
+  
+  // Transaction permissions
+  CREATE_TRANSACTION: 'create:transaction',
+  READ_TRANSACTION: 'read:transaction',
+  UPDATE_TRANSACTION: 'update:transaction',
+  DELETE_TRANSACTION: 'delete:transaction',
+  
+  // Order permissions
+  CREATE_ORDER: 'create:order',
+  READ_ORDER: 'read:order',
+  READ_ALL_ORDERS: 'read:all_orders',
+  UPDATE_ORDER: 'update:order',
+  DELETE_ORDER: 'delete:order',
+  
+  // User permissions
+  CREATE_USER: 'create:user',
+  READ_USER: 'read:user',
+  UPDATE_USER: 'update:user',
+  DELETE_USER: 'delete:user',
+  
+  // Animal breeding permissions
+  CREATE_ANIMAL: 'create:animal',
+  READ_ANIMAL: 'read:animal',
+  UPDATE_ANIMAL: 'update:animal',
+  DELETE_ANIMAL: 'delete:animal',
+  CREATE_BREEDING_EVENT: 'create:breeding_event',
+  READ_BREEDING_EVENT: 'read:breeding_event',
+  UPDATE_BREEDING_EVENT: 'update:breeding_event',
+  DELETE_BREEDING_EVENT: 'delete:breeding_event',
+  
+  // Analytics permissions
+  READ_ANALYTICS: 'read:analytics',
+  
+  // Newsletter permissions
+  MANAGE_NEWSLETTERS: 'manage:newsletters',
+  
+  // Bulk order permissions
+  MANAGE_BULK_ORDERS: 'manage:bulk_orders',
+} as const;
+
+// Type definitions for roles and permissions
+export type UserRole = typeof UserRoles[keyof typeof UserRoles];
+export type Permission = typeof Permissions[keyof typeof Permissions];
+
 // Users table for authentication
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
-  role: text("role").default("User"),
+  role: text("role").default(UserRoles.CUSTOMER),
+  permissions: text("permissions").array(),
   avatar: text("avatar"),
+  isActive: boolean("is_active").default(true),
+  lastLogin: timestamp("last_login"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -17,7 +82,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
   name: true,
   role: true,
+  permissions: true,
   avatar: true,
+  isActive: true,
 });
 
 // Products table for farm products

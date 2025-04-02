@@ -75,6 +75,7 @@ import { z } from "zod";
 
 // Import setupAuth from auth.ts after all other imports to prevent circular dependency
 import { setupAuth, requireAuth, requireAdmin } from "./auth";
+import orderRoutes from "./routes/order-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup static files middleware
@@ -82,6 +83,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Setup authentication routes
   setupAuth(app);
+  
+  // Register order routes with RBAC protection
+  app.use('/api', orderRoutes);
 
   // Products API routes
   app.get("/api/products", async (req, res) => {
