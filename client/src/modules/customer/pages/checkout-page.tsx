@@ -6,6 +6,7 @@ import {
   Truck, 
   CreditCard, 
   CheckCircle, 
+  Check,
   ArrowLeft, 
   ShoppingBag 
 } from "lucide-react";
@@ -37,6 +38,11 @@ export default function CheckoutPage() {
   
   // Checkout state
   const [activeStep, setActiveStep] = useState<CheckoutStep>("shipping");
+  const [completedSteps, setCompletedSteps] = useState<Record<CheckoutStep, boolean>>({
+    shipping: false,
+    payment: false,
+    review: false,
+  });
   const [shippingInfo, setShippingInfo] = useState<ShippingFormValues | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [submittingOrder, setSubmittingOrder] = useState(false);
@@ -55,6 +61,7 @@ export default function CheckoutPage() {
   // Handle shipping form submission
   const handleShippingSubmit = (data: ShippingFormValues) => {
     setShippingInfo(data);
+    setCompletedSteps(prev => ({ ...prev, shipping: true }));
     setActiveStep("payment");
   };
 
@@ -102,6 +109,7 @@ export default function CheckoutPage() {
   const handlePlaceOrder = () => {
     if (!shippingInfo) return;
 
+    setCompletedSteps(prev => ({ ...prev, review: true }));
     setSubmittingOrder(true);
     
     // Prepare order items
@@ -179,14 +187,25 @@ export default function CheckoutPage() {
               {["shipping", "payment", "review"].map((step, index) => (
                 <div 
                   key={step} 
-                  className={`flex flex-col items-center ${activeStep === step ? "text-primary" : "text-muted-foreground"}`}
-                >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
+                  className={`flex flex-col items-center ${
                     activeStep === step 
+                      ? "text-primary" 
+                      : completedSteps[step as CheckoutStep] 
+                        ? "text-primary" 
+                        : "text-muted-foreground"
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 
+                    ${activeStep === step 
                       ? "bg-primary text-primary-foreground" 
-                      : "bg-muted"
-                  }`}>
-                    {index + 1}
+                      : completedSteps[step as CheckoutStep]
+                        ? "bg-green-500 text-white"
+                        : "bg-muted"
+                    } transition-colors duration-200`}
+                  >
+                    {completedSteps[step as CheckoutStep] 
+                      ? <Check className="h-4 w-4" /> 
+                      : index + 1}
                   </div>
                   <span className="text-xs">{t(`shop.${step}Step`)}</span>
                 </div>
@@ -202,7 +221,13 @@ export default function CheckoutPage() {
                   value="shipping"
                   onClick={() => setActiveStep("shipping")}
                   disabled={activeStep === "payment" && !shippingInfo}
+                  className="relative"
                 >
+                  {completedSteps.shipping && 
+                    <span className="absolute -top-1 -right-1 bg-green-500 text-white w-4 h-4 rounded-full flex items-center justify-center">
+                      <Check className="h-2.5 w-2.5" />
+                    </span>
+                  }
                   <Truck className="h-4 w-4 mr-2" />
                   {t("shop.shipping")}
                 </TabsTrigger>
@@ -210,7 +235,13 @@ export default function CheckoutPage() {
                   value="payment"
                   onClick={() => shippingInfo && setActiveStep("payment")}
                   disabled={!shippingInfo}
+                  className="relative"
                 >
+                  {completedSteps.payment && 
+                    <span className="absolute -top-1 -right-1 bg-green-500 text-white w-4 h-4 rounded-full flex items-center justify-center">
+                      <Check className="h-2.5 w-2.5" />
+                    </span>
+                  }
                   <CreditCard className="h-4 w-4 mr-2" />
                   {t("shop.payment")}
                 </TabsTrigger>
@@ -218,7 +249,13 @@ export default function CheckoutPage() {
                   value="review"
                   onClick={() => shippingInfo && setActiveStep("review")}
                   disabled={!shippingInfo}
+                  className="relative"
                 >
+                  {completedSteps.review && 
+                    <span className="absolute -top-1 -right-1 bg-green-500 text-white w-4 h-4 rounded-full flex items-center justify-center">
+                      <Check className="h-2.5 w-2.5" />
+                    </span>
+                  }
                   <CheckCircle className="h-4 w-4 mr-2" />
                   {t("shop.review")}
                 </TabsTrigger>
@@ -239,6 +276,7 @@ export default function CheckoutPage() {
                   type="button"
                   onClick={() => {
                     if (shippingInfo) {
+                      setCompletedSteps(prev => ({ ...prev, shipping: true }));
                       setActiveStep("payment");
                     }
                   }}
@@ -268,7 +306,10 @@ export default function CheckoutPage() {
                   {t("shop.backToShipping")}
                 </Button>
                 <Button
-                  onClick={() => setActiveStep("review")}
+                  onClick={() => {
+                    setCompletedSteps(prev => ({ ...prev, payment: true }));
+                    setActiveStep("review");
+                  }}
                 >
                   {t("shop.nextReviewOrder") || "Next: Review Order"}
                 </Button>
@@ -298,12 +339,19 @@ export default function CheckoutPage() {
                 <Button
                   onClick={handlePlaceOrder}
                   disabled={createOrderMutation.isPending}
-                  className="gap-2"
+                  className="gap-2 min-w-[140px] relative"
                 >
-                  {createOrderMutation.isPending && (
-                    <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                  {createOrderMutation.isPending ? (
+                    <>
+                      <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                      <span>{t("shop.placingOrder") || "Placing Order..."}</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag className="h-4 w-4" />
+                      <span>{t("shop.placeOrder") || "Place Order"}</span>
+                    </>
                   )}
-                  {t("shop.placeOrder")}
                 </Button>
               </div>
             </div>
@@ -366,8 +414,10 @@ export default function CheckoutPage() {
               className="w-full mt-4"
               onClick={() => {
                 if (activeStep === "shipping" && shippingInfo) {
+                  setCompletedSteps(prev => ({ ...prev, shipping: true }));
                   setActiveStep("payment");
                 } else if (activeStep === "payment") {
+                  setCompletedSteps(prev => ({ ...prev, payment: true }));
                   setActiveStep("review");
                 }
               }}
