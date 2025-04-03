@@ -2,7 +2,8 @@ import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils" 
+import { Label } from "./label"
 
 const Select = SelectPrimitive.Root
 
@@ -144,6 +145,70 @@ const SelectSeparator = React.forwardRef<
 ))
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName
 
+// Create a labeled select component for accessibility
+interface FormSelectProps extends React.ComponentProps<typeof Select> {
+  label: string;
+  id?: string;
+  description?: string;
+  errorMessage?: string;
+  className?: string;
+  placeholder?: string;
+}
+
+const FormSelect = React.forwardRef<
+  React.ElementRef<typeof Select>,
+  FormSelectProps
+>(({
+  label,
+  id,
+  children,
+  description,
+  errorMessage,
+  className,
+  ...props
+}, ref) => {
+  // Generate a unique ID if none is provided
+  const selectId = id || `select-${Math.random().toString(36).substring(2, 9)}`;
+  const descriptionId = description ? `${selectId}-description` : undefined;
+  const errorId = errorMessage ? `${selectId}-error` : undefined;
+  
+  return (
+    <div className={cn("space-y-1", className)}>
+      <Label htmlFor={selectId} className="text-sm font-medium">
+        {label}
+      </Label>
+      
+      <Select {...props}>
+        <SelectTrigger 
+          id={selectId}
+          aria-describedby={cn(descriptionId, errorId)}
+          className={cn(
+            errorMessage && "border-destructive focus:ring-destructive"
+          )}
+        >
+          <SelectValue placeholder="Select an option" />
+        </SelectTrigger>
+        <SelectContent>
+          {children}
+        </SelectContent>
+      </Select>
+      
+      {description && (
+        <p id={descriptionId} className="text-sm text-muted-foreground">
+          {description}
+        </p>
+      )}
+      
+      {errorMessage && (
+        <p id={errorId} className="text-sm text-destructive">
+          {errorMessage}
+        </p>
+      )}
+    </div>
+  );
+});
+FormSelect.displayName = "FormSelect";
+
 export {
   Select,
   SelectGroup,
@@ -155,4 +220,5 @@ export {
   SelectSeparator,
   SelectScrollUpButton,
   SelectScrollDownButton,
+  FormSelect,
 }

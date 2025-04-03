@@ -95,14 +95,19 @@ export function NavigationBar({
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <label htmlFor="mobile-search" className="sr-only">
+            Search products
+          </label>
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Input
+            id="mobile-search"
             type="search"
             placeholder="Search products..."
             value={localSearchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-9 w-full"
             autoFocus
+            aria-label="Search products"
           />
           {localSearchQuery && (
             <Button
@@ -110,6 +115,7 @@ export function NavigationBar({
               size="icon"
               className="absolute right-0 top-0 h-full"
               onClick={() => handleSearchChange("")}
+              aria-label="Clear search"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -147,13 +153,18 @@ export function NavigationBar({
         {/* Search, Cart, Account (Desktop) */}
         <div className="hidden md:flex items-center space-x-2">
           <div className="relative w-60">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <label htmlFor="desktop-search" className="sr-only">
+              Search products
+            </label>
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <Input
+              id="desktop-search"
               type="search"
               placeholder="Search products..."
               value={localSearchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-9 w-full"
+              aria-label="Search products"
             />
             {localSearchQuery && (
               <Button
@@ -161,6 +172,7 @@ export function NavigationBar({
                 size="icon"
                 className="absolute right-0 top-0 h-full"
                 onClick={() => handleSearchChange("")}
+                aria-label="Clear search"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -172,10 +184,15 @@ export function NavigationBar({
             size="icon"
             className="relative"
             onClick={onCartClick}
+            aria-label={`Shopping cart with ${cartItemsCount} items`}
           >
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingCart className="h-5 w-5" aria-hidden="true" />
             {cartItemsCount > 0 && (
-              <Badge variant="destructive" className="absolute -top-2 -right-2 px-1 py-px text-[10px] min-w-[16px] h-[16px] flex items-center justify-center">
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-2 -right-2 px-1 py-px text-[10px] min-w-[16px] h-[16px] flex items-center justify-center"
+                aria-hidden="true"
+              >
                 {cartItemsCount > 99 ? "99+" : cartItemsCount}
               </Badge>
             )}
@@ -213,8 +230,9 @@ export function NavigationBar({
             variant="ghost" 
             size="icon"
             onClick={() => setSearchOpen(true)}
+            aria-label="Search products"
           >
-            <Search className="h-5 w-5" />
+            <Search className="h-5 w-5" aria-hidden="true" />
           </Button>
           
           <Button
@@ -222,10 +240,15 @@ export function NavigationBar({
             size="icon"
             className="relative"
             onClick={onCartClick}
+            aria-label={`Shopping cart with ${cartItemsCount} items`}
           >
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingCart className="h-5 w-5" aria-hidden="true" />
             {cartItemsCount > 0 && (
-              <Badge variant="destructive" className="absolute -top-2 -right-2 px-1 py-px text-[10px] min-w-[16px] h-[16px] flex items-center justify-center">
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-2 -right-2 px-1 py-px text-[10px] min-w-[16px] h-[16px] flex items-center justify-center"
+                aria-hidden="true"
+              >
                 {cartItemsCount > 99 ? "99+" : cartItemsCount}
               </Badge>
             )}
@@ -233,12 +256,18 @@ export function NavigationBar({
           
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
+              <Button 
+                variant="ghost" 
+                size="icon"
+                aria-label="Open menu"
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-menu"
+              >
+                <Menu className="h-5 w-5" aria-hidden="true" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="overflow-y-auto">
-              <div className="flex flex-col space-y-6 py-4">
+              <div id="mobile-menu" className="flex flex-col space-y-6 py-4">
                 {user ? (
                   <div className="flex flex-col items-center space-y-3 pb-6 border-b">
                     <div className="bg-primary/10 h-16 w-16 rounded-full flex items-center justify-center overflow-hidden">

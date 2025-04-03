@@ -125,7 +125,17 @@ export function NewsletterForm() {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input placeholder="Your name (optional)" {...field} />
+                <div className="flex flex-col space-y-1">
+                  <label htmlFor="newsletter-name" className="text-sm font-medium sr-only">
+                    Your Name (Optional)
+                  </label>
+                  <Input 
+                    id="newsletter-name"
+                    placeholder="Your name (optional)" 
+                    aria-label="Your name (optional)"
+                    {...field} 
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -138,9 +148,22 @@ export function NewsletterForm() {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input placeholder="Your email" required {...field} />
+                <div className="flex flex-col space-y-1">
+                  <label htmlFor="newsletter-email" className="text-sm font-medium sr-only">
+                    Your Email Address
+                  </label>
+                  <Input 
+                    id="newsletter-email"
+                    placeholder="Your email" 
+                    required 
+                    aria-required="true"
+                    aria-label="Your email address"
+                    type="email"
+                    {...field} 
+                  />
+                </div>
               </FormControl>
-              <FormMessage />
+              <FormMessage id="newsletter-email-error" aria-live="polite" />
             </FormItem>
           )}
         />

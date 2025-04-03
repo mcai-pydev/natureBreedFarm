@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { Input } from "./input";
 import { Button } from "./button";
+import { Label } from "./label";
+import { VisuallyHidden } from "./visually-hidden";
 
 interface QuantitySelectorProps {
   initialValue?: number;
@@ -12,6 +14,9 @@ interface QuantitySelectorProps {
   allowManualInput?: boolean;
   disabled?: boolean;
   onChange?: (value: number) => void;
+  label?: string;
+  name?: string;
+  id?: string;
 }
 
 export function QuantitySelector({
@@ -22,8 +27,15 @@ export function QuantitySelector({
   size = "default",
   allowManualInput = true,
   disabled = false,
-  onChange
+  onChange,
+  label = "Quantity",
+  name = "quantity",
+  id
 }: QuantitySelectorProps) {
+  // Generate random ID if not provided
+  const inputId = id || `quantity-input-${Math.random().toString(36).substring(2, 9)}`;
+  const decrementId = `${inputId}-decrement`;
+  const incrementId = `${inputId}-increment`;
   const [value, setValue] = useState(initialValue);
   
   // Sync with initialValue if it changes externally
@@ -69,44 +81,67 @@ export function QuantitySelector({
     "h-9 w-14 text-base";
   
   return (
-    <div className="flex items-center">
-      <Button
-        variant="outline"
-        size="icon"
-        className={buttonSizeClass}
-        onClick={decrement}
-        disabled={disabled || value <= min}
-        type="button"
-      >
-        <MinusIcon className="h-3 w-3" />
-      </Button>
-      
-      {allowManualInput ? (
-        <Input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={value}
-          onChange={handleInputChange}
-          className={`mx-1 text-center px-1 ${inputSizeClass}`}
-          disabled={disabled}
-        />
-      ) : (
-        <div className={`mx-1 flex items-center justify-center ${inputSizeClass} border rounded-md bg-background`}>
-          <span className="font-medium">{value}</span>
-        </div>
-      )}
-      
-      <Button
-        variant="outline"
-        size="icon"
-        className={buttonSizeClass}
-        onClick={increment}
-        disabled={disabled || value >= max}
-        type="button"
-      >
-        <PlusIcon className="h-3 w-3" />
-      </Button>
+    <div className="flex flex-col space-y-1">
+      <Label htmlFor={inputId} className="text-sm font-medium">
+        {label}
+      </Label>
+      <div className="flex items-center" role="group" aria-labelledby={inputId}>
+        <Button
+          variant="outline"
+          size="icon"
+          className={buttonSizeClass}
+          onClick={decrement}
+          disabled={disabled || value <= min}
+          type="button"
+          id={decrementId}
+          aria-label={`Decrease ${label.toLowerCase()}`}
+          aria-controls={inputId}
+        >
+          <MinusIcon className="h-3 w-3" />
+        </Button>
+        
+        {allowManualInput ? (
+          <Input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={value}
+            onChange={handleInputChange}
+            className={`mx-1 text-center px-1 ${inputSizeClass}`}
+            disabled={disabled}
+            id={inputId}
+            name={name}
+            aria-label={label}
+            aria-valuemin={min}
+            aria-valuemax={max}
+            aria-valuenow={value}
+          />
+        ) : (
+          <div 
+            className={`mx-1 flex items-center justify-center ${inputSizeClass} border rounded-md bg-background`}
+            aria-live="polite"
+            aria-atomic="true"
+            id={inputId}
+            role="status"
+          >
+            <span className="font-medium">{value}</span>
+          </div>
+        )}
+        
+        <Button
+          variant="outline"
+          size="icon"
+          className={buttonSizeClass}
+          onClick={increment}
+          disabled={disabled || value >= max}
+          type="button"
+          id={incrementId}
+          aria-label={`Increase ${label.toLowerCase()}`}
+          aria-controls={inputId}
+        >
+          <PlusIcon className="h-3 w-3" />
+        </Button>
+      </div>
     </div>
   );
 }
