@@ -4,142 +4,180 @@
       "name": "database",
       "status": "success",
       "message": "Database connection successful",
-      "timestamp": "2025-04-03T02:52:11.248Z"
+      "timestamp": "2025-04-03T03:28:33.566Z"
     },
     {
       "name": "api-endpoints",
       "status": "success",
       "message": "API endpoints are accessible",
-      "timestamp": "2025-04-03T02:52:11.559Z",
+      "timestamp": "2025-04-03T03:28:33.591Z",
       "details": {
         "status": "error",
-        "timestamp": "2025-04-03T02:52:11.526Z",
+        "timestamp": "2025-04-03T03:28:33.584Z",
         "components": [
           {
             "name": "database",
             "status": "success",
             "message": "Database connection successful",
-            "timestamp": "2025-04-03T02:52:11.248Z"
+            "timestamp": "2025-04-03T03:28:33.566Z"
           },
           {
             "name": "api-endpoints",
             "status": "success",
             "message": "API endpoints are accessible",
-            "timestamp": "2025-04-03T02:50:45.195Z",
+            "timestamp": "2025-04-03T02:52:11.559Z",
             "details": {
               "status": "error",
-              "timestamp": "2025-04-03T02:50:45.178Z",
+              "timestamp": "2025-04-03T02:52:11.526Z",
               "components": [
                 {
                   "name": "database",
                   "status": "success",
                   "message": "Database connection successful",
-                  "timestamp": "2025-04-03T02:50:45.129Z"
+                  "timestamp": "2025-04-03T02:52:11.248Z"
                 },
                 {
                   "name": "api-endpoints",
                   "status": "success",
                   "message": "API endpoints are accessible",
-                  "timestamp": "2025-04-03T02:32:33.076Z",
+                  "timestamp": "2025-04-03T02:50:45.195Z",
                   "details": {
                     "status": "error",
-                    "timestamp": "2025-04-03T02:32:32.970Z",
+                    "timestamp": "2025-04-03T02:50:45.178Z",
                     "components": [
                       {
                         "name": "database",
                         "status": "success",
                         "message": "Database connection successful",
-                        "timestamp": "2025-04-03T02:32:32.524Z"
+                        "timestamp": "2025-04-03T02:50:45.129Z"
                       },
                       {
                         "name": "api-endpoints",
                         "status": "success",
                         "message": "API endpoints are accessible",
-                        "timestamp": "2025-04-03T02:32:04.681Z",
+                        "timestamp": "2025-04-03T02:32:33.076Z",
                         "details": {
                           "status": "error",
-                          "timestamp": "2025-04-03T02:32:04.674Z",
+                          "timestamp": "2025-04-03T02:32:32.970Z",
                           "components": [
                             {
                               "name": "database",
                               "status": "success",
                               "message": "Database connection successful",
-                              "timestamp": "2025-04-03T02:32:04.374Z"
+                              "timestamp": "2025-04-03T02:32:32.524Z"
                             },
                             {
                               "name": "api-endpoints",
                               "status": "success",
                               "message": "API endpoints are accessible",
-                              "timestamp": "2025-04-03T02:30:34.059Z",
+                              "timestamp": "2025-04-03T02:32:04.681Z",
                               "details": {
                                 "status": "error",
-                                "timestamp": "2025-04-03T02:30:34.053Z",
+                                "timestamp": "2025-04-03T02:32:04.674Z",
                                 "components": [
                                   {
                                     "name": "database",
                                     "status": "success",
                                     "message": "Database connection successful",
-                                    "timestamp": "2025-04-03T02:30:33.820Z"
+                                    "timestamp": "2025-04-03T02:32:04.374Z"
                                   },
                                   {
                                     "name": "api-endpoints",
                                     "status": "success",
                                     "message": "API endpoints are accessible",
-                                    "timestamp": "2025-04-03T02:17:54.627Z",
+                                    "timestamp": "2025-04-03T02:30:34.059Z",
                                     "details": {
                                       "status": "error",
-                                      "timestamp": "2025-04-03T02:17:54.622Z",
+                                      "timestamp": "2025-04-03T02:30:34.053Z",
                                       "components": [
                                         {
                                           "name": "database",
                                           "status": "success",
                                           "message": "Database connection successful",
-                                          "timestamp": "2025-04-03T02:17:54.607Z"
+                                          "timestamp": "2025-04-03T02:30:33.820Z"
                                         },
                                         {
                                           "name": "api-endpoints",
                                           "status": "success",
                                           "message": "API endpoints are accessible",
-                                          "timestamp": "2025-04-03T02:03:59.376Z",
+                                          "timestamp": "2025-04-03T02:17:54.627Z",
                                           "details": {
-                                            "status": "success",
-                                            "timestamp": "2025-04-03T02:03:59.369Z",
+                                            "status": "error",
+                                            "timestamp": "2025-04-03T02:17:54.622Z",
                                             "components": [
                                               {
                                                 "name": "database",
                                                 "status": "success",
                                                 "message": "Database connection successful",
-                                                "timestamp": "2025-04-03T02:03:59.352Z"
+                                                "timestamp": "2025-04-03T02:17:54.607Z"
                                               },
                                               {
                                                 "name": "api-endpoints",
                                                 "status": "success",
                                                 "message": "API endpoints are accessible",
-                                                "timestamp": "2025-04-03T01:42:56.637Z",
+                                                "timestamp": "2025-04-03T02:03:59.376Z",
                                                 "details": {
                                                   "status": "success",
-                                                  "timestamp": "2025-04-03T01:42:56.536Z",
+                                                  "timestamp": "2025-04-03T02:03:59.369Z",
                                                   "components": [
                                                     {
                                                       "name": "database",
                                                       "status": "success",
                                                       "message": "Database connection successful",
-                                                      "timestamp": "2025-04-03T01:42:55.763Z"
+                                                      "timestamp": "2025-04-03T02:03:59.352Z"
                                                     },
                                                     {
                                                       "name": "api-endpoints",
                                                       "status": "success",
                                                       "message": "API endpoints are accessible",
-                                                      "timestamp": "2025-04-03T01:41:07.581Z",
+                                                      "timestamp": "2025-04-03T01:42:56.637Z",
                                                       "details": {
                                                         "status": "success",
-                                                        "timestamp": "2025-04-03T01:41:07.574Z",
+                                                        "timestamp": "2025-04-03T01:42:56.536Z",
                                                         "components": [
                                                           {
                                                             "name": "database",
                                                             "status": "success",
                                                             "message": "Database connection successful",
-                                                            "timestamp": "2025-04-03T01:41:06.879Z"
+                                                            "timestamp": "2025-04-03T01:42:55.763Z"
+                                                          },
+                                                          {
+                                                            "name": "api-endpoints",
+                                                            "status": "success",
+                                                            "message": "API endpoints are accessible",
+                                                            "timestamp": "2025-04-03T01:41:07.581Z",
+                                                            "details": {
+                                                              "status": "success",
+                                                              "timestamp": "2025-04-03T01:41:07.574Z",
+                                                              "components": [
+                                                                {
+                                                                  "name": "database",
+                                                                  "status": "success",
+                                                                  "message": "Database connection successful",
+                                                                  "timestamp": "2025-04-03T01:41:06.879Z"
+                                                                }
+                                                              ],
+                                                              "version": "1.0.0",
+                                                              "environment": "development"
+                                                            }
+                                                          },
+                                                          {
+                                                            "name": "auth",
+                                                            "status": "success",
+                                                            "message": "Auth system is working properly",
+                                                            "timestamp": "2025-04-03T01:41:07.962Z",
+                                                            "details": {
+                                                              "userId": 1
+                                                            }
+                                                          },
+                                                          {
+                                                            "name": "shop",
+                                                            "status": "success",
+                                                            "message": "Shop API is working with 8 products available",
+                                                            "timestamp": "2025-04-03T01:41:07.965Z",
+                                                            "details": {
+                                                              "productCount": 8
+                                                            }
                                                           }
                                                         ],
                                                         "version": "1.0.0",
@@ -150,7 +188,7 @@
                                                       "name": "auth",
                                                       "status": "success",
                                                       "message": "Auth system is working properly",
-                                                      "timestamp": "2025-04-03T01:41:07.962Z",
+                                                      "timestamp": "2025-04-03T01:42:56.807Z",
                                                       "details": {
                                                         "userId": 1
                                                       }
@@ -159,7 +197,7 @@
                                                       "name": "shop",
                                                       "status": "success",
                                                       "message": "Shop API is working with 8 products available",
-                                                      "timestamp": "2025-04-03T01:41:07.965Z",
+                                                      "timestamp": "2025-04-03T01:42:56.836Z",
                                                       "details": {
                                                         "productCount": 8
                                                       }
@@ -173,7 +211,7 @@
                                                 "name": "auth",
                                                 "status": "success",
                                                 "message": "Auth system is working properly",
-                                                "timestamp": "2025-04-03T01:42:56.807Z",
+                                                "timestamp": "2025-04-03T02:03:59.447Z",
                                                 "details": {
                                                   "userId": 1
                                                 }
@@ -182,9 +220,36 @@
                                                 "name": "shop",
                                                 "status": "success",
                                                 "message": "Shop API is working with 8 products available",
-                                                "timestamp": "2025-04-03T01:42:56.836Z",
+                                                "timestamp": "2025-04-03T02:03:59.451Z",
                                                 "details": {
                                                   "productCount": 8
+                                                }
+                                              },
+                                              {
+                                                "name": "orders",
+                                                "status": "error",
+                                                "message": "Orders API is not accessible",
+                                                "timestamp": "2025-04-03T02:03:59.457Z",
+                                                "details": {
+                                                  "error": "Request failed with status code 401"
+                                                }
+                                              },
+                                              {
+                                                "name": "checkout",
+                                                "status": "error",
+                                                "message": "Checkout flow has issues",
+                                                "timestamp": "2025-04-03T02:03:59.463Z",
+                                                "details": {
+                                                  "products": {
+                                                    "total": 8,
+                                                    "inStock": 8,
+                                                    "featuredProducts": 4
+                                                  },
+                                                  "orderCreation": {
+                                                    "success": false,
+                                                    "message": "Order creation endpoint failed unexpectedly",
+                                                    "error": "Request failed with status code 401"
+                                                  }
                                                 }
                                               }
                                             ],
@@ -196,7 +261,7 @@
                                           "name": "auth",
                                           "status": "success",
                                           "message": "Auth system is working properly",
-                                          "timestamp": "2025-04-03T02:03:59.447Z",
+                                          "timestamp": "2025-04-03T02:17:55.345Z",
                                           "details": {
                                             "userId": 1
                                           }
@@ -205,7 +270,7 @@
                                           "name": "shop",
                                           "status": "success",
                                           "message": "Shop API is working with 8 products available",
-                                          "timestamp": "2025-04-03T02:03:59.451Z",
+                                          "timestamp": "2025-04-03T02:17:55.349Z",
                                           "details": {
                                             "productCount": 8
                                           }
@@ -214,7 +279,7 @@
                                           "name": "orders",
                                           "status": "error",
                                           "message": "Orders API is not accessible",
-                                          "timestamp": "2025-04-03T02:03:59.457Z",
+                                          "timestamp": "2025-04-03T02:17:55.365Z",
                                           "details": {
                                             "error": "Request failed with status code 401"
                                           }
@@ -223,7 +288,7 @@
                                           "name": "checkout",
                                           "status": "error",
                                           "message": "Checkout flow has issues",
-                                          "timestamp": "2025-04-03T02:03:59.463Z",
+                                          "timestamp": "2025-04-03T02:17:55.598Z",
                                           "details": {
                                             "products": {
                                               "total": 8,
@@ -246,7 +311,7 @@
                                     "name": "auth",
                                     "status": "success",
                                     "message": "Auth system is working properly",
-                                    "timestamp": "2025-04-03T02:17:55.345Z",
+                                    "timestamp": "2025-04-03T02:30:35.656Z",
                                     "details": {
                                       "userId": 1
                                     }
@@ -255,7 +320,7 @@
                                     "name": "shop",
                                     "status": "success",
                                     "message": "Shop API is working with 8 products available",
-                                    "timestamp": "2025-04-03T02:17:55.349Z",
+                                    "timestamp": "2025-04-03T02:30:36.027Z",
                                     "details": {
                                       "productCount": 8
                                     }
@@ -264,7 +329,7 @@
                                     "name": "orders",
                                     "status": "error",
                                     "message": "Orders API is not accessible",
-                                    "timestamp": "2025-04-03T02:17:55.365Z",
+                                    "timestamp": "2025-04-03T02:30:37.684Z",
                                     "details": {
                                       "error": "Request failed with status code 401"
                                     }
@@ -273,7 +338,7 @@
                                     "name": "checkout",
                                     "status": "error",
                                     "message": "Checkout flow has issues",
-                                    "timestamp": "2025-04-03T02:17:55.598Z",
+                                    "timestamp": "2025-04-03T02:30:37.832Z",
                                     "details": {
                                       "products": {
                                         "total": 8,
@@ -286,6 +351,19 @@
                                         "error": "Request failed with status code 401"
                                       }
                                     }
+                                  },
+                                  {
+                                    "name": "breeding",
+                                    "status": "success",
+                                    "message": "Breeding system is working properly",
+                                    "timestamp": "2025-04-03T02:30:37.834Z",
+                                    "details": {
+                                      "animalCount": 6,
+                                      "rabbitCount": 4,
+                                      "breedingEventsCount": 2,
+                                      "inbreedingCheckWorking": true,
+                                      "potentialMatesWorking": true
+                                    }
                                   }
                                 ],
                                 "version": "1.0.0",
@@ -296,7 +374,7 @@
                               "name": "auth",
                               "status": "success",
                               "message": "Auth system is working properly",
-                              "timestamp": "2025-04-03T02:30:35.656Z",
+                              "timestamp": "2025-04-03T02:32:05.168Z",
                               "details": {
                                 "userId": 1
                               }
@@ -305,7 +383,7 @@
                               "name": "shop",
                               "status": "success",
                               "message": "Shop API is working with 8 products available",
-                              "timestamp": "2025-04-03T02:30:36.027Z",
+                              "timestamp": "2025-04-03T02:32:06.409Z",
                               "details": {
                                 "productCount": 8
                               }
@@ -314,7 +392,7 @@
                               "name": "orders",
                               "status": "error",
                               "message": "Orders API is not accessible",
-                              "timestamp": "2025-04-03T02:30:37.684Z",
+                              "timestamp": "2025-04-03T02:32:06.540Z",
                               "details": {
                                 "error": "Request failed with status code 401"
                               }
@@ -323,7 +401,7 @@
                               "name": "checkout",
                               "status": "error",
                               "message": "Checkout flow has issues",
-                              "timestamp": "2025-04-03T02:30:37.832Z",
+                              "timestamp": "2025-04-03T02:32:06.947Z",
                               "details": {
                                 "products": {
                                   "total": 8,
@@ -341,7 +419,7 @@
                               "name": "breeding",
                               "status": "success",
                               "message": "Breeding system is working properly",
-                              "timestamp": "2025-04-03T02:30:37.834Z",
+                              "timestamp": "2025-04-03T02:32:06.948Z",
                               "details": {
                                 "animalCount": 6,
                                 "rabbitCount": 4,
@@ -359,7 +437,7 @@
                         "name": "auth",
                         "status": "success",
                         "message": "Auth system is working properly",
-                        "timestamp": "2025-04-03T02:32:05.168Z",
+                        "timestamp": "2025-04-03T02:32:33.264Z",
                         "details": {
                           "userId": 1
                         }
@@ -368,7 +446,7 @@
                         "name": "shop",
                         "status": "success",
                         "message": "Shop API is working with 8 products available",
-                        "timestamp": "2025-04-03T02:32:06.409Z",
+                        "timestamp": "2025-04-03T02:32:33.288Z",
                         "details": {
                           "productCount": 8
                         }
@@ -377,7 +455,7 @@
                         "name": "orders",
                         "status": "error",
                         "message": "Orders API is not accessible",
-                        "timestamp": "2025-04-03T02:32:06.540Z",
+                        "timestamp": "2025-04-03T02:32:33.334Z",
                         "details": {
                           "error": "Request failed with status code 401"
                         }
@@ -386,7 +464,7 @@
                         "name": "checkout",
                         "status": "error",
                         "message": "Checkout flow has issues",
-                        "timestamp": "2025-04-03T02:32:06.947Z",
+                        "timestamp": "2025-04-03T02:32:33.420Z",
                         "details": {
                           "products": {
                             "total": 8,
@@ -404,7 +482,7 @@
                         "name": "breeding",
                         "status": "success",
                         "message": "Breeding system is working properly",
-                        "timestamp": "2025-04-03T02:32:06.948Z",
+                        "timestamp": "2025-04-03T02:32:33.424Z",
                         "details": {
                           "animalCount": 6,
                           "rabbitCount": 4,
@@ -422,7 +500,7 @@
                   "name": "auth",
                   "status": "success",
                   "message": "Auth system is working properly",
-                  "timestamp": "2025-04-03T02:32:33.264Z",
+                  "timestamp": "2025-04-03T02:50:45.620Z",
                   "details": {
                     "userId": 1
                   }
@@ -431,7 +509,7 @@
                   "name": "shop",
                   "status": "success",
                   "message": "Shop API is working with 8 products available",
-                  "timestamp": "2025-04-03T02:32:33.288Z",
+                  "timestamp": "2025-04-03T02:50:47.052Z",
                   "details": {
                     "productCount": 8
                   }
@@ -440,7 +518,7 @@
                   "name": "orders",
                   "status": "error",
                   "message": "Orders API is not accessible",
-                  "timestamp": "2025-04-03T02:32:33.334Z",
+                  "timestamp": "2025-04-03T02:50:47.632Z",
                   "details": {
                     "error": "Request failed with status code 401"
                   }
@@ -449,7 +527,7 @@
                   "name": "checkout",
                   "status": "error",
                   "message": "Checkout flow has issues",
-                  "timestamp": "2025-04-03T02:32:33.420Z",
+                  "timestamp": "2025-04-03T02:50:48.179Z",
                   "details": {
                     "products": {
                       "total": 8,
@@ -467,13 +545,110 @@
                   "name": "breeding",
                   "status": "success",
                   "message": "Breeding system is working properly",
-                  "timestamp": "2025-04-03T02:32:33.424Z",
+                  "timestamp": "2025-04-03T02:50:48.180Z",
                   "details": {
                     "animalCount": 6,
                     "rabbitCount": 4,
                     "breedingEventsCount": 2,
                     "inbreedingCheckWorking": true,
                     "potentialMatesWorking": true
+                  }
+                },
+                {
+                  "name": "pages",
+                  "status": "success",
+                  "message": "Pages check passed: 11/11 pages verified",
+                  "timestamp": "2025-04-03T02:50:48.816Z",
+                  "details": {
+                    "results": [
+                      {
+                        "page": "/",
+                        "status": "success",
+                        "message": "Home page route is configured (no API to verify)"
+                      },
+                      {
+                        "page": "/shop",
+                        "apiEndpoint": "/api/products",
+                        "status": "success",
+                        "message": "Shop page API endpoint is working (200)",
+                        "details": {
+                          "statusCode": 200
+                        }
+                      },
+                      {
+                        "page": "/products",
+                        "apiEndpoint": "/api/products",
+                        "status": "success",
+                        "message": "Products page API endpoint is working (200)",
+                        "details": {
+                          "statusCode": 200
+                        }
+                      },
+                      {
+                        "page": "/transactions",
+                        "apiEndpoint": "/api/transactions",
+                        "status": "success",
+                        "message": "Transactions page API endpoint is working (200)",
+                        "details": {
+                          "statusCode": 200
+                        }
+                      },
+                      {
+                        "page": "/reports",
+                        "apiEndpoint": "/api/reports",
+                        "status": "success",
+                        "message": "Reports page API endpoint is working (200)",
+                        "details": {
+                          "statusCode": 200
+                        }
+                      },
+                      {
+                        "page": "/rabbit-breeding",
+                        "apiEndpoint": "/api/animals",
+                        "status": "success",
+                        "message": "Rabbit Breeding page API endpoint is working (200)",
+                        "details": {
+                          "statusCode": 200
+                        }
+                      },
+                      {
+                        "page": "/ai-assistant",
+                        "apiEndpoint": "/api/ai/chat",
+                        "status": "success",
+                        "message": "AI Assistant page API endpoint is working (200)",
+                        "details": {
+                          "statusCode": 200
+                        }
+                      },
+                      {
+                        "page": "/settings",
+                        "status": "success",
+                        "message": "Settings page route is configured (no API to verify)"
+                      },
+                      {
+                        "page": "/status",
+                        "apiEndpoint": "/api/health",
+                        "status": "success",
+                        "message": "Status page API endpoint is working (200)",
+                        "details": {
+                          "statusCode": 200
+                        }
+                      },
+                      {
+                        "page": "/auth",
+                        "apiEndpoint": "/api/login",
+                        "status": "success",
+                        "message": "Auth page API endpoint is working (200)",
+                        "details": {
+                          "statusCode": 200
+                        }
+                      },
+                      {
+                        "page": "/onboarding",
+                        "status": "success",
+                        "message": "Onboarding page route is configured (no API to verify)"
+                      }
+                    ]
                   }
                 }
               ],
@@ -485,7 +660,7 @@
             "name": "auth",
             "status": "success",
             "message": "Auth system is working properly",
-            "timestamp": "2025-04-03T02:50:45.620Z",
+            "timestamp": "2025-04-03T02:52:12.429Z",
             "details": {
               "userId": 1
             }
@@ -494,7 +669,7 @@
             "name": "shop",
             "status": "success",
             "message": "Shop API is working with 8 products available",
-            "timestamp": "2025-04-03T02:50:47.052Z",
+            "timestamp": "2025-04-03T02:52:12.444Z",
             "details": {
               "productCount": 8
             }
@@ -503,7 +678,7 @@
             "name": "orders",
             "status": "error",
             "message": "Orders API is not accessible",
-            "timestamp": "2025-04-03T02:50:47.632Z",
+            "timestamp": "2025-04-03T02:52:12.472Z",
             "details": {
               "error": "Request failed with status code 401"
             }
@@ -512,7 +687,7 @@
             "name": "checkout",
             "status": "error",
             "message": "Checkout flow has issues",
-            "timestamp": "2025-04-03T02:50:48.179Z",
+            "timestamp": "2025-04-03T02:52:12.489Z",
             "details": {
               "products": {
                 "total": 8,
@@ -530,7 +705,7 @@
             "name": "breeding",
             "status": "success",
             "message": "Breeding system is working properly",
-            "timestamp": "2025-04-03T02:50:48.180Z",
+            "timestamp": "2025-04-03T02:52:12.491Z",
             "details": {
               "animalCount": 6,
               "rabbitCount": 4,
@@ -543,7 +718,7 @@
             "name": "pages",
             "status": "success",
             "message": "Pages check passed: 11/11 pages verified",
-            "timestamp": "2025-04-03T02:50:48.816Z",
+            "timestamp": "2025-04-03T02:52:13.484Z",
             "details": {
               "results": [
                 {
@@ -645,7 +820,7 @@
       "name": "auth",
       "status": "success",
       "message": "Auth system is working properly",
-      "timestamp": "2025-04-03T02:52:12.429Z",
+      "timestamp": "2025-04-03T03:28:33.682Z",
       "details": {
         "userId": 1
       }
@@ -654,7 +829,7 @@
       "name": "shop",
       "status": "success",
       "message": "Shop API is working with 8 products available",
-      "timestamp": "2025-04-03T02:52:12.444Z",
+      "timestamp": "2025-04-03T03:28:33.687Z",
       "details": {
         "productCount": 8
       }
@@ -663,7 +838,7 @@
       "name": "orders",
       "status": "error",
       "message": "Orders API is not accessible",
-      "timestamp": "2025-04-03T02:52:12.472Z",
+      "timestamp": "2025-04-03T03:28:33.699Z",
       "details": {
         "error": "Request failed with status code 401"
       }
@@ -672,7 +847,7 @@
       "name": "checkout",
       "status": "error",
       "message": "Checkout flow has issues",
-      "timestamp": "2025-04-03T02:52:12.489Z",
+      "timestamp": "2025-04-03T03:28:33.714Z",
       "details": {
         "products": {
           "total": 8,
@@ -690,7 +865,7 @@
       "name": "breeding",
       "status": "success",
       "message": "Breeding system is working properly",
-      "timestamp": "2025-04-03T02:52:12.491Z",
+      "timestamp": "2025-04-03T03:28:33.715Z",
       "details": {
         "animalCount": 6,
         "rabbitCount": 4,
@@ -703,7 +878,7 @@
       "name": "pages",
       "status": "success",
       "message": "Pages check passed: 11/11 pages verified",
-      "timestamp": "2025-04-03T02:52:13.484Z",
+      "timestamp": "2025-04-03T03:28:40.009Z",
       "details": {
         "results": [
           {
@@ -797,7 +972,7 @@
       }
     }
   ],
-  "lastBootTimestamp": "2025-04-03T02:52:13.484Z",
+  "lastBootTimestamp": "2025-04-03T03:28:40.009Z",
   "overallStatus": "error",
   "environment": "development"
 }
