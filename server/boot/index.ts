@@ -138,6 +138,7 @@ async function checkModuleStatus(
 import { checkOrdersModule } from './orders-check';
 import { checkCheckoutFlow } from './checkout-check';
 import { exportHealthSnapshot } from './health-snapshot';
+import { checkBreedingSystem } from './breeding-check';
 
 // Main boot function
 export async function bootSystem(): Promise<BootStatus> {
@@ -292,6 +293,25 @@ export async function bootSystem(): Promise<BootStatus> {
     checkoutStatus.status as any,
     checkoutStatus.message,
     checkoutStatus.details
+  );
+  updateStatus(status);
+  
+  // Check Animal Breeding module
+  const breedingStatus = await checkModuleStatus('breeding', async () => {
+    const result = await checkBreedingSystem();
+    return {
+      success: result.status === 'success',
+      message: result.message,
+      details: result.details
+    };
+  });
+  
+  status = updateComponentStatus(
+    status,
+    breedingStatus.name,
+    breedingStatus.status as any,
+    breedingStatus.message,
+    breedingStatus.details
   );
   updateStatus(status);
   

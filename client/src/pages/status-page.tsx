@@ -86,7 +86,7 @@ export default function StatusPage() {
               <div className="flex justify-center items-center py-10">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : snapshotsData?.snapshots?.length > 0 ? (
+            ) : snapshotsData && snapshotsData.snapshots && snapshotsData.snapshots.length > 0 ? (
               <div className="border rounded-md overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-muted">
@@ -189,6 +189,76 @@ export default function StatusPage() {
                 >
                   Export Snapshot
                 </a>
+              </div>
+            </div>
+            
+            <div className="mt-8 border-t pt-6">
+              <h3 className="text-lg font-medium mb-3">Status Badge</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Use this badge in your GitHub README or other documentation to show system status.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border rounded-md p-4">
+                  <h4 className="text-sm font-medium mb-2">Markdown Badge</h4>
+                  <div className="bg-muted p-3 rounded-md mb-3 overflow-x-auto">
+                    <pre className="text-xs whitespace-pre-wrap">
+                      ```markdown{"\n"}
+                      ![System Status](https://your-app-url.com/api/system/badge){"\n"}
+                      ```
+                    </pre>
+                  </div>
+                  <div className="flex justify-between">
+                    <a 
+                      href="/api/system/badge"
+                      target="_blank"
+                      className="text-xs text-blue-500 hover:underline"
+                    >
+                      View Badge
+                    </a>
+                    <button
+                      className="text-xs text-blue-500 hover:underline"
+                      onClick={() => {
+                        navigator.clipboard.writeText("![System Status](https://your-app-url.com/api/system/badge)");
+                      }}
+                    >
+                      Copy to Clipboard
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="border rounded-md p-4">
+                  <h4 className="text-sm font-medium mb-2">HTML Badge</h4>
+                  <div className="bg-muted p-3 rounded-md mb-3 overflow-x-auto">
+                    <pre className="text-xs whitespace-pre-wrap">
+                      ```html{"\n"}
+                      <iframe src="https://your-app-url.com/api/system/badge.html" width="100%" height="120" frameBorder="0"></iframe>{"\n"}
+                      ```
+                    </pre>
+                  </div>
+                  <div className="flex justify-between">
+                    <a 
+                      href="/api/system/badge.html"
+                      target="_blank"
+                      className="text-xs text-blue-500 hover:underline"
+                    >
+                      View Badge
+                    </a>
+                    <button
+                      className="text-xs text-blue-500 hover:underline"
+                      onClick={() => {
+                        navigator.clipboard.writeText('<iframe src="https://your-app-url.com/api/system/badge.html" width="100%" height="120" frameBorder="0"></iframe>');
+                      }}
+                    >
+                      Copy to Clipboard
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-4 border rounded-md">
+                <h4 className="text-sm font-medium mb-2">Live Preview</h4>
+                <iframe src="/api/system/badge.html" width="100%" height="120" frameBorder="0"></iframe>
               </div>
             </div>
           </div>

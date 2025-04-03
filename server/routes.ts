@@ -12,6 +12,7 @@ import {
   getHealthSnapshot,
   exportHealthSnapshot
 } from "./boot/health-snapshot";
+import { getStatusBadge, getStatusBadgeHtml } from "./routes/status-badge";
 
 // Helper function for AI chat responses when no API key is available
 function getFallbackResponse(message: string, history: any[] = []): string {
@@ -1333,6 +1334,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Status badge endpoints for GitHub or other integration
+  app.get("/api/system/badge", getStatusBadge);
+  app.get("/api/system/badge.html", getStatusBadgeHtml);
 
   const httpServer = createServer(app);
   // Animal Breeding API Routes

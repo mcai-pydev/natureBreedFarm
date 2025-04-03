@@ -107,6 +107,45 @@ export const BootStatusDashboard = ({ className }: { className?: string }) => {
         return <AlertCircle className="h-5 w-5 text-gray-500" />;
     }
   };
+  
+  const getStatusEmoji = (status: string) => {
+    switch (status) {
+      case 'success':
+        return '✅';
+      case 'warning':
+        return '⚠️';
+      case 'error':
+        return '❌';
+      case 'pending':
+        return '🔄';
+      default:
+        return '❓';
+    }
+  };
+  
+  const getModuleGroup = (moduleName: string) => {
+    if (['database', 'api-endpoints'].includes(moduleName)) {
+      return { name: 'Core Infrastructure', emoji: '🏗️' };
+    }
+    
+    if (['auth'].includes(moduleName)) {
+      return { name: 'Security', emoji: '🔒' };
+    }
+    
+    if (['shop', 'products'].includes(moduleName)) {
+      return { name: 'Shopping', emoji: '🛒' };
+    }
+    
+    if (['orders', 'checkout'].includes(moduleName)) {
+      return { name: 'Order Management', emoji: '📦' };
+    }
+    
+    if (['breeding'].includes(moduleName)) {
+      return { name: 'Farm Intelligence', emoji: '🐇' };
+    }
+    
+    return { name: 'Other', emoji: '🧩' };
+  };
 
   // Calculate health score percentage
   const calculateHealthScore = (status: BootStatus): number => {
@@ -158,6 +197,20 @@ export const BootStatusDashboard = ({ className }: { className?: string }) => {
     // Checkout module
     if (component.name === 'checkout' && component.status !== 'success') {
       return 'Check order creation process and verify product inventory';
+    }
+    
+    // Breeding module
+    if (component.name === 'breeding' && component.status !== 'success') {
+      if (component.message?.includes('No animals found')) {
+        return 'Add sample animals to the breeding system for testing';
+      }
+      if (component.message?.includes('Need at least two rabbits')) {
+        return 'Add more rabbits to test breeding compatibility features';
+      }
+      if (component.message?.includes('Need at least one male and one female')) {
+        return 'Ensure both male and female rabbits exist in the system';
+      }
+      return 'Check animal breeding service initialization and data';
     }
     
     return null;
@@ -275,50 +328,95 @@ export const BootStatusDashboard = ({ className }: { className?: string }) => {
           <Progress value={healthScore} className="h-2" />
         </div>
         
-        <Accordion type="single" collapsible className="w-full">
-          {data.components.map((component) => {
-            const healingSuggestion = getHealingSuggestion(component);
+        {/* System status overview */}
+        <div className="mb-6 p-3 bg-muted/50 rounded-md">
+          <h3 className="text-sm font-medium mb-2">System Overview</h3>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline" className="text-xs">
+              🩺 Health: {getStatusEmoji(data.overallStatus)} {data.overallStatus}
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              🧪 Modules: {data.components.length}
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              ✅ Passing: {data.components.filter(c => c.status === 'success').length}
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              ⚠️ Warning: {data.components.filter(c => c.status === 'warning').length}
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              ❌ Failed: {data.components.filter(c => c.status === 'error').length}
+            </Badge>
+          </div>
+        </div>
+        
+        {/* Group modules by category */}
+        {Object.entries(
+          // Group components by their module group
+          data.components.reduce((groups, component) => {
+            const group = getModuleGroup(component.name);
+            if (!groups[group.name]) {
+              groups[group.name] = {
+                components: [],
+                emoji: group.emoji
+              };
+            }
+            groups[group.name].components.push(component);
+            return groups;
+          }, {} as Record<string, { components: ComponentStatus[], emoji: string }>)
+        ).map(([groupName, group]) => (
+          <div key={groupName} className="mb-4">
+            <h3 className="text-sm font-medium mb-2 flex items-center">
+              <span className="mr-2">{group.emoji}</span>
+              {groupName}
+            </h3>
             
-            return (
-              <AccordionItem 
-                key={component.name} 
-                value={component.name}
-                className="border rounded-md mb-2 overflow-hidden"
-              >
-                <AccordionTrigger className="px-4 py-2 hover:no-underline">
-                  <div className="flex items-center gap-2 w-full">
-                    <div className={`h-3 w-3 rounded-full ${getStatusColor(component.status)}`} />
-                    <span className="font-medium">{component.name}</span>
-                    <span className="text-xs text-muted-foreground ml-auto mr-4">
-                      {component.status.toUpperCase()}
-                    </span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-3 pt-0">
-                  <div className="border-l-2 pl-4 border-muted">
-                    <p className="text-sm mb-2">{component.message}</p>
-                    
-                    {healingSuggestion && (
-                      <div className="bg-muted p-2 rounded-md mb-2">
-                        <p className="text-xs font-medium">Auto-healing suggestion:</p>
-                        <p className="text-sm">{healingSuggestion}</p>
+            <Accordion type="single" collapsible className="w-full">
+              {group.components.map((component) => {
+                const healingSuggestion = getHealingSuggestion(component);
+                
+                return (
+                  <AccordionItem 
+                    key={component.name} 
+                    value={component.name}
+                    className="border rounded-md mb-2 overflow-hidden"
+                  >
+                    <AccordionTrigger className="px-4 py-2 hover:no-underline">
+                      <div className="flex items-center gap-2 w-full">
+                        <span className="mr-1">{getStatusEmoji(component.status)}</span>
+                        <span className="font-medium">{component.name}</span>
+                        <span className="text-xs text-muted-foreground ml-auto mr-4">
+                          {component.status.toUpperCase()}
+                        </span>
                       </div>
-                    )}
-                    
-                    {component.details && (
-                      <div className="mt-2">
-                        <p className="text-xs text-muted-foreground mb-1">Details:</p>
-                        <pre className="text-xs bg-muted p-2 rounded-md overflow-auto max-h-36">
-                          {JSON.stringify(component.details, null, 2)}
-                        </pre>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-3 pt-0">
+                      <div className="border-l-2 pl-4 border-muted">
+                        <p className="text-sm mb-2">{component.message}</p>
+                        
+                        {healingSuggestion && (
+                          <div className="bg-muted p-2 rounded-md mb-2">
+                            <p className="text-xs font-medium">🔧 Auto-healing suggestion:</p>
+                            <p className="text-sm">{healingSuggestion}</p>
+                          </div>
+                        )}
+                        
+                        {component.details && (
+                          <div className="mt-2">
+                            <p className="text-xs text-muted-foreground mb-1">📋 Details:</p>
+                            <pre className="text-xs bg-muted p-2 rounded-md overflow-auto max-h-36">
+                              {JSON.stringify(component.details, null, 2)}
+                            </pre>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          </div>
+        ))}
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground">
         <div className="flex justify-between w-full">
