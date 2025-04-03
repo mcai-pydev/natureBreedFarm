@@ -10,7 +10,8 @@
  * npx tsx boot-system.js
  */
 
-console.log('Running Nature Breed Farm Smart Boot System...');
-console.log('To check system status, run:');
-console.log('npx tsx server/boot/cli.ts');
-console.log('\nThis will verify all system components including database, API endpoints, and application modules.');
+// Simple wrapper to execute the TypeScript CLI
+require('child_process').spawn('npx', ['tsx', 'server/boot/cli.ts'].concat(process.argv.slice(2)), {
+  stdio: 'inherit',
+  shell: true
+});

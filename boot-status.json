@@ -4,37 +4,75 @@
       "name": "database",
       "status": "success",
       "message": "Database connection successful",
-      "timestamp": "2025-04-03T01:42:55.763Z"
+      "timestamp": "2025-04-03T02:03:59.352Z"
     },
     {
       "name": "api-endpoints",
       "status": "success",
       "message": "API endpoints are accessible",
-      "timestamp": "2025-04-03T01:42:56.637Z",
+      "timestamp": "2025-04-03T02:03:59.376Z",
       "details": {
         "status": "success",
-        "timestamp": "2025-04-03T01:42:56.536Z",
+        "timestamp": "2025-04-03T02:03:59.369Z",
         "components": [
           {
             "name": "database",
             "status": "success",
             "message": "Database connection successful",
-            "timestamp": "2025-04-03T01:42:55.763Z"
+            "timestamp": "2025-04-03T02:03:59.352Z"
           },
           {
             "name": "api-endpoints",
             "status": "success",
             "message": "API endpoints are accessible",
-            "timestamp": "2025-04-03T01:41:07.581Z",
+            "timestamp": "2025-04-03T01:42:56.637Z",
             "details": {
               "status": "success",
-              "timestamp": "2025-04-03T01:41:07.574Z",
+              "timestamp": "2025-04-03T01:42:56.536Z",
               "components": [
                 {
                   "name": "database",
                   "status": "success",
                   "message": "Database connection successful",
-                  "timestamp": "2025-04-03T01:41:06.879Z"
+                  "timestamp": "2025-04-03T01:42:55.763Z"
+                },
+                {
+                  "name": "api-endpoints",
+                  "status": "success",
+                  "message": "API endpoints are accessible",
+                  "timestamp": "2025-04-03T01:41:07.581Z",
+                  "details": {
+                    "status": "success",
+                    "timestamp": "2025-04-03T01:41:07.574Z",
+                    "components": [
+                      {
+                        "name": "database",
+                        "status": "success",
+                        "message": "Database connection successful",
+                        "timestamp": "2025-04-03T01:41:06.879Z"
+                      }
+                    ],
+                    "version": "1.0.0",
+                    "environment": "development"
+                  }
+                },
+                {
+                  "name": "auth",
+                  "status": "success",
+                  "message": "Auth system is working properly",
+                  "timestamp": "2025-04-03T01:41:07.962Z",
+                  "details": {
+                    "userId": 1
+                  }
+                },
+                {
+                  "name": "shop",
+                  "status": "success",
+                  "message": "Shop API is working with 8 products available",
+                  "timestamp": "2025-04-03T01:41:07.965Z",
+                  "details": {
+                    "productCount": 8
+                  }
                 }
               ],
               "version": "1.0.0",
@@ -45,7 +83,7 @@
             "name": "auth",
             "status": "success",
             "message": "Auth system is working properly",
-            "timestamp": "2025-04-03T01:41:07.962Z",
+            "timestamp": "2025-04-03T01:42:56.807Z",
             "details": {
               "userId": 1
             }
@@ -54,7 +92,7 @@
             "name": "shop",
             "status": "success",
             "message": "Shop API is working with 8 products available",
-            "timestamp": "2025-04-03T01:41:07.965Z",
+            "timestamp": "2025-04-03T01:42:56.836Z",
             "details": {
               "productCount": 8
             }
@@ -68,7 +106,7 @@
       "name": "auth",
       "status": "success",
       "message": "Auth system is working properly",
-      "timestamp": "2025-04-03T01:42:56.807Z",
+      "timestamp": "2025-04-03T02:03:59.447Z",
       "details": {
         "userId": 1
       }
@@ -77,13 +115,40 @@
       "name": "shop",
       "status": "success",
       "message": "Shop API is working with 8 products available",
-      "timestamp": "2025-04-03T01:42:56.836Z",
+      "timestamp": "2025-04-03T02:03:59.451Z",
       "details": {
         "productCount": 8
       }
+    },
+    {
+      "name": "orders",
+      "status": "error",
+      "message": "Orders API is not accessible",
+      "timestamp": "2025-04-03T02:03:59.457Z",
+      "details": {
+        "error": "Request failed with status code 401"
+      }
+    },
+    {
+      "name": "checkout",
+      "status": "error",
+      "message": "Checkout flow has issues",
+      "timestamp": "2025-04-03T02:03:59.463Z",
+      "details": {
+        "products": {
+          "total": 8,
+          "inStock": 8,
+          "featuredProducts": 4
+        },
+        "orderCreation": {
+          "success": false,
+          "message": "Order creation endpoint failed unexpectedly",
+          "error": "Request failed with status code 401"
+        }
+      }
     }
   ],
-  "lastBootTimestamp": "2025-04-03T01:42:56.836Z",
-  "overallStatus": "success",
+  "lastBootTimestamp": "2025-04-03T02:03:59.463Z",
+  "overallStatus": "error",
   "environment": "development"
 }

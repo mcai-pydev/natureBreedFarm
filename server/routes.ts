@@ -6,6 +6,11 @@ import { storage } from "./storage";
 import { emailService } from "./email";
 import { openaiService } from "./openai-service";
 import { getBootStatus } from "./boot/index";
+import { 
+  getLatestHealthSnapshot, 
+  getHealthSnapshotsList, 
+  getHealthSnapshot 
+} from "./boot/health-snapshot";
 
 // Helper function for AI chat responses when no API key is available
 function getFallbackResponse(message: string, history: any[] = []): string {
@@ -1249,6 +1254,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({
         error: "Failed to retrieve system status",
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Health snapshot endpoints
+  
+  // Get latest health snapshot
+  app.get("/api/system/snapshots/latest", (req, res) => {
+    try {
+      const snapshot = getLatestHealthSnapshot();
+      if (!snapshot) {
+        return res.status(404).json({ error: "No health snapshots available" });
+      }
+      res.json(snapshot);
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to get latest health snapshot",
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Get list of all available snapshots
+  app.get("/api/system/snapshots", (req, res) => {
+    try {
+      const snapshots = getHealthSnapshotsList();
+      res.json({ snapshots });
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to list health snapshots",
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Get specific snapshot by filename
+  app.get("/api/system/snapshots/:filename", (req, res) => {
+    try {
+      const snapshot = getHealthSnapshot(req.params.filename);
+      if (!snapshot) {
+        return res.status(404).json({ error: "Health snapshot not found" });
+      }
+      res.json(snapshot);
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to get health snapshot",
         message: error instanceof Error ? error.message : String(error)
       });
     }

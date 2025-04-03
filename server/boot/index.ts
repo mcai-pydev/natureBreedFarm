@@ -134,6 +134,11 @@ async function checkModuleStatus(
   }
 }
 
+// Import our new check modules
+import { checkOrdersModule } from './orders-check';
+import { checkCheckoutFlow } from './checkout-check';
+import { exportHealthSnapshot } from './health-snapshot';
+
 // Main boot function
 export async function bootSystem(): Promise<BootStatus> {
   console.log('🚀 Booting Nature Breed Farm Application...');
@@ -262,6 +267,34 @@ export async function bootSystem(): Promise<BootStatus> {
   );
   updateStatus(status);
   
+  // Check Orders module
+  const ordersStatus = await checkModuleStatus('orders', async () => {
+    return await checkOrdersModule();
+  });
+  
+  status = updateComponentStatus(
+    status,
+    ordersStatus.name,
+    ordersStatus.status as any,
+    ordersStatus.message,
+    ordersStatus.details
+  );
+  updateStatus(status);
+  
+  // Check Checkout flow
+  const checkoutStatus = await checkModuleStatus('checkout', async () => {
+    return await checkCheckoutFlow();
+  });
+  
+  status = updateComponentStatus(
+    status,
+    checkoutStatus.name,
+    checkoutStatus.status as any,
+    checkoutStatus.message,
+    checkoutStatus.details
+  );
+  updateStatus(status);
+  
   // Final status report
   console.log('\n📊 Boot Status Report:');
   console.log(`Overall: ${status.overallStatus === 'success' ? '✅' : status.overallStatus === 'warning' ? '⚠️' : '❌'} ${status.overallStatus.toUpperCase()}`);
@@ -270,6 +303,14 @@ export async function bootSystem(): Promise<BootStatus> {
     const icon = component.status === 'success' ? '✅' : component.status === 'warning' ? '⚠️' : '❌';
     console.log(`${icon} ${component.name}: ${component.message}`);
   });
+  
+  // If boot is successful, export a health snapshot
+  if (status.overallStatus === 'success') {
+    const snapshotResult = exportHealthSnapshot(status);
+    if (snapshotResult.success) {
+      console.log(`📸 Health snapshot exported: ${snapshotResult.timestamp}`);
+    }
+  }
   
   return status;
 }
