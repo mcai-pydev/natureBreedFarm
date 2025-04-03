@@ -139,6 +139,7 @@ import { checkOrdersModule } from './orders-check';
 import { checkCheckoutFlow } from './checkout-check';
 import { exportHealthSnapshot } from './health-snapshot';
 import { checkBreedingSystem } from './breeding-check';
+import { checkPages } from './pages-check';
 
 // Main boot function
 export async function bootSystem(): Promise<BootStatus> {
@@ -312,6 +313,20 @@ export async function bootSystem(): Promise<BootStatus> {
     breedingStatus.status as any,
     breedingStatus.message,
     breedingStatus.details
+  );
+  updateStatus(status);
+  
+  // Check Application Pages and their API endpoints
+  const pagesStatus = await checkModuleStatus('pages', async () => {
+    return await checkPages();
+  });
+  
+  status = updateComponentStatus(
+    status,
+    pagesStatus.name,
+    pagesStatus.status as any,
+    pagesStatus.message,
+    pagesStatus.details
   );
   updateStatus(status);
   

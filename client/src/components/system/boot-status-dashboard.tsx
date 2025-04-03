@@ -144,6 +144,10 @@ export const BootStatusDashboard = ({ className }: { className?: string }) => {
       return { name: 'Farm Intelligence', emoji: '🐇' };
     }
     
+    if (['pages'].includes(moduleName)) {
+      return { name: 'Application Pages', emoji: '📱' };
+    }
+    
     return { name: 'Other', emoji: '🧩' };
   };
 
@@ -211,6 +215,11 @@ export const BootStatusDashboard = ({ className }: { className?: string }) => {
         return 'Ensure both male and female rabbits exist in the system';
       }
       return 'Check animal breeding service initialization and data';
+    }
+    
+    // Pages module
+    if (component.name === 'pages' && component.status !== 'success') {
+      return 'Check that all application routes and their corresponding API endpoints are accessible';
     }
     
     return null;

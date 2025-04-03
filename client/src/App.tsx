@@ -14,6 +14,13 @@ import { ProtectedOrderDetailPage } from '@/pages/order-detail-page';
 import NotFoundPage from '@/pages/not-found-page';
 import AuthPage from '@/pages/auth-page';
 import ShopPage from '@/pages/shop-page';
+import ProductsPage from '@/pages/products-page';
+import TransactionsPage from '@/pages/transactions-page';
+import ReportsPage from '@/pages/reports-page';
+import RabbitBreedingPage from '@/pages/rabbit-breeding-page';
+import PolicyPage from '@/pages/policy-page';
+import AIAssistantPage from '@/pages/ai-assistant-page';
+import SettingsPage from '@/pages/settings-page';
 import StatusPage from '@/pages/status-page';
 import OnboardingPage from '@/pages/onboarding-page';
 import DebugOnboardingPage from '@/pages/debug-onboarding-page';
@@ -75,6 +82,13 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/shop" component={ShopPage} />
+      <Route path="/products" component={ProductsPage} />
+      <Route path="/transactions" component={TransactionsPage} />
+      <Route path="/reports" component={ReportsPage} />
+      <Route path="/rabbit-breeding" component={RabbitBreedingPage} />
+      <Route path="/policies" component={PolicyPage} />
+      <Route path="/ai-assistant" component={AIAssistantPage} />
+      <Route path="/settings" component={SettingsPage} />
       <Route path="/status" component={StatusPage} />
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/debug-onboarding" component={DebugOnboardingPage} />

@@ -110,3 +110,9 @@ export const useToast = () => {
   }
   return context;
 };
+
+// For direct imports in some files
+export const toast = (props: Omit<Toast, 'id'>) => {
+  const { toast: showToast } = useToast();
+  return showToast(props);
+};
