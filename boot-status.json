@@ -1,0 +1,89 @@
+{
+  "components": [
+    {
+      "name": "database",
+      "status": "success",
+      "message": "Database connection successful",
+      "timestamp": "2025-04-03T01:42:55.763Z"
+    },
+    {
+      "name": "api-endpoints",
+      "status": "success",
+      "message": "API endpoints are accessible",
+      "timestamp": "2025-04-03T01:42:56.637Z",
+      "details": {
+        "status": "success",
+        "timestamp": "2025-04-03T01:42:56.536Z",
+        "components": [
+          {
+            "name": "database",
+            "status": "success",
+            "message": "Database connection successful",
+            "timestamp": "2025-04-03T01:42:55.763Z"
+          },
+          {
+            "name": "api-endpoints",
+            "status": "success",
+            "message": "API endpoints are accessible",
+            "timestamp": "2025-04-03T01:41:07.581Z",
+            "details": {
+              "status": "success",
+              "timestamp": "2025-04-03T01:41:07.574Z",
+              "components": [
+                {
+                  "name": "database",
+                  "status": "success",
+                  "message": "Database connection successful",
+                  "timestamp": "2025-04-03T01:41:06.879Z"
+                }
+              ],
+              "version": "1.0.0",
+              "environment": "development"
+            }
+          },
+          {
+            "name": "auth",
+            "status": "success",
+            "message": "Auth system is working properly",
+            "timestamp": "2025-04-03T01:41:07.962Z",
+            "details": {
+              "userId": 1
+            }
+          },
+          {
+            "name": "shop",
+            "status": "success",
+            "message": "Shop API is working with 8 products available",
+            "timestamp": "2025-04-03T01:41:07.965Z",
+            "details": {
+              "productCount": 8
+            }
+          }
+        ],
+        "version": "1.0.0",
+        "environment": "development"
+      }
+    },
+    {
+      "name": "auth",
+      "status": "success",
+      "message": "Auth system is working properly",
+      "timestamp": "2025-04-03T01:42:56.807Z",
+      "details": {
+        "userId": 1
+      }
+    },
+    {
+      "name": "shop",
+      "status": "success",
+      "message": "Shop API is working with 8 products available",
+      "timestamp": "2025-04-03T01:42:56.836Z",
+      "details": {
+        "productCount": 8
+      }
+    }
+  ],
+  "lastBootTimestamp": "2025-04-03T01:42:56.836Z",
+  "overallStatus": "success",
+  "environment": "development"
+}

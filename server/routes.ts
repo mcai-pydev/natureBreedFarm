@@ -5,6 +5,7 @@ import path from "path";
 import { storage } from "./storage";
 import { emailService } from "./email";
 import { openaiService } from "./openai-service";
+import { getBootStatus } from "./boot/index";
 
 // Helper function for AI chat responses when no API key is available
 function getFallbackResponse(message: string, history: any[] = []): string {
@@ -1217,6 +1218,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // System health and diagnostics endpoints
+  app.get("/api/health", (req, res) => {
+    try {
+      const bootStatus = getBootStatus();
+      res.json({
+        status: bootStatus.overallStatus,
+        timestamp: new Date().toISOString(),
+        components: bootStatus.components,
+        version: process.env.npm_package_version || "1.0.0",
+        environment: process.env.NODE_ENV || "development"
+      });
+    } catch (error) {
+      // Even if boot status isn't available, we still want to return a 200 OK
+      // to indicate the API is at least responding
+      res.json({
+        status: "partial",
+        timestamp: new Date().toISOString(),
+        message: "API is responding but boot status check failed",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Boot status endpoint
+  app.get("/api/system/status", (req, res) => {
+    try {
+      const bootStatus = getBootStatus();
+      res.json(bootStatus);
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to retrieve system status",
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   // Animal Breeding API Routes
   app.get("/api/animals", async (req, res) => {
@@ -1503,8 +1540,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "maleId and femaleId are required as query parameters" });
       }
       
-      const maleIdNum = typeof maleId === 'string' ? parseInt(maleId) : maleId;
-      const femaleIdNum = typeof femaleId === 'string' ? parseInt(femaleId) : femaleId;
+      // Parse IDs safely
+      let maleIdNum = 0;
+      let femaleIdNum = 0;
+      
+      try {
+        if (typeof maleId === 'string') {
+          maleIdNum = parseInt(maleId);
+        } else if (Array.isArray(maleId) && maleId.length > 0 && typeof maleId[0] === 'string') {
+          maleIdNum = parseInt(maleId[0]);
+        }
+        
+        if (typeof femaleId === 'string') {
+          femaleIdNum = parseInt(femaleId);
+        } else if (Array.isArray(femaleId) && femaleId.length > 0 && typeof femaleId[0] === 'string') {
+          femaleIdNum = parseInt(femaleId[0]);
+        }
+      } catch (e) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      if (isNaN(maleIdNum) || isNaN(femaleIdNum) || maleIdNum <= 0 || femaleIdNum <= 0) {
+        return res.status(400).json({ error: "Invalid ID format for maleId or femaleId" });
+      }
       
       const riskAssessment = await storage.checkInbreedingRisk(maleIdNum, femaleIdNum);
       res.json(riskAssessment);

@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { bootSystem } from "./boot/index";
 
 const app = express();
 app.use(express.json());
@@ -64,7 +65,24 @@ app.use((req, res, next) => {
     port,
     host: "0.0.0.0",
     reusePort: true,
-  }, () => {
+  }, async () => {
     log(`serving on port ${port}`);
+    
+    // Run boot system checks after server has started
+    try {
+      log('Running system boot checks...');
+      const bootStatus = await bootSystem();
+      log(`Boot status: ${bootStatus.overallStatus.toUpperCase()}`);
+      
+      if (bootStatus.overallStatus === 'error') {
+        log('⚠️ WARNING: System boot completed with errors. Check /api/health for details.');
+      } else if (bootStatus.overallStatus === 'warning') {
+        log('⚠️ System boot completed with warnings. Check /api/health for details.');
+      } else {
+        log('✅ System boot completed successfully!');
+      }
+    } catch (error) {
+      log(`❌ Error during system boot: ${error instanceof Error ? error.message : String(error)}`);
+    }
   });
 })();
