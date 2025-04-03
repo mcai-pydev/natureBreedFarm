@@ -140,7 +140,7 @@ export const BootStatusDashboard = ({ className }: { className?: string }) => {
       return { name: 'Order Management', emoji: '📦' };
     }
     
-    if (['breeding'].includes(moduleName)) {
+    if (['breeding', 'rabbit-breeding'].includes(moduleName)) {
       return { name: 'Farm Intelligence', emoji: '🐇' };
     }
     
@@ -208,15 +208,18 @@ export const BootStatusDashboard = ({ className }: { className?: string }) => {
     }
     
     // Breeding module
-    if (component.name === 'breeding' && component.status !== 'success') {
-      if (component.message?.includes('No animals found')) {
+    if ((component.name === 'breeding' || component.name === 'rabbit-breeding') && component.status !== 'success') {
+      if (component.message?.includes('No animals found') || component.message?.includes('Could not retrieve animals')) {
         return 'Add sample animals to the breeding system for testing';
       }
-      if (component.message?.includes('Need at least two rabbits')) {
+      if (component.message?.includes('Need at least two rabbits') || component.message?.includes('insufficient stock')) {
         return 'Add more rabbits to test breeding compatibility features';
       }
       if (component.message?.includes('Need at least one male and one female')) {
         return 'Ensure both male and female rabbits exist in the system';
+      }
+      if (component.name === 'rabbit-breeding' && component.status === 'warning') {
+        return 'The rabbit breeding system is operational but may have limited functionality due to insufficient breeding pairs';
       }
       return 'Check animal breeding service initialization and data';
     }

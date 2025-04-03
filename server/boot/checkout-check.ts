@@ -11,17 +11,12 @@
  */
 
 import axios from 'axios';
-
-interface CheckoutTestResult {
-  success: boolean;
-  message: string;
-  details?: any;
-}
+import { BootCheckResult } from './types';
 
 /**
  * Check the checkout flow functionality
  */
-export async function checkCheckoutFlow(): Promise<CheckoutTestResult> {
+export async function checkCheckoutFlow(): Promise<BootCheckResult> {
   try {
     // Setup test results tracking
     const results = {
@@ -34,7 +29,7 @@ export async function checkCheckoutFlow(): Promise<CheckoutTestResult> {
       orderCreation: {
         success: false,
         message: '',
-        status: null
+        statusCode: null as number | null
       }
     };
     
@@ -59,7 +54,7 @@ export async function checkCheckoutFlow(): Promise<CheckoutTestResult> {
       
       if (productsResponse.status !== 200 || !Array.isArray(productsResponse.data)) {
         return {
-          success: false,
+          status: 'error',
           message: 'No products available for checkout',
           details: { 
             status: productsResponse.status,
@@ -81,7 +76,7 @@ export async function checkCheckoutFlow(): Promise<CheckoutTestResult> {
       
       if (productsInStock.length === 0) {
         return {
-          success: false,
+          status: 'error',
           message: 'No products in stock for checkout',
           details: { 
             totalProducts: productsResponse.data.length,
@@ -119,7 +114,7 @@ export async function checkCheckoutFlow(): Promise<CheckoutTestResult> {
         results.orderCreation = {
           success: true,
           message: 'Order creation endpoint is accessible',
-          status: orderResponse.status
+          statusCode: orderResponse.status
         };
       } catch (error: any) {
         if (axios.isAxiosError(error) && error.response) {
@@ -128,27 +123,28 @@ export async function checkCheckoutFlow(): Promise<CheckoutTestResult> {
             results.orderCreation = {
               success: true,
               message: 'Order creation endpoint correctly validated the request',
-              status: error.response.status
+              statusCode: error.response.status
             };
           } else if (error.response.status === 401) {
             // Auth error is expected if not authenticated
             results.orderCreation = {
               success: true,
               message: 'Order creation endpoint correctly requires authentication',
-              status: error.response.status
+              statusCode: error.response.status
             };
           } else {
             results.orderCreation = {
               success: false,
               message: `Order creation endpoint failed with status ${error.response.status}`,
-              status: error.response.status
+              statusCode: error.response.status
             };
           }
         } else {
           results.orderCreation = {
             success: false,
-            message: 'Order creation endpoint failed unexpectedly',
-            error: error instanceof Error ? error.message : String(error)
+            message: 'Order creation endpoint failed unexpectedly: ' + 
+              (error instanceof Error ? error.message : String(error)),
+            statusCode: null
           };
         }
       }
@@ -183,7 +179,7 @@ export async function checkCheckoutFlow(): Promise<CheckoutTestResult> {
       const checkoutFlowOperational = productsInStock.length > 0 && results.orderCreation.success;
       
       return {
-        success: checkoutFlowOperational,
+        status: checkoutFlowOperational ? 'success' : 'error',
         message: checkoutFlowOperational 
           ? `Checkout flow is operational with ${productsInStock.length} products available` 
           : 'Checkout flow has issues',
@@ -192,20 +188,20 @@ export async function checkCheckoutFlow(): Promise<CheckoutTestResult> {
           cartTest
         }
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
-        success: false,
+        status: 'error',
         message: 'Products API check failed',
         details: { 
           error: error instanceof Error ? error.message : String(error)
         }
       };
     }
-  } catch (error) {
+  } catch (error: any) {
     return {
-      success: false,
+      status: 'error',
       message: `Checkout flow check failed: ${error instanceof Error ? error.message : String(error)}`,
-      details: { error }
+      details: { error: error instanceof Error ? error.message : String(error) }
     };
   }
 }

@@ -139,6 +139,7 @@ import { checkOrdersModule } from './orders-check';
 import { checkCheckoutFlow } from './checkout-check';
 import { exportHealthSnapshot } from './health-snapshot';
 import { checkBreedingSystem } from './breeding-check';
+import { checkRabbitBreeding } from './rabbit-check';
 import { checkPages } from './pages-check';
 import { accessibilityCheck } from './accessibility-check';
 
@@ -286,7 +287,12 @@ export async function bootSystem(): Promise<BootStatus> {
   
   // Check Checkout flow
   const checkoutStatus = await checkModuleStatus('checkout', async () => {
-    return await checkCheckoutFlow();
+    const result = await checkCheckoutFlow();
+    return {
+      success: result.status === 'success' || result.status === 'warning',
+      message: result.message,
+      details: result.details
+    };
   });
   
   status = updateComponentStatus(
@@ -317,9 +323,33 @@ export async function bootSystem(): Promise<BootStatus> {
   );
   updateStatus(status);
   
+  // Check Rabbit Breeding specifically
+  const rabbitStatus = await checkModuleStatus('rabbit-breeding', async () => {
+    const result = await checkRabbitBreeding();
+    return {
+      success: result.status === 'success' || result.status === 'warning',
+      message: result.message,
+      details: result.details
+    };
+  });
+  
+  status = updateComponentStatus(
+    status,
+    rabbitStatus.name,
+    rabbitStatus.status as any,
+    rabbitStatus.message,
+    rabbitStatus.details
+  );
+  updateStatus(status);
+  
   // Check Application Pages and their API endpoints
   const pagesStatus = await checkModuleStatus('pages', async () => {
-    return await checkPages();
+    const result = await checkPages();
+    return {
+      success: result.status === 'success' || result.status === 'warning',
+      message: result.message,
+      details: result.details
+    };
   });
   
   status = updateComponentStatus(
