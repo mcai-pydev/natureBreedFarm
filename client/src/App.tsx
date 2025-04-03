@@ -14,6 +14,7 @@ import { ProtectedOrderDetailPage } from '@/pages/order-detail-page';
 import NotFoundPage from '@/pages/not-found-page';
 import AuthPage from '@/pages/auth-page';
 import ShopPage from '@/pages/shop-page';
+import StatusPage from '@/pages/status-page';
 import OnboardingPage from '@/pages/onboarding-page';
 import DebugOnboardingPage from '@/pages/debug-onboarding-page';
 import { Loader2 } from 'lucide-react';
@@ -74,6 +75,7 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/shop" component={ShopPage} />
+      <Route path="/status" component={StatusPage} />
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/debug-onboarding" component={DebugOnboardingPage} />
       <ProtectedOrderHistoryPage />

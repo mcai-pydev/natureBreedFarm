@@ -9,7 +9,8 @@ import { getBootStatus } from "./boot/index";
 import { 
   getLatestHealthSnapshot, 
   getHealthSnapshotsList, 
-  getHealthSnapshot 
+  getHealthSnapshot,
+  exportHealthSnapshot
 } from "./boot/health-snapshot";
 
 // Helper function for AI chat responses when no API key is available
@@ -1301,6 +1302,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({
         error: "Failed to get health snapshot",
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Create a new snapshot on demand
+  app.get("/api/system/snapshot", (req, res) => {
+    try {
+      const status = getBootStatus();
+      const result = exportHealthSnapshot(status);
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: "Health snapshot exported successfully",
+          timestamp: result.timestamp,
+          filePath: result.filePath
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: result.error || "Failed to export health snapshot"
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to create health snapshot",
         message: error instanceof Error ? error.message : String(error)
       });
     }
