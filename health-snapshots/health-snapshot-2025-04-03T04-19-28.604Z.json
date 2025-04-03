@@ -2295,5 +2295,11 @@
   ],
   "lastBootTimestamp": "2025-04-03T04:19:28.592Z",
   "overallStatus": "success",
-  "environment": "development"
+  "environment": "development",
+  "snapshot": {
+    "exportedAt": "2025-04-03T04-19-28.604Z",
+    "appVersion": "1.0.0",
+    "environment": "development",
+    "hostname": "9f7aa64e7d4d"
+  }
 }
