@@ -13,6 +13,7 @@ import {
   exportHealthSnapshot
 } from "./boot/health-snapshot";
 import { getStatusBadge, getStatusBadgeHtml } from "./routes/status-badge";
+import { accessibilityCheck } from "./boot/accessibility-check";
 
 // Helper function for AI chat responses when no API key is available
 function getFallbackResponse(message: string, history: any[] = []): string {
@@ -1226,6 +1227,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // System health and diagnostics endpoints
+  app.get("/api/health/a11y", async (req, res) => {
+    try {
+      const a11yResult = await accessibilityCheck.check();
+      res.json({
+        status: a11yResult.status,
+        message: a11yResult.message,
+        timestamp: new Date().toISOString(),
+        details: a11yResult.details || [],
+      });
+    } catch (error) {
+      console.error("Accessibility check error:", error);
+      res.status(500).json({ 
+        status: 'error',
+        message: 'Failed to run accessibility check',
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   app.get("/api/health", (req, res) => {
     try {
       const bootStatus = getBootStatus();

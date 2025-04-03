@@ -1,0 +1,83 @@
+ raising a very important point about recurring accessibility and dependency issues — especially when resolving one issue seems to cause another to reappear. This kind of "whack-a-mole debugging cycle" is frustrating and time-wasting unless you build the right system around it. Here's a full recommendation and implementation plan:
+
+✅ Why the Issue Reappeared
+The DialogContent requires a DialogTitle warning is from Radix UI and relates to accessibility best practices. This often comes back when:
+
+A modal is refactored or re-rendered without DialogTitle
+
+A fallback wrapper is introduced without restoring DialogTitle
+
+The boot/CI system doesn't enforce accessibility at all
+
+This is not a bug per se — but a missing guardrail.
+
+✅ How We Can Catch These Automatically
+🧠 1. Add a Custom Rule to the Boot Health System:
+Enhance the boot system’s diagnostics to include an accessibility validator:
+
+ts
+Copy
+Edit
+// pseudo-logic
+if (component.includes('DialogContent') && !component.includes('DialogTitle')) {
+  log.warn("⚠️ DialogContent is missing DialogTitle – accessibility issue");
+  status.dialogAccessibility = 'warn';
+}
+🧪 2. Integrate an Accessibility Linter
+Use eslint-plugin-jsx-a11y in the frontend stack:
+
+bash
+Copy
+Edit
+npm install eslint-plugin-jsx-a11y --save-dev
+Then add to your ESLint config:
+
+json
+Copy
+Edit
+"plugins": ["jsx-a11y"],
+"extends": ["plugin:jsx-a11y/recommended"]
+💡 Bonus: Add a GitHub check that fails PRs if critical a11y rules are broken.
+
+🧪 3. Create a Dedicated Boot Test: /a11y
+In your boot CLI and status dashboard, add a lightweight route like:
+
+ts
+Copy
+Edit
+GET /api/health/a11y
+Which checks:
+
+Modal components for missing titles
+
+Button labels for screen reader compliance
+
+Form fields for missing <label> elements
+
+📦 4. Developer Awareness in Docs
+In the CONTRIBUTING.md, add:
+
+Note: All DialogContent components must include a DialogTitle (or be wrapped in VisuallyHidden). This ensures accessibility for screen readers and avoids Radix warnings.
+
+✅ Strategic Next Step
+Let’s update the smart boot system with an Accessibility module, just like we did for:
+
+Auth health ✅
+
+DB ping ✅
+
+Product catalog ✅
+
+Checkout endpoints ✅
+
+🧩 Action Plan (Ready for Devs):
+ Add a11y check to smart boot system CLI and status dashboard
+
+ Install eslint-plugin-jsx-a11y and add to CI
+
+ Add /api/health/a11y to backend (dummy check for now)
+
+ Update the /status UI to reflect accessibility score
+
+ Push a new GitHub Issue: accessibility-check: modal missing title
+

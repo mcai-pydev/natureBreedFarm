@@ -148,6 +148,10 @@ export const BootStatusDashboard = ({ className }: { className?: string }) => {
       return { name: 'Application Pages', emoji: '📱' };
     }
     
+    if (['accessibility', 'a11y'].includes(moduleName)) {
+      return { name: 'Accessibility', emoji: '♿' };
+    }
+    
     return { name: 'Other', emoji: '🧩' };
   };
 
@@ -220,6 +224,20 @@ export const BootStatusDashboard = ({ className }: { className?: string }) => {
     // Pages module
     if (component.name === 'pages' && component.status !== 'success') {
       return 'Check that all application routes and their corresponding API endpoints are accessible';
+    }
+    
+    // Accessibility module
+    if (component.name === 'accessibility' && component.status !== 'success') {
+      if (component.message?.includes('Dialog')) {
+        return 'Add DialogTitle components to Dialog components for screen reader accessibility';
+      }
+      if (component.message?.includes('alt text')) {
+        return 'Ensure all images have appropriate alt text';
+      }
+      if (component.message?.includes('aria-label')) {
+        return 'Add aria-label attributes to interactive elements without visible text';
+      }
+      return 'Review UI components for accessibility issues like missing labels, headings, or ARIA attributes';
     }
     
     return null;

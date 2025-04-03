@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BootStatusDashboard } from '@/components/system/boot-status-dashboard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 export default function StatusPage() {
   // Get health snapshots list
@@ -10,11 +14,57 @@ export default function StatusPage() {
     snapshots: string[];
   };
   
+  type AccessibilityCheckResult = {
+    status: 'success' | 'warning' | 'error' | 'pending';
+    message: string;
+    timestamp: string;
+    details?: Array<{
+      component: string;
+      issue: string;
+      suggestion: string;
+      path?: string;
+      severity: 'high' | 'medium' | 'low';
+    }>;
+  };
+  
+  const { toast } = useToast();
+  const [isRunningCheck, setIsRunningCheck] = useState(false);
+  
   const { data: snapshotsData, isLoading: isLoadingSnapshots } = useQuery<SnapshotsResponse>({
     queryKey: ['/api/system/snapshots'],
     refetchInterval: 0,
     refetchOnWindowFocus: false,
   });
+  
+  const { 
+    data: a11yData, 
+    isLoading: isLoadingA11y, 
+    error: a11yError,
+    refetch: refetchA11y
+  } = useQuery<AccessibilityCheckResult>({
+    queryKey: ['/api/health/a11y'],
+    refetchInterval: 0,
+    refetchOnWindowFocus: false,
+  });
+  
+  const handleRunA11yCheck = async () => {
+    setIsRunningCheck(true);
+    try {
+      await refetchA11y();
+      toast({
+        title: "Accessibility check complete",
+        description: "The accessibility scan has been completed",
+      });
+    } catch (error) {
+      toast({
+        title: "Accessibility check failed",
+        description: "Failed to complete the accessibility scan",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRunningCheck(false);
+    }
+  };
 
   return (
     <div className="container py-6 max-w-6xl">
@@ -29,6 +79,7 @@ export default function StatusPage() {
         <TabsList className="mb-4">
           <TabsTrigger value="current">Current Status</TabsTrigger>
           <TabsTrigger value="snapshots">Health Snapshots</TabsTrigger>
+          <TabsTrigger value="accessibility">Accessibility</TabsTrigger>
           <TabsTrigger value="tools">Diagnostic Tools</TabsTrigger>
         </TabsList>
         
@@ -126,6 +177,195 @@ export default function StatusPage() {
             )}
           </div>
         </TabsContent>
+
+        <TabsContent value="accessibility">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-xl font-semibold">Accessibility Check</CardTitle>
+                  <CardDescription>
+                    Analyze the application for common accessibility issues and WCAG compliance
+                  </CardDescription>
+                </div>
+                <Button 
+                  onClick={handleRunA11yCheck} 
+                  disabled={isRunningCheck || isLoadingA11y}
+                >
+                  {(isRunningCheck || isLoadingA11y) ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Running...
+                    </>
+                  ) : (
+                    'Run Accessibility Check'
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoadingA11y && !a11yData ? (
+                <div className="flex justify-center items-center py-10">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : a11yError ? (
+                <div className="bg-destructive/10 p-4 rounded-md border border-destructive/20 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-medium text-destructive">Failed to run accessibility check</h3>
+                    <p className="text-sm mt-1">{a11yError instanceof Error ? a11yError.message : 'Unknown error'}</p>
+                  </div>
+                </div>
+              ) : a11yData ? (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-4 p-4 rounded-md bg-muted/50">
+                    {a11yData.status === 'success' ? (
+                      <CheckCircle className="h-8 w-8 text-green-500" />
+                    ) : a11yData.status === 'warning' ? (
+                      <AlertCircle className="h-8 w-8 text-amber-500" />
+                    ) : (
+                      <AlertCircle className="h-8 w-8 text-red-500" />
+                    )}
+                    
+                    <div>
+                      <h3 className="font-medium text-lg">
+                        {a11yData.status === 'success' ? 'No issues detected' : 
+                         a11yData.status === 'warning' ? 'Minor issues detected' : 
+                         'Critical issues detected'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {a11yData.message}
+                      </p>
+                      <div className="mt-1">
+                        <Badge variant={
+                          a11yData.status === 'success' ? 'default' :
+                          a11yData.status === 'warning' ? 'outline' : 'destructive'
+                        }>
+                          {a11yData.status.toUpperCase()}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          Last checked: {new Date(a11yData.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {a11yData.details && a11yData.details.length > 0 && (
+                    <div className="border rounded-md overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-muted">
+                          <tr>
+                            <th className="px-4 py-2 text-left">Component</th>
+                            <th className="px-4 py-2 text-left">Issue</th>
+                            <th className="px-4 py-2 text-left">Severity</th>
+                            <th className="px-4 py-2 text-left">Suggestion</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {a11yData.details.map((issue, index) => (
+                            <tr key={index} className="border-t">
+                              <td className="px-4 py-3">
+                                <div className="font-medium">{issue.component}</div>
+                                {issue.path && (
+                                  <div className="text-xs text-muted-foreground mt-1">{issue.path}</div>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">{issue.issue}</td>
+                              <td className="px-4 py-3">
+                                <Badge variant={
+                                  issue.severity === 'high' ? 'destructive' :
+                                  issue.severity === 'medium' ? 'outline' : 'secondary'
+                                }>
+                                  {issue.severity}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-3">{issue.suggestion}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                    <div className="border rounded-md p-4">
+                      <h3 className="font-medium mb-2">WCAG Compliance Guidelines</h3>
+                      <ul className="list-disc pl-5 space-y-1 text-sm">
+                        <li>Ensure all images have alt text (WCAG 1.1.1)</li>
+                        <li>Provide labels for all form elements (WCAG 3.3.2)</li>
+                        <li>Use sufficient color contrast (WCAG 1.4.3)</li>
+                        <li>Ensure content is keyboard accessible (WCAG 2.1.1)</li>
+                        <li>Provide proper heading structure (WCAG 1.3.1)</li>
+                        <li>Add ARIA labels to interactive elements (WCAG 4.1.2)</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="border rounded-md p-4">
+                      <h3 className="font-medium mb-2">Common Fixes</h3>
+                      <ul className="list-disc pl-5 space-y-1 text-sm">
+                        <li>Add DialogTitle components to Dialog components</li>
+                        <li>Add alt attributes to all images</li>
+                        <li>Use VisuallyHidden component for screen reader text</li>
+                        <li>Ensure proper focus management in modals</li>
+                        <li>Use semantic HTML elements (button, nav, main)</li>
+                        <li>Add aria-label to buttons with only icons</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed rounded-md p-6 text-center">
+                  <h3 className="font-medium text-lg mb-2">No accessibility check data</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Run an accessibility check to scan the application for issues and get recommendations.
+                  </p>
+                  <Button 
+                    onClick={handleRunA11yCheck} 
+                    variant="outline"
+                    className="mx-auto"
+                  >
+                    Run Accessibility Check
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="border-t pt-4 flex flex-col items-start">
+              <h4 className="text-sm font-medium mb-2">Resources</h4>
+              <ul className="list-disc pl-5 space-y-1 text-sm w-full">
+                <li>
+                  <a 
+                    href="https://www.w3.org/WAI/standards-guidelines/wcag/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    WCAG Guidelines
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="https://www.a11yproject.com/checklist/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    A11y Project Checklist
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="https://reactjs.org/docs/accessibility.html" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    React Accessibility Guide
+                  </a>
+                </li>
+              </ul>
+            </CardFooter>
+          </Card>
+        </TabsContent>
         
         <TabsContent value="tools">
           <div className="border rounded-lg p-6">
@@ -174,6 +414,20 @@ export default function StatusPage() {
                   className="px-3 py-1 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 inline-block"
                 >
                   Run Auth Check
+                </a>
+              </div>
+              
+              <div className="border rounded-md p-4">
+                <h3 className="font-medium mb-2">Accessibility Check</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Scan the application for accessibility issues and ARIA compliance.
+                </p>
+                <a 
+                  href="/api/health/a11y"
+                  target="_blank"
+                  className="px-3 py-1 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 inline-block"
+                >
+                  Run Accessibility Check
                 </a>
               </div>
               

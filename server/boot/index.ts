@@ -140,6 +140,7 @@ import { checkCheckoutFlow } from './checkout-check';
 import { exportHealthSnapshot } from './health-snapshot';
 import { checkBreedingSystem } from './breeding-check';
 import { checkPages } from './pages-check';
+import { accessibilityCheck } from './accessibility-check';
 
 // Main boot function
 export async function bootSystem(): Promise<BootStatus> {
@@ -327,6 +328,25 @@ export async function bootSystem(): Promise<BootStatus> {
     pagesStatus.status as any,
     pagesStatus.message,
     pagesStatus.details
+  );
+  updateStatus(status);
+  
+  // Check frontend accessibility
+  const a11yStatus = await checkModuleStatus('accessibility', async () => {
+    const result = await accessibilityCheck.check();
+    return {
+      success: result.status !== 'error',
+      message: result.message,
+      details: result.details
+    };
+  });
+  
+  status = updateComponentStatus(
+    status,
+    a11yStatus.name,
+    a11yStatus.status as any,
+    a11yStatus.message,
+    a11yStatus.details
   );
   updateStatus(status);
   
