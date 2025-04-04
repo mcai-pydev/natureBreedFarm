@@ -1,3 +1,4 @@
+//import RabbitBreedingPage from "@/pages/rabbit-breeding-page"; // this must match
 import React, { useEffect, useState } from 'react';
 import { Route, Switch, useLocation } from 'wouter';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -17,7 +18,6 @@ import ShopPage from '@/pages/shop-page';
 import ProductsPage from '@/pages/products-page';
 import TransactionsPage from '@/pages/transactions-page';
 import ReportsPage from '@/pages/reports-page';
-import RabbitBreedingPage from '@/pages/rabbit-breeding-page';
 import PolicyPage from '@/pages/policy-page';
 import AIAssistantPage from '@/pages/ai-assistant-page';
 import SettingsPage from '@/pages/settings-page';
