@@ -9,7 +9,8 @@ import {
   LogOut,
   Leaf,
   Wheat,
-  ShoppingCart
+  ShoppingCart,
+  PawPrint
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,6 +27,7 @@ export default function Sidebar() {
     { href: "/transactions", label: "Transactions", icon: DollarSign },
     { href: "/reports", label: "Reports", icon: BarChart },
     { href: "/shop", label: "Shop", icon: ShoppingCart },
+    { href: "/rabbit-breeding", label: "Rabbit Breeding", icon: PawPrint },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 
