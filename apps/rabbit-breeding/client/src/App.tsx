@@ -1,6 +1,7 @@
 import { Switch, Route } from 'wouter';
 import RabbitDashboard from '@/pages/dashboard';
 import StatusPage from '@/pages/status';
+import BreedingEventsPage from '@/pages/breeding-events';
 import Layout from '@/components/layout';
 
 export default function App() {
@@ -9,6 +10,7 @@ export default function App() {
       <Switch>
         <Route path="/" component={RabbitDashboard} />
         <Route path="/status" component={StatusPage} />
+        <Route path="/breeding-events" component={BreedingEventsPage} />
         <Route>
           <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
             <h1 className="text-2xl font-bold">Page Not Found</h1>

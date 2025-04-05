@@ -91,6 +91,7 @@ export const insertAnimalSchema = createInsertSchema(animals).pick({
   growthRate: true,
   litterSize: true,
   dateOfBirth: true,
+  status: true,
   cageNumber: true,
   dietaryNotes: true,
   healthNotes: true,

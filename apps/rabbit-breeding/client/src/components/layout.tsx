@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { Rabbit, BarChart3, ActivitySquare } from 'lucide-react';
+import { Rabbit, BarChart3, ActivitySquare, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NavItem = ({ 
@@ -39,6 +39,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         
         <nav className="space-y-1">
           <NavItem href="/" icon={BarChart3}>Dashboard</NavItem>
+          <NavItem href="/breeding-events" icon={Calendar}>Breeding Events</NavItem>
           <NavItem href="/status" icon={ActivitySquare}>System Status</NavItem>
         </nav>
       </aside>

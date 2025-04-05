@@ -1,0 +1,75 @@
+🎯 Next Critical Task: Breeding Events Functionality
+This continues from the current milestone (dashboard + breeding suggestions) and unlocks core functionality:
+
+✅ Developer Task: Breeding Events Tracking Module
+📌 Purpose:
+To allow farmers to log, manage, and visualize rabbit breeding events like mating, pregnancy tracking, and offspring generation — the backbone of rabbit farm productivity.
+
+📁 Directory Structure
+bash
+Copy
+Edit
+/apps/rabbit-breeding
+  └── /pages
+       ├── dashboard.tsx         ✅ already done
+       ├── breeding-events.tsx   🔧 NEW
+  └── /lib
+       ├── breeding-service.ts   ✅ extend here
+  └── /routes
+       ├── breeding.ts           ✅ expose endpoints
+🧱 Subtasks
+1. Frontend - Breeding Events Page
+ Create a /breeding-events page (linked from dashboard)
+
+ Display table of logged events (e.g., pairing, pregnancy, litter)
+
+ Add modal form for logging a new event:
+
+Select Male
+
+Select Female
+
+Date of Breeding
+
+Notes
+
+ Form validations and toast success/error messages
+
+2. Backend API
+ Create /api/breeding/events (GET, POST)
+
+ Store events in a dedicated breeding_events table or model
+
+ Handle linkage to animalId for parent tracking
+
+3. Smart Boot Integration
+ Add event system check: status of last event logged, last mating, etc.
+
+ Show status on /status page inside rabbit app
+
+4. AI Assistant Hook (Optional Phase)
+ Add button: “Ask AI: Is this a good match?”
+
+ Use GPT to suggest based on genetic data (can stub for now)
+
+🧪 Testing
+ Add a few test breeding events manually
+
+ Verify correct stats on dashboard
+
+ Confirm history is preserved in local DB
+
+⚡ Bonus Enhancements
+From developer proposals, prioritize these (separate tasks):
+
+ ✅ “Playful Achievement Badges” – Reward milestones like “First Litter Logged”
+
+ ✅ “Interactive Tour” – Step-by-step intro for breeders
+
+ ✅ “Quick Action Floating Menu” – Add rabbit, add event, etc.
+
+ ✅ “Offline support” (queued sync later)
+
+🔁 Reminder: Keep this Modular
+This entire functionality is still inside the /apps/rabbit-breeding micro-app so it doesn’t interfere with main app boot or routing. We’ll integrate later.
+
