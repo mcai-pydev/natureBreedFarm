@@ -3,7 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { bootSystem } from "./boot/index";
-import { seedAnimalData } from "./seed-data";
+import { seedAnimalData, seedUserData } from "./seed-data";
 
 const app = express();
 app.use(express.json());
@@ -70,17 +70,30 @@ app.use((req, res, next) => {
   }, async () => {
     log(`serving on port ${port}`);
     
-    // Seed data from in-memory to database
+    // Seed user data to database
     try {
-      log('Seeding animal data from in-memory to database...');
-      const seedResult = await seedAnimalData();
-      if (seedResult.success) {
-        log(`✅ Seed successful: ${seedResult.message}`);
+      log('Seeding user data to database...');
+      const userSeedResult = await seedUserData();
+      if (userSeedResult.success) {
+        log(`✅ User seed successful: ${userSeedResult.message}`);
       } else {
-        log(`⚠️ Seed warning: ${seedResult.message}`);
+        log(`⚠️ User seed warning: ${userSeedResult.message}`);
       }
     } catch (error) {
-      log(`❌ Error seeding data: ${error instanceof Error ? error.message : String(error)}`);
+      log(`❌ Error seeding user data: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    
+    // Seed animal data from in-memory to database
+    try {
+      log('Seeding animal data from in-memory to database...');
+      const animalSeedResult = await seedAnimalData();
+      if (animalSeedResult.success) {
+        log(`✅ Animal seed successful: ${animalSeedResult.message}`);
+      } else {
+        log(`⚠️ Animal seed warning: ${animalSeedResult.message}`);
+      }
+    } catch (error) {
+      log(`❌ Error seeding animal data: ${error instanceof Error ? error.message : String(error)}`);
     }
     
     // Run boot system checks after server has started

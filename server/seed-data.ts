@@ -1,14 +1,91 @@
 /**
  * Sample data seeder for database
- * This will load the in-memory rabbit data into the PostgreSQL database
+ * This will load seed data into the PostgreSQL database
  */
 
 import { db } from './db';
-import { animals, breedingEvents, rabbitBreeds } from '@shared/schema';
+import { animals, breedingEvents, rabbitBreeds, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { animalBreedingService } from './animal-breeding';
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
+
+// For password hashing
+const scryptAsync = promisify(scrypt);
+
+// Function to hash passwords
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 // Function to seed the sample animal data into the database
+// Function to seed admin user data into the database
+export async function seedUserData() {
+  try {
+    console.log('🌱 Checking for existing users in database...');
+    
+    // Get count of users in database
+    const dbUsers = await db.select().from(users);
+    
+    if (dbUsers.length > 0) {
+      console.log(`🌱 Database already has ${dbUsers.length} users, no seeding needed.`);
+      return {
+        success: true,
+        message: `Database already has ${dbUsers.length} users, no seeding needed`,
+        count: dbUsers.length
+      };
+    }
+    
+    console.log('🌱 No users found in database. Seeding admin user...');
+    
+    // Create admin user with default permissions
+    const adminUser = {
+      username: "admin",
+      password: await hashPassword("admin123"),
+      name: "Chief Ijeh",
+      role: "Admin",
+      permissions: [
+        "create:product", "read:product", "update:product", "delete:product",
+        "create:transaction", "read:transaction", "update:transaction", "delete:transaction",
+        "create:order", "read:order", "read:all_orders", "update:order", "delete:order",
+        "create:user", "read:user", "update:user", "delete:user",
+        "create:animal", "read:animal", "update:animal", "delete:animal",
+        "create:breeding_event", "read:breeding_event", "update:breeding_event", "delete:breeding_event",
+        "read:analytics", "manage:newsletters", "manage:bulk_orders"
+      ],
+      avatar: "/chief_ijeh.jpg",
+      isActive: true
+    };
+    
+    try {
+      const [result] = await db.insert(users).values(adminUser).returning();
+      console.log(`✅ Inserted admin user: ${adminUser.username}`);
+      
+      return {
+        success: true,
+        message: `Successfully seeded admin user to database`,
+        user: result
+      };
+    } catch (insertError) {
+      console.error(`❌ Error inserting admin user:`, insertError);
+      return {
+        success: false,
+        message: `Error inserting admin user: ${insertError instanceof Error ? insertError.message : String(insertError)}`,
+        error: insertError
+      };
+    }
+  } catch (error) {
+    console.error('❌ Error seeding user data:', error);
+    return {
+      success: false,
+      message: `Error seeding user data: ${error instanceof Error ? error.message : String(error)}`,
+      error
+    };
+  }
+}
+
 export async function seedAnimalData() {
   try {
     console.log('🌱 Checking for existing animals in database...');
