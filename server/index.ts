@@ -5,6 +5,8 @@ import { setupVite, serveStatic, log } from "./vite";
 import { bootSystem } from "./boot/index";
 import { seedAnimalData, seedUserData } from "./seed-data";
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -62,25 +64,26 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5000;
+  const port = process.env.PORT || 5000;
   server.listen({
     port,
-    host: "0.0.0.0",
-    reusePort: true,
+    host: "0.0.0.0"
   }, async () => {
     log(`serving on port ${port}`);
     
-    // Seed user data to database
-    try {
-      log('Seeding user data to database...');
-      const userSeedResult = await seedUserData();
-      if (userSeedResult.success) {
-        log(`✅ User seed successful: ${userSeedResult.message}`);
-      } else {
-        log(`⚠️ User seed warning: ${userSeedResult.message}`);
+    if (!isProduction) {
+      // Seed user data to database
+      try {
+        log('Seeding user data to database...');
+        const userSeedResult = await seedUserData();
+        if (userSeedResult.success) {
+          log(`✅ User seed successful: ${userSeedResult.message}`);
+        } else {
+          log(`⚠️ User seed warning: ${userSeedResult.message}`);
+        }
+      } catch (error) {
+        log(`❌ Error seeding user data: ${error instanceof Error ? error.message : String(error)}`);
       }
-    } catch (error) {
-      log(`❌ Error seeding user data: ${error instanceof Error ? error.message : String(error)}`);
     }
     
     // Seed animal data from in-memory to database
