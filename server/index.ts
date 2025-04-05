@@ -86,17 +86,19 @@ app.use((req, res, next) => {
       }
     }
     
-    // Seed animal data from in-memory to database
-    try {
-      log('Seeding animal data from in-memory to database...');
-      const animalSeedResult = await seedAnimalData();
-      if (animalSeedResult.success) {
-        log(`✅ Animal seed successful: ${animalSeedResult.message}`);
-      } else {
-        log(`⚠️ Animal seed warning: ${animalSeedResult.message}`);
+    // Seed animal data from in-memory to database - only in development
+    if (!isProduction) {
+      try {
+        log('Seeding animal data from in-memory to database...');
+        const animalSeedResult = await seedAnimalData();
+        if (animalSeedResult.success) {
+          log(`✅ Animal seed successful: ${animalSeedResult.message}`);
+        } else {
+          log(`⚠️ Animal seed warning: ${animalSeedResult.message}`);
+        }
+      } catch (error) {
+        log(`❌ Error seeding animal data: ${error instanceof Error ? error.message : String(error)}`);
       }
-    } catch (error) {
-      log(`❌ Error seeding animal data: ${error instanceof Error ? error.message : String(error)}`);
     }
     
     // Run boot system checks after server has started

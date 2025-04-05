@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Auth Health Check Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.5;
+    }
+    h1 {
+      color: #2563eb;
+    }
+    pre {
+      background-color: #f1f5f9;
+      padding: 15px;
+      border-radius: 5px;
+      overflow: auto;
+      max-height: 300px;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 20px;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    .success {
+      color: #16a34a;
+      font-weight: bold;
+    }
+    .warning {
+      color: #ca8a04;
+      font-weight: bold;
+    }
+    .error {
+      color: #dc2626;
+      font-weight: bold;
+    }
+    .endpoint {
+      margin-bottom: 30px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Auth Health Check Test</h1>
+  
+  <div class="endpoint">
+    <h2>Auth Health Check</h2>
+    <button id="authCheckBtn">Run Auth Health Check</button>
+    <div>
+      Status: <span id="authStatus"></span>
+    </div>
+    <div>
+      <h3>Response:</h3>
+      <pre id="authResponse"></pre>
+    </div>
+  </div>
+  
+  <div class="endpoint">
+    <h2>Overall System Health</h2>
+    <button id="sysHealthBtn">Get System Health</button>
+    <div>
+      Status: <span id="sysStatus"></span>
+    </div>
+    <div>
+      <h3>Response:</h3>
+      <pre id="sysResponse"></pre>
+    </div>
+  </div>
+  
+  <div class="endpoint">
+    <h2>System Boot Status</h2>
+    <button id="bootStatusBtn">Get Boot Status</button>
+    <div>
+      Status: <span id="bootStatus"></span>
+    </div>
+    <div>
+      <h3>Response:</h3>
+      <pre id="bootResponse"></pre>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('authCheckBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/health/auth');
+        const data = await response.json();
+        
+        document.getElementById('authResponse').textContent = JSON.stringify(data, null, 2);
+        
+        const statusEl = document.getElementById('authStatus');
+        statusEl.textContent = data.status;
+        statusEl.className = data.status;
+        
+      } catch (error) {
+        document.getElementById('authResponse').textContent = error.message;
+        document.getElementById('authStatus').textContent = 'Error';
+        document.getElementById('authStatus').className = 'error';
+      }
+    });
+    
+    document.getElementById('sysHealthBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/health');
+        const data = await response.json();
+        
+        document.getElementById('sysResponse').textContent = JSON.stringify(data, null, 2);
+        
+        const statusEl = document.getElementById('sysStatus');
+        statusEl.textContent = data.status;
+        statusEl.className = data.status === 'success' ? 'success' : 
+                            data.status === 'warning' ? 'warning' : 'error';
+        
+      } catch (error) {
+        document.getElementById('sysResponse').textContent = error.message;
+        document.getElementById('sysStatus').textContent = 'Error';
+        document.getElementById('sysStatus').className = 'error';
+      }
+    });
+    
+    document.getElementById('bootStatusBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/system/status');
+        const data = await response.json();
+        
+        document.getElementById('bootResponse').textContent = JSON.stringify(data, null, 2);
+        
+        const statusEl = document.getElementById('bootStatus');
+        statusEl.textContent = data.overallStatus;
+        statusEl.className = data.overallStatus === 'success' ? 'success' : 
+                            data.overallStatus === 'warning' ? 'warning' : 'error';
+        
+      } catch (error) {
+        document.getElementById('bootResponse').textContent = error.message;
+        document.getElementById('bootStatus').textContent = 'Error';
+        document.getElementById('bootStatus').className = 'error';
+      }
+    });
+  </script>
+</body>
+</html>

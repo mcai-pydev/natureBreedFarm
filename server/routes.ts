@@ -14,6 +14,7 @@ import {
 } from "./boot/health-snapshot";
 import { getStatusBadge, getStatusBadgeHtml } from "./routes/status-badge";
 import { accessibilityCheck } from "./boot/accessibility-check";
+import { checkAuthSystem, checkAuthEndpoints } from "./boot/auth-check";
 import { z } from "zod";
 
 // Helper function for AI chat responses when no API key is available
@@ -1322,6 +1323,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // System health and diagnostics endpoints
+  app.get("/api/health/auth", async (req, res) => {
+    try {
+      const authResult = await checkAuthEndpoints();
+      
+      // Only run full auth check if endpoints are available
+      let fullAuthResult = authResult;
+      if (authResult.status === 'success') {
+        fullAuthResult = await checkAuthSystem();
+      }
+      
+      res.json({
+        status: fullAuthResult.status,
+        message: fullAuthResult.message,
+        timestamp: new Date().toISOString(),
+        details: fullAuthResult.details || {},
+      });
+    } catch (error) {
+      console.error("Auth health check error:", error);
+      res.status(500).json({ 
+        status: 'error',
+        message: 'Failed to run auth health check',
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   app.get("/api/health/a11y", async (req, res) => {
     try {
       const a11yResult = await accessibilityCheck.check();

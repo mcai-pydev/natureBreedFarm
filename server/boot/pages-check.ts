@@ -4,6 +4,7 @@
  * This module verifies that all configured application pages are available
  * and their associated API endpoints are working correctly.
  */
+import { BootCheckResult } from './types';
 
 import axios from 'axios';
 
@@ -37,11 +38,7 @@ const CORE_PAGES: PageConfig[] = [
   { name: 'Onboarding', route: '/onboarding' }
 ];
 
-export async function checkPages(): Promise<{ 
-  success: boolean; 
-  message: string; 
-  details: { results: PageCheckResult[] } 
-}> {
+export async function checkPages(): Promise<BootCheckResult> {
   const results: PageCheckResult[] = [];
   const BASE_URL = 'http://localhost:5000';
   
@@ -101,7 +98,7 @@ export async function checkPages(): Promise<{
     : `Pages check passed: ${passedCount}/${checkedCount} pages verified`;
   
   return {
-    success: !criticalPagesFailed,
+    status: criticalPagesFailed ? 'error' : 'success',
     message,
     details: { results }
   };

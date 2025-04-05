@@ -142,6 +142,7 @@ import { checkBreedingSystem } from './breeding-check';
 import { checkRabbitBreeding } from './rabbit-check';
 import { checkPages } from './pages-check';
 import { accessibilityCheck } from './accessibility-check';
+import { checkAuthSystem, checkAuthEndpoints } from './auth-check';
 
 // Main boot function
 export async function bootSystem(): Promise<BootStatus> {
@@ -185,7 +186,12 @@ export async function bootSystem(): Promise<BootStatus> {
       return {
         success: response.status === 200,
         message: 'API endpoints are accessible',
-        details: response.data
+        details: { 
+          status: response.status,
+          timestamp: new Date().toISOString(),
+          // Avoid including the full response data to prevent recursion
+          responseAvailable: !!response.data
+        }
       };
     } catch (error) {
       // If health endpoint doesn't exist, try another common endpoint
@@ -211,29 +217,31 @@ export async function bootSystem(): Promise<BootStatus> {
   );
   updateStatus(status);
   
-  // Check Auth module specifically
+  // Check Auth module specifically with comprehensive validation
   const authStatus = await checkModuleStatus('auth', async () => {
-    try {
-      // Try a test login with admin credentials
-      const response = await axios.post('http://localhost:5000/api/login', {
-        username: 'admin',
-        password: 'admin123'
-      });
+    // First check if auth endpoints are accessible
+    const endpointsResult = await checkAuthEndpoints();
+    
+    // Only try the full auth check if endpoints are accessible
+    if (endpointsResult.status === 'success') {
+      // Use our comprehensive auth check that validates login and session persistence
+      const authResult = await checkAuthSystem();
       
       return {
-        success: response.status === 200,
-        message: 'Auth system is working properly',
-        details: { userId: response.data?.id }
+        success: authResult.status === 'success' || authResult.status === 'warning',
+        message: authResult.message,
+        details: {
+          endpoints: { status: endpointsResult.status, message: endpointsResult.message },
+          loginCheck: authResult.details || {}
+        }
       };
-    } catch (error) {
-      // If unauthorized or invalid credentials, auth is still working
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return {
-          success: true,
-          message: 'Auth system correctly handled authentication attempt',
-        };
-      }
-      throw new Error(`Auth system check failed: ${error instanceof Error ? error.message : String(error)}`);
+    } else {
+      // If endpoints aren't accessible, don't attempt login
+      return {
+        success: false,
+        message: `Auth system unreachable: ${endpointsResult.message}`,
+        details: { endpoints: endpointsResult }
+      };
     }
   });
   
