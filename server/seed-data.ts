@@ -7,17 +7,11 @@ import { db } from './db';
 import { animals, breedingEvents, rabbitBreeds, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { animalBreedingService } from './animal-breeding';
-import { scrypt, randomBytes } from "crypto";
-import { promisify } from "util";
+import bcrypt from 'bcryptjs';
 
-// For password hashing
-const scryptAsync = promisify(scrypt);
-
-// Function to hash passwords
+// Function to hash passwords using bcrypt
 async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
+  return await bcrypt.hash(password, 10);
 }
 
 // Function to seed the sample animal data into the database

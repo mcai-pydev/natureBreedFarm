@@ -2,8 +2,8 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
+import { randomBytes } from "crypto";
+import bcrypt from 'bcryptjs';
 import { storage } from "./storage";
 import { emailService } from "./email";
 import { User as SelectUser } from "@shared/schema";
@@ -17,14 +17,11 @@ declare global {
   }
 }
 
-const scryptAsync = promisify(scrypt);
 const JWT_SECRET = process.env.JWT_SECRET || 'nature-breed-farm-jwt-secret';
 const JWT_EXPIRES_IN = '24h';
 
 async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
+  return await bcrypt.hash(password, 10);
 }
 
 // Generate a JWT token for a user
@@ -45,10 +42,7 @@ function verifyToken(token: string): SelectUser | null {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  return await bcrypt.compare(supplied, stored);
 }
 
 // Extract JWT token from Authorization header

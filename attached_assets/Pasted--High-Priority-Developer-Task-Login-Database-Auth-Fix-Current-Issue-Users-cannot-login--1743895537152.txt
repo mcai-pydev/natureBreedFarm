@@ -1,0 +1,87 @@
+🛠️ 🔥 High Priority Developer Task: Login & Database Auth Fix
+❌ Current Issue:
+Users cannot login — error:
+
+password authentication failed for user "neondb_owner"
+
+✅ Root Cause (Confirmed):
+The PostgreSQL credentials in .env used by the backend do not match the actual login credentials on NeonDB.
+
+This causes the auth middleware to fail during session validation → user: null in frontend auth debug info.
+
+The user account (admin) is either:
+
+Not seeded properly into the PostgreSQL users table
+
+OR password is hashed using a different algorithm or salt from the login logic
+
+🧩 Task Checklist: Fixing Login with PostgreSQL (Replit + Local Dev)
+🔐 Authentication Fix Tasks:
+Verify .env Credentials:
+
+Confirm all these variables are correct and active in Replit Secrets:
+
+env
+Copy
+Edit
+DATABASE_URL=postgresql://neondb_owner:<correct-password>@ep-bold-shad.us-east-2.aws.neon.tech/neondb?sslmode=require
+JWT_SECRET=...
+Re-seed Admin Account (in seed-data.ts)
+
+Ensure admin user is inserted with a bcrypt-hashed password
+
+ts
+Copy
+Edit
+import bcrypt from "bcryptjs";
+const password = await bcrypt.hash("admin123", 10);
+Fix loginUser() Function in Auth Service:
+
+Confirm it fetches user from the DB and compares hashed password using bcrypt:
+
+ts
+Copy
+Edit
+const isValid = await bcrypt.compare(inputPassword, user.hashedPassword);
+Ensure JWT_SECRET is loaded correctly into your generateJWT() and verifyJWT() methods.
+
+🧪 QA Tasks:
+ Try curl or Postman call:
+
+bash
+Copy
+Edit
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "admin123"}'
+ Check if the login API returns token + user
+
+🚀 Optional Deployment Enhancements:
+Only run seedAdmin() in development mode:
+
+ts
+Copy
+Edit
+if (process.env.NODE_ENV !== 'production') {
+  await seedAdmin();
+}
+Add an auth section to /api/health boot checks to verify session creation.
+
+📌 Push Checklist (once verified):
+ Push fixed auth-service.ts
+
+ Push updated seed-data.ts
+
+ Push .env.example with updated format
+
+ Push Replit secrets (if safe via admin tools)
+
+🔄 NEXT AFTER LOGIN WORKS:
+Once we confirm login stability:
+
+✅ Finalize Breeding Compatibility and History Exports
+
+📥 Add offline login fallback (optional for farmers)
+
+🧠 Enable AI pairing assistant (text first, then voice)
+

@@ -4,32 +4,34 @@
       "name": "database",
       "status": "success",
       "message": "Database connection successful",
-      "timestamp": "2025-04-05T23:17:50.575Z"
+      "timestamp": "2025-04-05T23:28:30.099Z"
     },
     {
       "name": "api-endpoints",
       "status": "success",
       "message": "API endpoints are accessible",
-      "timestamp": "2025-04-05T23:17:50.593Z",
+      "timestamp": "2025-04-05T23:28:31.481Z",
       "details": {
         "status": 200,
-        "timestamp": "2025-04-05T23:17:50.593Z",
+        "timestamp": "2025-04-05T23:28:31.481Z",
         "responseAvailable": true
       }
     },
     {
       "name": "auth",
-      "status": "error",
-      "message": "Login succeeded but returned unexpected data",
-      "timestamp": "2025-04-05T23:17:50.933Z",
+      "status": "success",
+      "message": "Login endpoint is functioning but credentials were rejected",
+      "timestamp": "2025-04-05T23:28:32.459Z",
       "details": {
         "endpoints": {
           "status": "success",
           "message": "Auth endpoints are accessible"
         },
         "loginCheck": {
-          "statusCode": 200,
-          "dataReceived": true
+          "statusCode": 401,
+          "responseData": {
+            "message": "Invalid username or password"
+          }
         }
       }
     },
@@ -37,7 +39,7 @@
       "name": "shop",
       "status": "error",
       "message": "Shop API is working with 0 products available",
-      "timestamp": "2025-04-05T23:17:50.959Z",
+      "timestamp": "2025-04-05T23:28:32.689Z",
       "details": {
         "productCount": 0
       }
@@ -45,10 +47,10 @@
     {
       "name": "orders",
       "status": "success",
-      "message": "Orders module is functioning correctly with 0 orders in system",
-      "timestamp": "2025-04-05T23:17:52.895Z",
+      "message": "Orders module is functioning correctly (auth protected)",
+      "timestamp": "2025-04-05T23:28:32.870Z",
       "details": {
-        "isAuthenticated": true,
+        "isAuthenticated": false,
         "isOrdersEndpointWorking": true,
         "ordersCount": 0,
         "specificOrderTest": {
@@ -69,7 +71,7 @@
       "name": "checkout",
       "status": "error",
       "message": "No products in stock for checkout",
-      "timestamp": "2025-04-05T23:17:54.739Z",
+      "timestamp": "2025-04-05T23:28:32.923Z",
       "details": {
         "totalProducts": 0,
         "inStockProducts": 0
@@ -79,7 +81,7 @@
       "name": "breeding",
       "status": "success",
       "message": "Breeding system is working properly",
-      "timestamp": "2025-04-05T23:17:54.976Z",
+      "timestamp": "2025-04-05T23:28:33.215Z",
       "details": {
         "animalCount": 6,
         "rabbitCount": 4,
@@ -92,7 +94,7 @@
       "name": "rabbit-breeding",
       "status": "success",
       "message": "Rabbit breeding system operational with 4 rabbits available",
-      "timestamp": "2025-04-05T23:17:55.153Z",
+      "timestamp": "2025-04-05T23:28:33.366Z",
       "details": {
         "animalsCount": 6,
         "rabbitsCount": 4,
@@ -108,7 +110,7 @@
       "name": "pages",
       "status": "success",
       "message": "Pages check passed: 11/11 pages verified",
-      "timestamp": "2025-04-05T23:17:55.323Z",
+      "timestamp": "2025-04-05T23:28:33.513Z",
       "details": {
         "results": [
           {
@@ -205,14 +207,14 @@
       "name": "accessibility",
       "status": "success",
       "message": "2 accessibility issues detected",
-      "timestamp": "2025-04-05T23:17:55.333Z",
+      "timestamp": "2025-04-05T23:28:33.518Z",
       "details": [
         "client/src/components/reports/report-filters.tsx: Form control without label",
         "client/src/components/settings/newsletter-subscriber-list.tsx: Form control without label"
       ]
     }
   ],
-  "lastBootTimestamp": "2025-04-05T23:17:55.333Z",
+  "lastBootTimestamp": "2025-04-05T23:28:33.518Z",
   "overallStatus": "error",
   "environment": "development"
 }
