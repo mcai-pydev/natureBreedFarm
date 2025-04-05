@@ -239,9 +239,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New endpoint for compatibility check with detailed results
+  app.get('/api/breeding/compatibility-check', async (req, res) => {
+    try {
+      const maleId = parseInt(req.query.maleId as string);
+      const femaleId = parseInt(req.query.femaleId as string);
+      
+      if (isNaN(maleId) || isNaN(femaleId)) {
+        return res.status(400).json({ 
+          compatible: false,
+          reason: 'Invalid animal IDs',
+          riskLevel: 'high'
+        });
+      }
+
+      // Get the full animal objects to perform detailed checks
+      const male = await animalBreedingService.getAnimal(maleId);
+      const female = await animalBreedingService.getAnimal(femaleId);
+      
+      if (!male || !female) {
+        return res.status(404).json({ 
+          compatible: false,
+          reason: 'One or both animals not found',
+          riskLevel: 'high'
+        });
+      }
+
+      // Check if they're different genders
+      if (male.gender === female.gender) {
+        return res.status(400).json({ 
+          compatible: false,
+          reason: 'Both animals are the same gender',
+          riskLevel: 'high'
+        });
+      }
+
+      // Basic check for same animal
+      if (male.id === female.id) {
+        return res.status(400).json({ 
+          compatible: false,
+          reason: 'Cannot breed an animal with itself',
+          riskLevel: 'high'
+        });
+      }
+
+      // Check for parent-child relationship
+      if (male.id === female.parentMaleId || female.id === male.parentFemaleId) {
+        return res.status(400).json({ 
+          compatible: false,
+          reason: 'Parent-child breeding is not allowed due to high inbreeding risk',
+          riskLevel: 'high'
+        });
+      }
+
+      // Check if they're siblings
+      if (male.parentMaleId && female.parentMaleId && male.parentMaleId === female.parentMaleId) {
+        // Full siblings
+        if (male.parentFemaleId && female.parentFemaleId && male.parentFemaleId === female.parentFemaleId) {
+          return res.status(400).json({ 
+            compatible: false,
+            reason: 'Siblings breeding is not allowed due to high inbreeding risk',
+            riskLevel: 'high'
+          });
+        }
+        
+        // Half siblings (same father, different mother)
+        return res.status(400).json({ 
+          compatible: false,
+          reason: 'Half-siblings breeding is not allowed due to moderate inbreeding risk',
+          riskLevel: 'high'
+        });
+      }
+
+      // Check if they're half-siblings from maternal side
+      if (male.parentFemaleId && female.parentFemaleId && male.parentFemaleId === female.parentFemaleId) {
+        return res.status(400).json({ 
+          compatible: false,
+          reason: 'Half-siblings breeding is not allowed due to moderate inbreeding risk',
+          riskLevel: 'high'
+        });
+      }
+
+      // Also check for shared ancestry if available
+      if (male.ancestry && female.ancestry && 
+          (male.ancestry.length > 0 && female.ancestry.length > 0)) {
+        
+        // Check for shared ancestors
+        const sharedAncestors = male.ancestry.filter(maleAncestor => 
+          female.ancestry?.includes(maleAncestor)
+        );
+        
+        if (sharedAncestors.length > 0) {
+          return res.status(400).json({ 
+            compatible: false,
+            reason: `Shared ancestry detected: ${sharedAncestors.join(', ')}. This increases inbreeding risk.`,
+            riskLevel: 'medium'
+          });
+        }
+      }
+
+      // For complete protection, also run the service's inbreeding check
+      const riskCheck = await animalBreedingService.checkInbreedingRisk(maleId, femaleId);
+      
+      if (riskCheck.isRisky) {
+        return res.status(400).json({ 
+          compatible: false,
+          reason: `Inbreeding risk detected: ${riskCheck.relationshipType || 'unknown relationship'}`,
+          riskLevel: 'high'
+        });
+      }
+      
+      // Passed all checks
+      res.json({
+        compatible: true,
+        riskLevel: 'none'
+      });
+    } catch (error) {
+      console.error('Error checking breeding compatibility:', error);
+      res.status(500).json({ 
+        compatible: false,
+        reason: 'Failed to check breeding compatibility',
+        riskLevel: 'high'
+      });
+    }
+  });
+
   app.post('/api/breeding-events', async (req, res) => {
     try {
       const eventData = insertBreedingEventSchema.parse(req.body);
+      
+      // Validate the breeding pair before creating the event
+      const male = await animalBreedingService.getAnimal(eventData.maleId);
+      const female = await animalBreedingService.getAnimal(eventData.femaleId);
+      
+      if (!male || !female) {
+        return res.status(404).json({ 
+          error: 'One or both animals not found' 
+        });
+      }
+      
+      // Check for inbreeding risk
+      const riskCheck = await animalBreedingService.checkInbreedingRisk(
+        eventData.maleId, 
+        eventData.femaleId
+      );
+      
+      if (riskCheck.isRisky) {
+        return res.status(400).json({ 
+          error: 'Breeding pairing rejected due to inbreeding risk', 
+          details: riskCheck 
+        });
+      }
+      
+      // Proceed with creating the breeding event
       const newEvent = await animalBreedingService.createBreedingEvent(eventData);
       res.status(201).json(newEvent);
     } catch (error) {

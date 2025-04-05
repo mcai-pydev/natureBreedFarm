@@ -1,0 +1,82 @@
+Task Brief: Implement Parent Compatibility & Genetic Safety Check
+📌 Goal
+Prevent inbreeding by introducing logic that checks parent compatibility before allowing a breeding pair to be submitted. This is a critical feature for genetic health and aligns with long-term smart breeding strategy.
+
+🧠 Task Overview
+✅ 1. Add Compatibility Check Function
+Create /lib/breeding/validatePairing.ts
+
+Function should receive two rabbit objects and return:
+
+ts
+Copy
+Edit
+{
+  compatible: boolean;
+  reason?: string;
+}
+Example:
+
+ts
+Copy
+Edit
+const result = checkParentCompatibility(male, female);
+if (!result.compatible) {
+  return res.status(400).json({ error: result.reason });
+}
+✅ 2. Define Matching Rules (MVP)
+❌ Deny if male.id === female.id
+
+❌ Deny if either parentMaleId or parentFemaleId overlaps
+
+❌ Deny if parentMaleId === other.parentMaleId (siblings)
+
+✅ Pass if no close relationship is found
+
+🔒 Extend later to support family tree lineage scanning
+
+✅ 3. Wire into API Route
+File: routes/breeding.ts
+
+Inject validation before saving event to DB:
+
+ts
+Copy
+Edit
+const { compatible, reason } = validatePairing(male, female);
+if (!compatible) return res.status(400).json({ error: reason });
+✅ 4. Update Breeding Form UI
+Component: components/breeding/BreedingForm.tsx
+
+When a pair is selected:
+
+Run validation before allowing modal submission
+
+Show inline error message if pair is disqualified
+
+🧠 Bonus: Add red warning icon if pair is not allowed
+
+✅ 5. Optional — Health Risk Level Tag
+Add a visual tag in suggestions:
+
+ts
+Copy
+Edit
+<span className="text-sm px-2 py-1 rounded bg-yellow-100 text-yellow-700">
+  Potential Risk
+</span>
+🧪 Acceptance Criteria
+✅ Invalid pairings are blocked with informative message
+
+✅ Valid pairings are saved and show in timeline
+
+✅ UI displays warning if pair fails validation
+
+✅ Smart Boot shows pass/fail status for validation logic
+
+⏭ Next After This Task
+🧬 Add Genetic Lineage Tracker (Phase 2)
+
+🎤 Add AI Assistant for Pairing (Phase 3)
+
+📡 Send breeding errors to centralized log system

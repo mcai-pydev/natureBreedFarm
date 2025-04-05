@@ -11,7 +11,12 @@ import {
   Download,
   FileText,
   FileSpreadsheet,
-  ChevronDown
+  ChevronDown,
+  Check,
+  XCircle,
+  ShieldAlert,
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +24,9 @@ import { Link } from 'wouter';
 import { formatDate, cn } from '@/lib/utils';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
+import { CompatibilityChecker } from '@/components/breeding/CompatibilityChecker';
+import { ParentCompatibilityResult } from '@/lib/breeding/validatePairing';
+import { Animal } from '@shared/schema';
 
 // Interface for our event types
 interface BreedingEvent {
@@ -56,13 +64,62 @@ const NewBreedingEventModal = ({
     notes: '',
     status: 'scheduled'
   });
+  
+  const [compatibility, setCompatibility] = useState<{
+    isChecking: boolean;
+    result: ParentCompatibilityResult | null;
+  }>({
+    isChecking: false,
+    result: null
+  });
+  
+  // Store references to selected animals for form submission
+  const [selectedMale, setSelectedMale] = useState<Animal | null>(null);
+  const [selectedFemale, setSelectedFemale] = useState<Animal | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Reset compatibility result when changing animals
+    if (name === 'maleId' || name === 'femaleId') {
+      setCompatibility({ isChecking: false, result: null });
+      
+      // Update selected animals
+      if (name === 'maleId' && value) {
+        const male = animals.find(a => a.id === parseInt(value));
+        setSelectedMale(male || null);
+      } else if (name === 'femaleId' && value) {
+        const female = animals.find(a => a.id === parseInt(value));
+        setSelectedFemale(female || null);
+      }
+    }
+  };
+  
+  // Check compatibility when both animals are selected
+  const checkCompatibility = async () => {
+    if (!formData.maleId || !formData.femaleId) return;
+    
+    setCompatibility({ isChecking: true, result: null });
+    
+    try {
+      const response = await fetch(`/api/breeding/compatibility-check?maleId=${formData.maleId}&femaleId=${formData.femaleId}`);
+      const result = await response.json();
+      setCompatibility({ isChecking: false, result });
+    } catch (error) {
+      console.error('Error checking compatibility:', error);
+      setCompatibility({ 
+        isChecking: false, 
+        result: {
+          compatible: false,
+          reason: 'Error checking compatibility. Please try again.',
+          riskLevel: 'high'
+        }
+      });
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Find the selected animals
@@ -72,6 +129,42 @@ const NewBreedingEventModal = ({
     if (!male || !female) {
       alert('Please select both a male and female rabbit');
       return;
+    }
+    
+    // Check compatibility first if not already checked
+    if (!compatibility.result) {
+      // Store the form data first
+      const maleIdToCheck = formData.maleId;
+      const femaleIdToCheck = formData.femaleId;
+      
+      try {
+        // Manually make the request rather than using the checkCompatibility function
+        const response = await fetch(`/api/breeding/compatibility-check?maleId=${maleIdToCheck}&femaleId=${femaleIdToCheck}`);
+        const compatResult = await response.json();
+        
+        // Update the state with the result
+        setCompatibility({
+          isChecking: false,
+          result: compatResult
+        });
+        
+        // If incompatible, ask for confirmation
+        if (!compatResult.compatible) {
+          const proceedAnyway = window.confirm(
+            `Warning: ${compatResult.reason || 'This breeding pair may be genetically incompatible.'} Proceed anyway?`
+          );
+          if (!proceedAnyway) return;
+        }
+      } catch (error) {
+        console.error('Error checking compatibility:', error);
+        // Continue without blocking
+      }
+    } else if (compatibility.result && !compatibility.result.compatible) {
+      const proceedAnyway = window.confirm(
+        `Warning: ${compatibility.result.reason || 'This breeding pair may be genetically incompatible.'}. Proceed anyway?`
+      );
+      
+      if (!proceedAnyway) return;
     }
     
     onSubmit({
@@ -95,6 +188,9 @@ const NewBreedingEventModal = ({
       notes: '',
       status: 'scheduled'
     });
+    
+    // Reset compatibility result
+    setCompatibility({ isChecking: false, result: null });
     
     onClose();
   };
@@ -207,6 +303,61 @@ const NewBreedingEventModal = ({
                 <option value="canceled">Canceled</option>
               </select>
             </div>
+            
+            {/* Compatibility Check UI */}
+            {formData.maleId && formData.femaleId && (
+              <div className="mt-2">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Compatibility Check</span>
+                  <button
+                    type="button"
+                    onClick={checkCompatibility}
+                    className="text-xs text-primary hover:underline flex items-center"
+                    disabled={compatibility.isChecking}
+                  >
+                    {compatibility.isChecking ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" /> 
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <ShieldAlert className="h-3 w-3 mr-1" /> 
+                        {compatibility.result ? 'Recheck' : 'Check Compatibility'}
+                      </>
+                    )}
+                  </button>
+                </div>
+                
+                {compatibility.result && (
+                  <div className={`mt-1 p-3 rounded-md text-sm ${
+                    compatibility.result.compatible 
+                      ? 'bg-green-100 border border-green-200' 
+                      : 'bg-red-100 border border-red-200'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {compatibility.result.compatible ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                      )}
+                      <span className={compatibility.result.compatible ? 'text-green-700' : 'text-red-700'}>
+                        {compatibility.result.compatible 
+                          ? 'These rabbits are compatible for breeding.' 
+                          : compatibility.result.reason || 'These rabbits are not compatible for breeding.'}
+                      </span>
+                    </div>
+                    {!compatibility.result.compatible && compatibility.result.riskLevel && (
+                      <div className="mt-1 pl-7">
+                        <span className="text-xs font-medium">
+                          Risk Level: {compatibility.result.riskLevel.charAt(0).toUpperCase() + compatibility.result.riskLevel.slice(1)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="flex justify-end gap-2 mt-6">
@@ -219,9 +370,13 @@ const NewBreedingEventModal = ({
             </button>
             <button 
               type="submit"
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              className={`px-4 py-2 rounded-md transition-colors ${
+                compatibility.result && !compatibility.result.compatible
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+              }`}
             >
-              Save Event
+              {compatibility.result && !compatibility.result.compatible ? 'Save Anyway (Not Recommended)' : 'Save Event'}
             </button>
           </div>
         </form>
@@ -302,6 +457,7 @@ export default function BreedingEventsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCompatibilityChecker, setShowCompatibilityChecker] = useState(false);
   
   // Add click outside handler to close export menu
   useEffect(() => {
@@ -537,6 +693,33 @@ export default function BreedingEventsPage() {
           </button>
         </div>
       )}
+      
+      {/* Compatibility Checker Section */}
+      <div className="pb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-semibold">Breeding Compatibility Check</h2>
+            <p className="text-muted-foreground text-sm">Verify genetic safety before breeding rabbits</p>
+          </div>
+          <button
+            onClick={() => setShowCompatibilityChecker(!showCompatibilityChecker)}
+            className="text-sm flex items-center gap-1 text-primary"
+          >
+            {showCompatibilityChecker ? 'Hide Checker' : 'Show Checker'}
+            <ShieldAlert className="h-4 w-4" />
+          </button>
+        </div>
+        
+        {showCompatibilityChecker && (
+          <CompatibilityChecker 
+            onCompatibilityResult={(result) => {
+              if (result.compatible) {
+                // Could auto-populate the modal with these compatible rabbits
+              }
+            }}
+          />
+        )}
+      </div>
       
       {/* Modal for creating new events */}
       <NewBreedingEventModal 
