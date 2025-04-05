@@ -171,15 +171,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const typeFilter = req.query.type as string | undefined;
       
-      // Get animals based on type filter
+      // Get all animals from service
+      const animals = await animalBreedingService.getAnimals();
+      
+      // If type filter is specified, filter the results
       if (typeFilter) {
-        const animals = await animalBreedingService.getAnimalsByType(typeFilter);
-        return res.json(animals);
-      } else {
-        // Get all animals if no type filter
-        const animals = await animalBreedingService.getAnimals();
-        return res.json(animals);
+        const filteredAnimals = animals.filter(animal => 
+          animal.type.toLowerCase() === typeFilter.toLowerCase()
+        );
+        return res.json(filteredAnimals);
       }
+      
+      // Otherwise return all animals
+      res.json(animals);
     } catch (error) {
       console.error('Error fetching animals:', error);
       res.status(500).json({ error: 'Failed to fetch animals' });

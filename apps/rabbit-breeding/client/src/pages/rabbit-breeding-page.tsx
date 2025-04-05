@@ -45,7 +45,7 @@ const safeGetAgeString = (date: string | Date | null | undefined): string => {
 };
 
 export default function RabbitBreedingPage() {
-  // Fetch animals data from API with proper queryFn
+  // Fetch animals data from API with proper queryFn that includes credentials
   const { 
     data: animals = [], 
     isLoading, 
@@ -53,7 +53,12 @@ export default function RabbitBreedingPage() {
   } = useQuery<Animal[]>({
     queryKey: ['/api/animals', 'rabbit'],
     queryFn: async () => {
-      const response = await fetch('/api/animals?type=rabbit');
+      const response = await fetch('/api/animals?type=rabbit', {
+        credentials: 'include',  // Include credentials for authenticated requests
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch animals');
       return response.json();
     }
