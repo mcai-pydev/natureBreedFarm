@@ -195,7 +195,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Breeding events API endpoints
   app.get('/api/breeding-events', async (req, res) => {
     try {
-      const events = await animalBreedingService.getBreedingEvents();
+      // Check if animalId query parameter exists
+      const animalId = req.query.animalId ? parseInt(req.query.animalId as string) : undefined;
+      
+      let events;
+      if (animalId) {
+        // Fetch all events and filter by animalId (either as male or female)
+        const allEvents = await animalBreedingService.getBreedingEvents();
+        events = allEvents.filter(event => 
+          event.maleId === animalId || event.femaleId === animalId
+        );
+      } else {
+        // Fetch all events
+        events = await animalBreedingService.getBreedingEvents();
+      }
+      
       res.json(events);
     } catch (error) {
       console.error('Error fetching breeding events:', error);

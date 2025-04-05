@@ -5,9 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(dateString: string): string {
-  if (!dateString) return 'Unknown';
-  const date = new Date(dateString);
+export function formatDate(dateInput: string | Date): string {
+  if (!dateInput) return 'Unknown';
+  
+  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  
   if (isNaN(date.getTime())) return 'Invalid date';
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
