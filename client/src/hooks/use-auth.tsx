@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useContext } from "react";
+import React, { createContext, ReactNode, useContext, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -15,37 +15,68 @@ interface User {
   isActive: boolean;
 }
 
+interface AuthResponse {
+  user: User;
+  token: string;
+}
+
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
+  token: string | null;
   loginMutation: any;
   logoutMutation: any;
   registerMutation: any;
+};
+
+// Token storage helper functions
+const storeToken = (token: string) => {
+  localStorage.setItem('authToken', token);
+};
+
+const getStoredToken = (): string | null => {
+  return localStorage.getItem('authToken');
+};
+
+const removeStoredToken = () => {
+  localStorage.removeItem('authToken');
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const token = getStoredToken();
   
+  // Query to fetch user data using JWT token if available
   const {
     data: user,
     error,
     isLoading,
     refetch
   } = useQuery<User | null, Error>({
-    queryKey: ["/api/user"],
+    queryKey: ["/api/me"],
     queryFn: async () => {
       try {
         console.log("Fetching user data...");
         
-        const response = await fetch("/api/user", {
-          credentials: "include", // Always include credentials for auth requests
-          headers: {
-            "Accept": "application/json",
-            "Cache-Control": "no-cache, no-store"
-          }
+        // Prepare headers with JWT token if available
+        const headers: HeadersInit = {
+          "Accept": "application/json",
+          "Cache-Control": "no-cache, no-store"
+        };
+        
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+          console.log("Using JWT token for authentication");
+        } else {
+          console.log("No JWT token available, falling back to session");
+        }
+        
+        const response = await fetch("/api/me", {
+          credentials: "include", // Include credentials for session fallback
+          headers
         });
         
         console.log("User fetch response status:", response.status);
@@ -53,6 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!response.ok) {
           if (response.status === 401) {
             console.log("User is not authenticated");
+            // Clear invalid token if present
+            if (token) {
+              console.log("Clearing invalid token");
+              removeStoredToken();
+            }
             return null;
           }
           throw new Error(`Failed to fetch user data: ${response.status}`);
@@ -66,7 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
     },
-    // Fetch user data on page load and whenever auth state might change
+    // Only run this query if the app has loaded or we have a token
+    enabled: true,
     staleTime: 1000 * 60 * 5, // Consider data stale after 5 minutes
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -84,16 +121,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (!response.ok) {
-        throw new Error("Login failed");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Login failed");
       }
       
-      return await response.json();
+      return await response.json() as AuthResponse;
     },
-    onSuccess: (user: User) => {
-      queryClient.setQueryData(["/api/user"], user);
+    onSuccess: (data: AuthResponse) => {
+      // Store the JWT token
+      if (data.token) {
+        console.log("Storing authentication token");
+        storeToken(data.token);
+      }
+      
+      // Update user data in cache
+      queryClient.setQueryData(["/api/me"], data.user);
+      
       toast({
         title: "Login successful",
-        description: `Welcome back, ${user.name}!`,
+        description: `Welcome back, ${data.user.name}!`,
       });
     },
     onError: (error: Error) => {
@@ -107,16 +153,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch("/api/logout", {
-        method: "POST",
-      });
-      
-      if (!response.ok) {
-        throw new Error("Logout failed");
+      // First try server-side logout for session
+      try {
+        const response = await fetch("/api/logout", {
+          method: "POST",
+        });
+        
+        if (!response.ok) {
+          console.warn("Server logout failed, but continuing with client-side logout");
+        }
+      } catch (error) {
+        console.warn("Server logout error, but continuing with client-side logout:", error);
       }
+      
+      // Always remove the token regardless of server-side logout success
+      removeStoredToken();
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
+      queryClient.setQueryData(["/api/me"], null);
       toast({
         title: "Logged out",
         description: "You have been logged out successfully",
@@ -124,10 +178,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onError: (error: Error) => {
       toast({
-        title: "Logout failed",
-        description: error.message,
+        title: "Logout error",
+        description: "Error during logout, but you've been logged out of this device",
         variant: "destructive",
       });
+      // Still remove user data from cache to ensure logged out state
+      queryClient.setQueryData(["/api/me"], null);
     },
   });
 
@@ -142,13 +198,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (!response.ok) {
-        throw new Error("Registration failed");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Registration failed");
       }
       
-      return await response.json();
+      const data = await response.json();
+      return data;
     },
     onSuccess: (user: User) => {
-      queryClient.setQueryData(["/api/user"], user);
+      queryClient.setQueryData(["/api/me"], user);
       toast({
         title: "Registration successful",
         description: `Welcome, ${user.name}!`,
@@ -169,6 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: user ?? null,
         isLoading,
         error,
+        token,
         loginMutation,
         logoutMutation,
         registerMutation,

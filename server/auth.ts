@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -9,6 +9,7 @@ import { emailService } from "./email";
 import { User as SelectUser } from "@shared/schema";
 import { requirePermission } from "./middleware/rbac";
 import { Permissions, UserRoles } from "./types/roles";
+import jwt from 'jsonwebtoken';
 
 declare global {
   namespace Express {
@@ -17,11 +18,30 @@ declare global {
 }
 
 const scryptAsync = promisify(scrypt);
+const JWT_SECRET = process.env.JWT_SECRET || 'nature-breed-farm-jwt-secret';
+const JWT_EXPIRES_IN = '24h';
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
+}
+
+// Generate a JWT token for a user
+function generateToken(user: SelectUser) {
+  const { password, ...userDataWithoutPassword } = user;
+  return jwt.sign(userDataWithoutPassword, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
+
+// Verify and decode a JWT token
+function verifyToken(token: string): SelectUser | null {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as Omit<SelectUser, 'password'>;
+    return decoded as SelectUser;
+  } catch (error) {
+    console.error('❌ Token verification failed:', error);
+    return null;
+  }
 }
 
 async function comparePasswords(supplied: string, stored: string) {
@@ -31,18 +51,58 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-// Middleware to ensure user is authenticated
-export const requireAuth = (req: any, res: any, next: any) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: "Authentication required" });
+// Extract JWT token from Authorization header
+const extractToken = (req: Request) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7); // Remove "Bearer " prefix
+  }
+  return null;
+};
+
+// Middleware to authenticate via JWT token
+export const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // First try the session-based auth
+    if (req.isAuthenticated()) {
+      return next();
+    }
+    
+    // Then try JWT token auth
+    const token = extractToken(req);
+    if (!token) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+
+    // Set the user on the request object for downstream middleware
+    (req as any).user = decoded;
+    
+    next();
+  } catch (error) {
+    console.error('❌ JWT authentication error:', error);
+    return res.status(401).json({ message: "Authentication failed" });
+  }
+};
+
+// Middleware to ensure user is authenticated (supports both session and JWT)
+export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated() && !(req as any).user) {
+    return res.status(401).json({ message: "Authentication required" });
   }
   next();
 };
 
 // Middleware to ensure user is admin
-export const requireAdmin = (req: any, res: any, next: any) => {
-  if (!req.isAuthenticated() || req.user.role !== UserRoles.ADMIN) {
-    return res.status(403).json({ error: "Admin privileges required" });
+export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+  // Check if user is authenticated either via session or JWT
+  if ((!req.isAuthenticated() && !(req as any).user) || 
+      (req.user && req.user.role !== UserRoles.ADMIN)) {
+    return res.status(403).json({ message: "Admin privileges required" });
   }
   next();
 };
@@ -211,13 +271,41 @@ export function setupAuth(app: Express) {
         
         console.log('✅ Login successful for user:', user.username, 'with role:', user.role);
         
+        // Generate JWT token
+        const token = generateToken(user);
+        console.log('🔑 Generated JWT token for user:', user.username);
+        
         // Remove password from response
         const { password: _, ...userWithoutPassword } = user;
         
-        // Return user data
-        return res.status(200).json(userWithoutPassword);
+        // Return user data with token
+        return res.status(200).json({
+          user: userWithoutPassword,
+          token
+        });
       });
     })(req, res, next);
+  });
+  
+  // New endpoint for JWT token verification
+  app.get("/api/me", authenticateJWT, (req, res) => {
+    try {
+      // User is already authenticated via JWT token or session
+      console.log('ℹ️ User authenticated via JWT or session', {
+        username: req.user?.username,
+        role: req.user?.role,
+        method: req.isAuthenticated() ? 'session' : 'jwt'
+      });
+      
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = req.user as SelectUser;
+      
+      // Return user data
+      return res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('❌ JWT verification error:', error);
+      return res.status(401).json({ message: "Authentication failed" });
+    }
   });
 
   app.post("/api/logout", (req, res, next) => {
