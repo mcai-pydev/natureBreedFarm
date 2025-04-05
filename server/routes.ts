@@ -14,6 +14,7 @@ import {
 } from "./boot/health-snapshot";
 import { getStatusBadge, getStatusBadgeHtml } from "./routes/status-badge";
 import { accessibilityCheck } from "./boot/accessibility-check";
+import { z } from "zod";
 
 // Helper function for AI chat responses when no API key is available
 function getFallbackResponse(message: string, history: any[] = []): string {
@@ -80,11 +81,14 @@ import {
   type InsertOrder,
   type InsertOrderItem
 } from "@shared/schema";
-import { z } from "zod";
+
 
 // Import setupAuth from auth.ts after all other imports to prevent circular dependency
 import { setupAuth, requireAuth, requireAdmin } from "./auth";
 import orderRoutes from "./routes/order-routes";
+import { stringify } from 'csv-stringify/sync';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup static files middleware
@@ -95,6 +99,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register order routes with RBAC protection
   app.use('/api', orderRoutes);
+  
+  // Export breeding events
+  app.get('/api/breeding-events/export', async (req, res) => {
+    try {
+      const format = req.query.format as string || 'csv';
+      const animalType = req.query.animalType as string || 'rabbit';
+      
+      // Fetch breeding events from storage
+      const breedingEvents = await storage.getBreedingEvents();
+      
+      if (!breedingEvents || breedingEvents.length === 0) {
+        return res.status(404).json({ error: 'No breeding events found' });
+      }
+      
+      // Format date for file name
+      const dateStr = new Date().toISOString().split('T')[0];
+      
+      if (format === 'csv') {
+        const filename = `breeding-events-export-${dateStr}.csv`;
+        
+        // CSV column configuration
+        const columns = [
+          { key: 'id', header: 'ID' },
+          { key: 'eventId', header: 'Event ID' },
+          { key: 'maleId', header: 'Male ID' },
+          { key: 'femaleId', header: 'Female ID' },
+          { key: 'breedingDate', header: 'Breeding Date' },
+          { key: 'status', header: 'Status' },
+          { key: 'expectedBirthDate', header: 'Expected Birth Date' },
+          { key: 'actualBirthDate', header: 'Actual Birth Date' },
+          { key: 'offspringCount', header: 'Offspring Count' },
+          { key: 'notes', header: 'Notes' },
+        ];
+        
+        // Generate CSV
+        const csvData = stringify(breedingEvents, {
+          header: true,
+          columns: columns,
+        });
+        
+        // Set response headers
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        
+        // Send the CSV file
+        return res.send(csvData);
+      } else if (format === 'pdf') {
+        const filename = `breeding-events-export-${dateStr}.pdf`;
+        
+        // Create PDF document
+        const doc = new jsPDF();
+        
+        // Add title
+        doc.setFontSize(16);
+        doc.text('Breeding Events Report', 14, 22);
+        
+        // Add report generation details
+        doc.setFontSize(10);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+        doc.text(`Total Events: ${breedingEvents.length}`, 14, 36);
+        
+        // Create table
+        autoTable(doc, {
+          startY: 40,
+          head: [['ID', 'Event ID', 'Male ID', 'Female ID', 'Date', 'Status', 'Offspring']],
+          body: breedingEvents.map(event => [
+            event.id,
+            event.eventId,
+            event.maleId,
+            event.femaleId, 
+            new Date(event.breedingDate).toLocaleDateString(),
+            event.status,
+            event.offspringCount || 'N/A'
+          ]),
+        });
+        
+        // Set response headers
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        
+        // Send the PDF file
+        const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+        return res.send(pdfBuffer);
+      } else {
+        return res.status(400).json({ error: 'Invalid format specified. Use "csv" or "pdf".' });
+      }
+    } catch (error) {
+      console.error('Error exporting breeding events:', error);
+      res.status(500).json({ error: 'Failed to export breeding events' });
+    }
+  });
 
   // Products API routes
   app.get("/api/products", async (req, res) => {
@@ -1379,6 +1474,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Dedicated endpoint for rabbits
+  app.get("/api/rabbits", async (req, res) => {
+    try {
+      const rabbits = await storage.getAnimalsByType("rabbit");
+      res.json(rabbits);
+    } catch (error) {
+      console.error("Error fetching rabbits:", error);
+      res.status(500).json({ error: "Failed to fetch rabbits" });
+    }
+  });
+  
   app.get("/api/animals/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -1512,6 +1618,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(events);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch breeding events" });
+    }
+  });
+  
+  // Dedicated endpoint for rabbit breeding events
+  app.get("/api/rabbits/breeding-events", async (req, res) => {
+    try {
+      const allEvents = await storage.getBreedingEvents();
+      
+      // Filter events to include only those where both animals are rabbits
+      const rabbitEvents = [];
+      
+      for (const event of allEvents) {
+        const male = await storage.getAnimal(event.maleId);
+        const female = await storage.getAnimal(event.femaleId);
+        
+        if (male && female && male.type === 'rabbit' && female.type === 'rabbit') {
+          rabbitEvents.push(event);
+        }
+      }
+      
+      res.json(rabbitEvents);
+    } catch (error) {
+      console.error("Error fetching rabbit breeding events:", error);
+      res.status(500).json({ error: "Failed to fetch rabbit breeding events" });
+    }
+  });
+  
+  // Get breeding events for a specific animal
+  app.get("/api/animals/:id/breeding-events", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const animal = await storage.getAnimal(id);
+      if (!animal) {
+        return res.status(404).json({ error: "Animal not found" });
+      }
+      
+      const allEvents = await storage.getBreedingEvents();
+      const animalEvents = allEvents.filter(event => 
+        event.maleId === id || event.femaleId === id
+      );
+      
+      res.json(animalEvents);
+    } catch (error) {
+      console.error("Error fetching animal breeding events:", error);
+      res.status(500).json({ error: "Failed to fetch animal breeding events" });
     }
   });
   

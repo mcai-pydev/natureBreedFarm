@@ -21,6 +21,11 @@ interface Animal {
 export default function RabbitBreedingPage() {
   const { data: animals, isLoading, error } = useQuery<Animal[]>({
     queryKey: ['/api/animals'],
+    queryFn: async () => {
+      const res = await fetch('/api/animals');
+      if (!res.ok) throw new Error('Failed to fetch animals');
+      return res.json();
+    },
     select: (data) => data.filter(animal => animal.type === 'rabbit')
   });
 

@@ -1,0 +1,6 @@
+ID,Event ID,Male ID,Female ID,Breeding Date,Status,Expected Birth Date,Actual Birth Date,Offspring Count,Notes
+1,BE-M1_F1-20230515,1,2,1684108800000,completed,1686873600000,1686787200000,6,First generation breeding - produced 6 healthy kits
+2,BE-M3_F2-20231210,5,4,1702166400000,completed,1704844800000,1704844800000,5,Second generation outcross breeding
+3,BE-M2_F3-20240115,3,6,1705276800000,completed,1708041600000,1707955200000,7,Second generation outcross breeding
+4,BE-M6_F6-20250315,11,12,1741996800000,pending,1744761600000,,0,Current breeding attempt - healthy unrelated pair
+5,BE-G1_G2-20250401,13,14,1743465600000,pending,1756684800000,,0,Seasonal goat breeding
