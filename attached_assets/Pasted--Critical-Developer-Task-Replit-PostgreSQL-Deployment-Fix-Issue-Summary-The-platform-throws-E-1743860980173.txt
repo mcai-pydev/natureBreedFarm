@@ -1,0 +1,93 @@
+✅ Critical Developer Task: Replit PostgreSQL Deployment Fix
+🔧 Issue Summary
+The platform throws:
+
+Error Loading Rabbits – Missing queryFn (frontend symptom)
+
+Backend logs reveal: DATABASE_URL not set or misconfigured
+
+Admin panel routes return 401 or blank results due to failed DB connection
+
+🧠 Developer Task: Fix Replit Environment for Rabbit Breeding & DB Access
+Title: Fix Replit PostgreSQL environment variables and DB integration
+
+Priority: 🔴 Urgent (Blocker)
+
+✅ Task Breakdown
+1. Fix PostgreSQL Environment in Replit
+Go to Replit → Deployments → Secrets / Environment variables
+
+Ensure this variable is defined:
+
+env
+Copy
+Edit
+DATABASE_URL=postgresql://neondb_owner:npg_S5wrqXcnP0RM@ep-bold-shad.us-east-2.aws.neon.tech/neondb?sslmode=require
+✅ This format is required by NeonDB with SSL enabled.
+
+2. Update db.ts to Use SSL
+Ensure database connection uses sslmode=require. Example in server/db.ts:
+
+ts
+Copy
+Edit
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }, // important for NeonDB
+});
+3. Restart or Re-deploy the App
+Once .env is properly set:
+
+Stop and Restart the Replit App or trigger Re-deploy.
+
+Ensure server logs show:
+
+log
+Copy
+Edit
+✅ Database connected at: [correct Neon URL]
+4. Fix /api/animals Query Bug in Client
+Inside rabbit-breeding-page.tsx or equivalent component:
+
+ts
+Copy
+Edit
+const { data: animals, isLoading, error } = useQuery({
+  queryKey: ['/api/animals'],
+  queryFn: async () => {
+    const res = await fetch('/api/animals?type=rabbit');
+    if (!res.ok) throw new Error('Failed to fetch rabbit data');
+    return res.json();
+  },
+});
+❌ If queryFn is missing, React Query fails silently with “Missing queryFn”
+
+🧪 Developer Self-Test (To confirm it's fixed)
+Visit http://localhost:5000/rabbit-breeding or /dashboard
+
+Expect Rabbit stats, breeding history, and compatibility checks to load
+
+No console or API 401 errors
+
+📦 Deliverables
+ .env.example file updated with NeonDB connection template
+
+ server/db.ts updated for Neon SSL
+
+ Frontend queryFn implemented correctly
+
+ System Boot /status reports ✅ for DB & breeding modules
+
+ Push latest working fix to GitHub
+
+✅ Once this is done:
+We can safely:
+
+🔁 Test locally AND via Replit
+
+✅ Unify development and production DBs
+
+🚀 Move forward with AI breeding assistant and CSV/PDF reporting
+

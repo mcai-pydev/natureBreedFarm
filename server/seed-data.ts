@@ -4,7 +4,7 @@
  */
 
 import { db } from './db';
-import { animals, breedingEvents } from '@shared/schema';
+import { animals, breedingEvents, rabbitBreeds } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { animalBreedingService } from './animal-breeding';
 
@@ -26,6 +26,14 @@ export async function seedAnimalData() {
     }
     
     console.log('🌱 No animals found in database. Seeding from in-memory data...');
+    
+    // First check if we have any rabbit breeds in the database
+    const breeds = await db.select().from(rabbitBreeds);
+    const hasBreeds = breeds.length > 0;
+    
+    if (!hasBreeds) {
+      console.log('⚠️ No rabbit breeds found in database. Animal breed IDs will be set to null.');
+    }
     
     // Get animals from in-memory service
     const memAnimals = await animalBreedingService.getAnimals();
@@ -49,15 +57,15 @@ export async function seedAnimalData() {
         .where(eq(animals.animalId, animal.animalId));
       
       if (existingAnimal.length === 0) {
-        const [result] = await db.insert(animals).values({
-          // Retain the same ID to maintain relationships
+        // Create values object with proper handling of breed IDs
+        const animalValues = {
           id: animal.id,
           animalId: animal.animalId,
           name: animal.name,
           type: animal.type,
           breed: animal.breed,
-          breedId: animal.breedId,
-          secondaryBreedId: animal.secondaryBreedId,
+          breedId: hasBreeds ? animal.breedId : null,  // Set to null if no breeds exist
+          secondaryBreedId: hasBreeds ? animal.secondaryBreedId : null,  // Set to null if no breeds exist
           isMixed: animal.isMixed,
           mixRatio: animal.mixRatio,
           gender: animal.gender,
@@ -92,11 +100,17 @@ export async function seedAnimalData() {
           roi: animal.roi,
           createdBy: animal.createdBy,
           createdAt: animal.createdAt,
-          updatedAt: animal.updatedAt,
           traits: animal.traits
-        }).returning();
+        };
         
-        insertedAnimals.push(result);
+        try {
+          const [result] = await db.insert(animals).values(animalValues).returning();
+          insertedAnimals.push(result);
+          console.log(`✅ Inserted animal: ${animal.name} (${animal.animalId})`);
+        } catch (insertError) {
+          console.error(`❌ Error inserting animal ${animal.name} (${animal.animalId}):`, insertError);
+          // Continue with the next animal rather than failing the whole process
+        }
       }
     }
     
@@ -117,9 +131,8 @@ export async function seedAnimalData() {
           .where(eq(breedingEvents.eventId, event.eventId));
         
         if (existingEvent.length === 0) {
-          const [result] = await db.insert(breedingEvents).values({
-            // Maintain same ID for relationships
-            id: event.id,
+          // Create a values object with only the fields that exist in the schema
+          const eventValues = {
             eventId: event.eventId,
             maleId: event.maleId,
             femaleId: event.femaleId,
@@ -129,23 +142,35 @@ export async function seedAnimalData() {
             expectedBirthDate: event.expectedBirthDate,
             actualBirthDate: event.actualBirthDate,
             status: event.status,
+            successRating: event.successRating,
+            wasPlanned: event.wasPlanned,
             offspringCount: event.offspringCount,
             offspringIds: event.offspringIds,
-            breedingPurpose: event.breedingPurpose,
+            maleOffspringCount: event.maleOffspringCount,
+            femaleOffspringCount: event.femaleOffspringCount,
+            offspringWeightAvg: event.offspringWeightAvg,
+            offspringHealthAvg: event.offspringHealthAvg,
+            offspringMortality: event.offspringMortality,
+            crossBreedType: event.crossBreedType,
+            expectedTraitsMatched: event.expectedTraitsMatched,
+            unexpectedTraitsObserved: event.unexpectedTraitsObserved,
+            geneticAnomalies: event.geneticAnomalies,
+            performanceRating: event.performanceRating,
+            economicValue: event.economicValue,
             notes: event.notes,
-            tags: event.tags,
             images: event.images,
             createdBy: event.createdBy,
-            createdAt: event.createdAt,
-            updatedAt: event.updatedAt,
-            geneticCompatibilityScore: event.geneticCompatibilityScore,
-            predictedLitterSize: event.predictedLitterSize,
-            predictedOffspringHealth: event.predictedOffspringHealth,
-            predictedROI: event.predictedROI,
-            actualROI: event.actualROI
-          }).returning();
+            createdAt: event.createdAt
+          };
           
-          insertedEvents.push(result);
+          try {
+            const [result] = await db.insert(breedingEvents).values(eventValues).returning();
+            insertedEvents.push(result);
+            console.log(`✅ Inserted breeding event: ${event.eventId}`);
+          } catch (insertError) {
+            console.error(`❌ Error inserting breeding event ${event.eventId}:`, insertError);
+            // Continue with the next event rather than failing the whole process
+          }
         }
       }
       

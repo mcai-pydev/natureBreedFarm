@@ -2,6 +2,8 @@ import {
   animals, type Animal, type InsertAnimal,
   breedingEvents, type BreedingEvent, type InsertBreedingEvent
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, not } from "drizzle-orm";
 
 export interface AnimalBreedingService {
   // Animal management
@@ -751,5 +753,224 @@ export class MemAnimalBreedingService implements AnimalBreedingService {
   }
 }
 
-// Export a singleton instance
-export const animalBreedingService = new MemAnimalBreedingService();
+// Database implementation of the Animal Breeding Service
+export class DatabaseAnimalBreedingService implements AnimalBreedingService {
+  async getAnimals(): Promise<Animal[]> {
+    try {
+      return await db.select().from(animals);
+    } catch (error) {
+      console.error('Error in DatabaseAnimalBreedingService.getAnimals:', error);
+      return [];
+    }
+  }
+  
+  async getAnimalsByType(type: string): Promise<Animal[]> {
+    try {
+      return await db
+        .select()
+        .from(animals)
+        .where(eq(animals.type, type));
+    } catch (error) {
+      console.error(`Error in DatabaseAnimalBreedingService.getAnimalsByType(${type}):`, error);
+      return [];
+    }
+  }
+  
+  async getAnimal(id: number): Promise<Animal | undefined> {
+    try {
+      const [animal] = await db
+        .select()
+        .from(animals)
+        .where(eq(animals.id, id));
+      
+      return animal;
+    } catch (error) {
+      console.error(`Error in DatabaseAnimalBreedingService.getAnimal(${id}):`, error);
+      return undefined;
+    }
+  }
+  
+  async createAnimal(animal: InsertAnimal): Promise<Animal> {
+    try {
+      const [createdAnimal] = await db
+        .insert(animals)
+        .values(animal)
+        .returning();
+      
+      return createdAnimal;
+    } catch (error) {
+      console.error('Error in DatabaseAnimalBreedingService.createAnimal:', error);
+      throw error;
+    }
+  }
+  
+  async updateAnimal(id: number, animalUpdate: Partial<InsertAnimal>): Promise<Animal | undefined> {
+    try {
+      const [updatedAnimal] = await db
+        .update(animals)
+        .set(animalUpdate)
+        .where(eq(animals.id, id))
+        .returning();
+      
+      return updatedAnimal;
+    } catch (error) {
+      console.error(`Error in DatabaseAnimalBreedingService.updateAnimal(${id}):`, error);
+      return undefined;
+    }
+  }
+  
+  async deleteAnimal(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(animals)
+        .where(eq(animals.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error(`Error in DatabaseAnimalBreedingService.deleteAnimal(${id}):`, error);
+      return false;
+    }
+  }
+  
+  async getPotentialMates(animalId: number): Promise<Animal[]> {
+    try {
+      const animal = await this.getAnimal(animalId);
+      
+      if (!animal) {
+        return [];
+      }
+      
+      // Get animals of the opposite gender and same type
+      const potentialMates = await db
+        .select()
+        .from(animals)
+        .where(
+          and(
+            eq(animals.type, animal.type),
+            eq(animals.gender, animal.gender === 'male' ? 'female' : 'male'),
+            eq(animals.status, 'active'),
+            not(eq(animals.id, animalId))
+          )
+        );
+      
+      return potentialMates;
+    } catch (error) {
+      console.error(`Error in DatabaseAnimalBreedingService.getPotentialMates(${animalId}):`, error);
+      return [];
+    }
+  }
+  
+  async checkInbreedingRisk(maleId: number, femaleId: number): Promise<{
+    isRisky: boolean;
+    relationshipType?: string;
+  }> {
+    try {
+      const male = await this.getAnimal(maleId);
+      const female = await this.getAnimal(femaleId);
+      
+      if (!male || !female) {
+        return { isRisky: false };
+      }
+      
+      // Check if they are directly related
+      if (male.parentMaleId === female.id || male.parentFemaleId === female.id) {
+        return { isRisky: true, relationshipType: 'parent-child' };
+      }
+      
+      if (female.parentMaleId === male.id || female.parentFemaleId === male.id) {
+        return { isRisky: true, relationshipType: 'parent-child' };
+      }
+      
+      // Check if they are siblings or half-siblings
+      if (male.parentMaleId && female.parentMaleId && male.parentMaleId === female.parentMaleId) {
+        if (male.parentFemaleId && female.parentFemaleId && male.parentFemaleId === female.parentFemaleId) {
+          return { isRisky: true, relationshipType: 'siblings' };
+        } else {
+          return { isRisky: true, relationshipType: 'half-siblings' };
+        }
+      }
+      
+      if (male.parentFemaleId && female.parentFemaleId && male.parentFemaleId === female.parentFemaleId) {
+        return { isRisky: true, relationshipType: 'half-siblings' };
+      }
+      
+      // TODO: Implement more sophisticated checks using the ancestry field
+      
+      return { isRisky: false };
+    } catch (error) {
+      console.error(`Error in DatabaseAnimalBreedingService.checkInbreedingRisk(${maleId}, ${femaleId}):`, error);
+      return { isRisky: false };
+    }
+  }
+  
+  async getBreedingEvents(): Promise<BreedingEvent[]> {
+    try {
+      return await db.select().from(breedingEvents);
+    } catch (error) {
+      console.error('Error in DatabaseAnimalBreedingService.getBreedingEvents:', error);
+      return [];
+    }
+  }
+  
+  async getBreedingEvent(id: number): Promise<BreedingEvent | undefined> {
+    try {
+      const [event] = await db
+        .select()
+        .from(breedingEvents)
+        .where(eq(breedingEvents.id, id));
+      
+      return event;
+    } catch (error) {
+      console.error(`Error in DatabaseAnimalBreedingService.getBreedingEvent(${id}):`, error);
+      return undefined;
+    }
+  }
+  
+  async createBreedingEvent(event: InsertBreedingEvent): Promise<BreedingEvent> {
+    try {
+      const [createdEvent] = await db
+        .insert(breedingEvents)
+        .values(event)
+        .returning();
+      
+      return createdEvent;
+    } catch (error) {
+      console.error('Error in DatabaseAnimalBreedingService.createBreedingEvent:', error);
+      throw error;
+    }
+  }
+  
+  async updateBreedingEvent(id: number, eventUpdate: Partial<InsertBreedingEvent>): Promise<BreedingEvent | undefined> {
+    try {
+      const [updatedEvent] = await db
+        .update(breedingEvents)
+        .set(eventUpdate)
+        .where(eq(breedingEvents.id, id))
+        .returning();
+      
+      return updatedEvent;
+    } catch (error) {
+      console.error(`Error in DatabaseAnimalBreedingService.updateBreedingEvent(${id}):`, error);
+      return undefined;
+    }
+  }
+  
+  async deleteBreedingEvent(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(breedingEvents)
+        .where(eq(breedingEvents.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error(`Error in DatabaseAnimalBreedingService.deleteBreedingEvent(${id}):`, error);
+      return false;
+    }
+  }
+}
+
+// Export instances for different environments
+// For database access
+export const animalBreedingService = new DatabaseAnimalBreedingService()
+// For in-memory access (during development & testing)
+export const memAnimalBreedingService = new MemAnimalBreedingService();
