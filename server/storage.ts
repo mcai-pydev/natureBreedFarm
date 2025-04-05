@@ -2196,4 +2196,639 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Implement database storage
+import { eq, and, desc, asc, or, sql } from "drizzle-orm";
+import { db } from "./db";
+import connectPg from "connect-pg-simple";
+
+const PostgresSessionStore = connectPg(session);
+
+export class DatabaseStorage implements IStorage {
+  sessionStore: SessionStore;
+
+  constructor() {
+    // Initialize session store for PostgreSQL
+    this.sessionStore = new PostgresSessionStore({
+      conObject: {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+      },
+      createTableIfMissing: true
+    });
+  }
+
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async updateUser(id: number, userUpdate: Partial<InsertUser>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({...userUpdate, updatedAt: new Date()})
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  // Product methods
+  async getProducts(): Promise<Product[]> {
+    return await db.select().from(products);
+  }
+
+  async getProductsByCategory(category: string): Promise<Product[]> {
+    return await db.select().from(products).where(eq(products.category, category));
+  }
+
+  async getFeaturedProducts(): Promise<Product[]> {
+    return await db.select().from(products).where(eq(products.isFeatured, true));
+  }
+
+  async searchProducts(query: string, filters?: any): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(
+        filters?.category
+          ? and(
+              eq(products.category, filters.category),
+              eq(products.name, query)
+            )
+          : eq(products.name, query)
+      );
+  }
+
+  async getLowStockProducts(): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(
+        and(
+          eq(products.trackInventory, true),
+          eq(products.stockStatus, "low")
+        )
+      );
+  }
+
+  async getProduct(id: number): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product;
+  }
+
+  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+    const [product] = await db.insert(products).values(insertProduct).returning();
+    return product;
+  }
+
+  async updateProduct(id: number, productUpdate: Partial<InsertProduct>): Promise<Product | undefined> {
+    const [updatedProduct] = await db
+      .update(products)
+      .set({...productUpdate, updatedAt: new Date()})
+      .where(eq(products.id, id))
+      .returning();
+    return updatedProduct;
+  }
+
+  async deleteProduct(id: number): Promise<boolean> {
+    const result = await db.delete(products).where(eq(products.id, id));
+    return result.count > 0;
+  }
+
+  async updateProductStock(id: number, quantity: number, isIncrease: boolean): Promise<Product | undefined> {
+    const product = await this.getProduct(id);
+    if (!product || !product.trackInventory) return undefined;
+
+    const newQuantity = isIncrease 
+      ? (product.quantity || 0) + quantity 
+      : (product.quantity || 0) - quantity;
+    
+    // Determine stock status based on new quantity
+    let stockStatus = "in_stock";
+    if (newQuantity <= 0) {
+      stockStatus = "out_of_stock";
+    } else if (newQuantity <= (product.lowStockThreshold || 5)) {
+      stockStatus = "low";
+    }
+
+    return this.updateProduct(id, { 
+      quantity: newQuantity, 
+      stockStatus 
+    });
+  }
+
+  // Transaction methods
+  async getTransactions(): Promise<TransactionWithProduct[]> {
+    const result = await db.select().from(transactions).leftJoin(products, eq(transactions.productId, products.id));
+    return result.map(row => ({
+      ...row.transactions,
+      product: row.products
+    }));
+  }
+
+  async getTransactionsByType(type: string): Promise<TransactionWithProduct[]> {
+    const result = await db
+      .select()
+      .from(transactions)
+      .leftJoin(products, eq(transactions.productId, products.id))
+      .where(eq(transactions.type, type));
+    
+    return result.map(row => ({
+      ...row.transactions,
+      product: row.products
+    }));
+  }
+
+  async getTransactionsByDate(startDate: Date, endDate: Date): Promise<TransactionWithProduct[]> {
+    const result = await db
+      .select()
+      .from(transactions)
+      .leftJoin(products, eq(transactions.productId, products.id))
+      .where(
+        and(
+          transactions.date >= startDate,
+          transactions.date <= endDate
+        )
+      );
+    
+    return result.map(row => ({
+      ...row.transactions,
+      product: row.products
+    }));
+  }
+
+  async getTransaction(id: number): Promise<Transaction | undefined> {
+    const [transaction] = await db.select().from(transactions).where(eq(transactions.id, id));
+    return transaction;
+  }
+
+  async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
+    const [transaction] = await db.insert(transactions).values(insertTransaction).returning();
+    
+    // Update product stock if applicable
+    if (insertTransaction.productId && insertTransaction.quantity) {
+      const isIncrease = insertTransaction.type === "purchase";
+      await this.updateProductStock(
+        insertTransaction.productId,
+        insertTransaction.quantity,
+        isIncrease
+      );
+    }
+    
+    return transaction;
+  }
+
+  async updateTransaction(id: number, transactionUpdate: Partial<InsertTransaction>): Promise<Transaction | undefined> {
+    const [updatedTransaction] = await db
+      .update(transactions)
+      .set({...transactionUpdate, updatedAt: new Date()})
+      .where(eq(transactions.id, id))
+      .returning();
+    return updatedTransaction;
+  }
+
+  async deleteTransaction(id: number): Promise<boolean> {
+    // Get transaction before deleting to potentially revert stock
+    const transaction = await this.getTransaction(id);
+    
+    const result = await db.delete(transactions).where(eq(transactions.id, id));
+    
+    // If successful deletion and transaction affected stock, revert it
+    if (result.count > 0 && transaction && transaction.productId && transaction.quantity) {
+      // When deleting, we need to reverse the stock update logic
+      const isIncrease = transaction.type !== "purchase";
+      await this.updateProductStock(
+        transaction.productId,
+        transaction.quantity,
+        isIncrease
+      );
+    }
+    
+    return result.count > 0;
+  }
+
+  // Newsletter methods
+  async getNewsletterSubscribers(): Promise<Newsletter[]> {
+    return await db.select().from(newsletters);
+  }
+
+  async getNewsletterSubscriber(email: string): Promise<Newsletter | undefined> {
+    const [subscriber] = await db.select().from(newsletters).where(eq(newsletters.email, email));
+    return subscriber;
+  }
+
+  async createNewsletterSubscriber(insertSubscriber: InsertNewsletter): Promise<Newsletter> {
+    const [subscriber] = await db.insert(newsletters).values(insertSubscriber).returning();
+    return subscriber;
+  }
+
+  async updateNewsletterSubscriber(id: number, subscriberUpdate: Partial<InsertNewsletter>): Promise<Newsletter | undefined> {
+    const [updatedSubscriber] = await db
+      .update(newsletters)
+      .set({...subscriberUpdate, updatedAt: new Date()})
+      .where(eq(newsletters.id, id))
+      .returning();
+    return updatedSubscriber;
+  }
+
+  async deleteNewsletterSubscriber(id: number): Promise<boolean> {
+    const result = await db.delete(newsletters).where(eq(newsletters.id, id));
+    return result.count > 0;
+  }
+
+  // Bulk order methods
+  async getBulkOrders(): Promise<BulkOrder[]> {
+    return await db.select().from(bulkOrders);
+  }
+
+  async getBulkOrder(id: number): Promise<BulkOrder | undefined> {
+    const [order] = await db.select().from(bulkOrders).where(eq(bulkOrders.id, id));
+    return order;
+  }
+
+  async createBulkOrder(insertOrder: InsertBulkOrder): Promise<BulkOrder> {
+    const [order] = await db.insert(bulkOrders).values(insertOrder).returning();
+    return order;
+  }
+
+  async updateBulkOrder(id: number, orderUpdate: Partial<InsertBulkOrder>): Promise<BulkOrder | undefined> {
+    const [updatedOrder] = await db
+      .update(bulkOrders)
+      .set({...orderUpdate, updatedAt: new Date()})
+      .where(eq(bulkOrders.id, id))
+      .returning();
+    return updatedOrder;
+  }
+
+  async deleteBulkOrder(id: number): Promise<boolean> {
+    const result = await db.delete(bulkOrders).where(eq(bulkOrders.id, id));
+    return result.count > 0;
+  }
+
+  // Social share methods
+  async getSocialShares(productId: number): Promise<SocialShare[]> {
+    return await db
+      .select()
+      .from(socialShares)
+      .where(eq(socialShares.productId, productId));
+  }
+
+  async createSocialShare(insertShare: InsertSocialShare): Promise<SocialShare> {
+    const [share] = await db.insert(socialShares).values(insertShare).returning();
+    return share;
+  }
+
+  async updateSocialShare(id: number, shareUpdate: Partial<InsertSocialShare>): Promise<SocialShare | undefined> {
+    const [updatedShare] = await db
+      .update(socialShares)
+      .set({...shareUpdate, updatedAt: new Date()})
+      .where(eq(socialShares.id, id))
+      .returning();
+    return updatedShare;
+  }
+
+  // Animal breeding methods
+  async getAnimals(): Promise<Animal[]> {
+    return await db.select().from(animals);
+  }
+
+  async getAnimalsByType(type: string): Promise<Animal[]> {
+    return await db
+      .select()
+      .from(animals)
+      .where(eq(animals.type, type));
+  }
+
+  async getAnimal(id: number): Promise<Animal | undefined> {
+    const [animal] = await db.select().from(animals).where(eq(animals.id, id));
+    return animal;
+  }
+
+  async createAnimal(insertAnimal: InsertAnimal): Promise<Animal> {
+    const [animal] = await db.insert(animals).values(insertAnimal).returning();
+    return animal;
+  }
+
+  async updateAnimal(id: number, animalUpdate: Partial<InsertAnimal>): Promise<Animal | undefined> {
+    const [updatedAnimal] = await db
+      .update(animals)
+      .set({...animalUpdate, updatedAt: new Date()})
+      .where(eq(animals.id, id))
+      .returning();
+    return updatedAnimal;
+  }
+
+  async deleteAnimal(id: number): Promise<boolean> {
+    // First check if this animal is used as a parent in other animals
+    const offspring = await db
+      .select()
+      .from(animals)
+      .where(
+        or(
+          eq(animals.parentMaleId, id),
+          eq(animals.parentFemaleId, id)
+        )
+      );
+    
+    if (offspring.length > 0) {
+      // Don't delete animals with offspring, maybe mark as inactive instead
+      await db
+        .update(animals)
+        .set({ status: "inactive", updatedAt: new Date() })
+        .where(eq(animals.id, id));
+      return false;
+    }
+    
+    const result = await db.delete(animals).where(eq(animals.id, id));
+    return result.count > 0;
+  }
+
+  async getPotentialMates(animalId: number): Promise<Animal[]> {
+    const animal = await this.getAnimal(animalId);
+    if (!animal) return [];
+    
+    // Only work with rabbits for now
+    if (animal.type.toLowerCase() !== "rabbit") {
+      return [];
+    }
+    
+    // Get animals of the opposite gender and same type
+    const potentialMates = await db
+      .select()
+      .from(animals)
+      .where(
+        and(
+          eq(animals.status, "active"),
+          eq(animals.type, "rabbit"),
+          animals.gender !== animal.gender
+        )
+      );
+    
+    // Filter out risky inbreeding matches
+    const safeMatches = [];
+    
+    for (const potential of potentialMates) {
+      // We need to determine male and female IDs based on gender
+      const maleId = animal.gender === "male" ? animal.id : potential.id;
+      const femaleId = animal.gender === "female" ? animal.id : potential.id;
+      
+      const inbreedingCheck = await this.checkInbreedingRisk(maleId, femaleId);
+      
+      if (!inbreedingCheck.isRisky) {
+        safeMatches.push(potential);
+      }
+    }
+    
+    return safeMatches;
+  }
+
+  async checkInbreedingRisk(maleId: number, femaleId: number): Promise<{
+    isRisky: boolean;
+    relationshipType?: string;
+  }> {
+    const male = await this.getAnimal(maleId);
+    const female = await this.getAnimal(femaleId);
+    
+    if (!male || !female) {
+      return { isRisky: false };
+    }
+
+    // Check if they're siblings or half-siblings
+    if ((male.parentMaleId && male.parentMaleId === female.parentMaleId) ||
+        (male.parentFemaleId && male.parentFemaleId === female.parentFemaleId)) {
+      return { 
+        isRisky: true, 
+        relationshipType: (male.parentMaleId === female.parentMaleId && male.parentFemaleId === female.parentFemaleId) 
+          ? "siblings" 
+          : "half-siblings"
+      };
+    }
+    
+    // Check if one is the parent of the other
+    if (male.id === female.parentMaleId || female.id === male.parentFemaleId) {
+      return { isRisky: true, relationshipType: "parent-child" };
+    }
+    
+    // Check for grandparent relationship
+    if (male.parentMaleId === female.id || male.parentFemaleId === female.id ||
+        female.parentMaleId === male.id || female.parentFemaleId === male.id) {
+      return { isRisky: true, relationshipType: "grandparent-grandchild" };
+    }
+    
+    // Add more complex relationship checks as needed
+    
+    return { isRisky: false };
+  }
+
+  async getBreedingEvents(): Promise<BreedingEvent[]> {
+    return await db.select().from(breedingEvents);
+  }
+
+  async getBreedingEvent(id: number): Promise<BreedingEvent | undefined> {
+    const [event] = await db.select().from(breedingEvents).where(eq(breedingEvents.id, id));
+    return event;
+  }
+
+  async createBreedingEvent(insertEvent: InsertBreedingEvent): Promise<BreedingEvent> {
+    const [event] = await db.insert(breedingEvents).values(insertEvent).returning();
+    return event;
+  }
+
+  async updateBreedingEvent(id: number, eventUpdate: Partial<InsertBreedingEvent>): Promise<BreedingEvent | undefined> {
+    const [updatedEvent] = await db
+      .update(breedingEvents)
+      .set({...eventUpdate, updatedAt: new Date()})
+      .where(eq(breedingEvents.id, id))
+      .returning();
+    return updatedEvent;
+  }
+
+  async deleteBreedingEvent(id: number): Promise<boolean> {
+    const result = await db.delete(breedingEvents).where(eq(breedingEvents.id, id));
+    return result.count > 0;
+  }
+
+  // Analytics methods
+  async getProductDistribution(): Promise<{ category: string, count: number }[]> {
+    const result = await db
+      .select({
+        category: products.category,
+        count: sql`count(${products.id})::int`
+      })
+      .from(products)
+      .groupBy(products.category);
+    
+    return result;
+  }
+
+  async getTransactionSummary(startDate: Date, endDate: Date): Promise<{ 
+    totalSales: number, 
+    totalPurchases: number, 
+    totalOrders: number,
+    totalAuctions: number
+  }> {
+    // Count sales transactions
+    const [salesResult] = await db
+      .select({
+        total: sql`coalesce(sum(${transactions.amount}), 0)::float`
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.type, "sale"),
+          transactions.date >= startDate,
+          transactions.date <= endDate
+        )
+      );
+    
+    // Count purchase transactions
+    const [purchasesResult] = await db
+      .select({
+        total: sql`coalesce(sum(${transactions.amount}), 0)::float`
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.type, "purchase"),
+          transactions.date >= startDate,
+          transactions.date <= endDate
+        )
+      );
+    
+    // Count orders
+    const [ordersResult] = await db
+      .select({
+        count: sql`count(${orders.id})::int`
+      })
+      .from(orders)
+      .where(
+        and(
+          orders.createdAt >= startDate,
+          orders.createdAt <= endDate
+        )
+      );
+    
+    // Count auction transactions
+    const [auctionsResult] = await db
+      .select({
+        total: sql`coalesce(sum(${transactions.amount}), 0)::float`
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.type, "auction"),
+          transactions.date >= startDate,
+          transactions.date <= endDate
+        )
+      );
+    
+    return {
+      totalSales: salesResult.total || 0,
+      totalPurchases: purchasesResult.total || 0,
+      totalOrders: ordersResult.count || 0,
+      totalAuctions: auctionsResult.total || 0
+    };
+  }
+
+  // Order methods
+  async getOrders(): Promise<Order[]> {
+    return await db.select().from(orders);
+  }
+
+  async getOrder(id: number): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order;
+  }
+
+  async getOrderWithItems(id: number): Promise<Order & { items: OrderItem[] } | undefined> {
+    const order = await this.getOrder(id);
+    if (!order) return undefined;
+    
+    const items = await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.orderId, id));
+    
+    return { ...order, items };
+  }
+
+  async createOrder(insertOrder: InsertOrder, insertItems: InsertOrderItem[]): Promise<Order> {
+    // Begin by creating the order
+    const [order] = await db.insert(orders).values(insertOrder).returning();
+    
+    // Add items to the order
+    for (const item of insertItems) {
+      await db.insert(orderItems).values({
+        ...item,
+        orderId: order.id
+      });
+      
+      // Update product stock if needed
+      if (item.productId && item.quantity) {
+        await this.updateProductStock(item.productId, item.quantity, false);
+      }
+    }
+    
+    return order;
+  }
+
+  async updateOrder(id: number, orderUpdate: Partial<InsertOrder>): Promise<Order | undefined> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({...orderUpdate, updatedAt: new Date()})
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder;
+  }
+
+  async deleteOrder(id: number): Promise<boolean> {
+    // Get order items first to restore stock
+    const items = await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.orderId, id));
+    
+    // Delete order items first
+    await db.delete(orderItems).where(eq(orderItems.orderId, id));
+    
+    // Delete the order
+    const result = await db.delete(orders).where(eq(orders.id, id));
+    
+    // Restore stock for deleted items
+    for (const item of items) {
+      if (item.productId && item.quantity) {
+        await this.updateProductStock(item.productId, item.quantity, true);
+      }
+    }
+    
+    return result.count > 0;
+  }
+
+  async getOrdersByCustomerEmail(email: string): Promise<Order[]> {
+    return await db
+      .select()
+      .from(orders)
+      .where(eq(orders.customerEmail, email));
+  }
+
+  async getRecentOrders(limit: number): Promise<Order[]> {
+    return await db
+      .select()
+      .from(orders)
+      .orderBy(desc(orders.createdAt))
+      .limit(limit);
+  }
+}
+
+// Switch from in-memory to database storage
+export const storage = new DatabaseStorage();

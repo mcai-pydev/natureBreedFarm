@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { bootSystem } from "./boot/index";
+import { seedAnimalData } from "./seed-data";
 
 const app = express();
 app.use(express.json());
@@ -68,6 +69,19 @@ app.use((req, res, next) => {
     reusePort: true,
   }, async () => {
     log(`serving on port ${port}`);
+    
+    // Seed data from in-memory to database
+    try {
+      log('Seeding animal data from in-memory to database...');
+      const seedResult = await seedAnimalData();
+      if (seedResult.success) {
+        log(`✅ Seed successful: ${seedResult.message}`);
+      } else {
+        log(`⚠️ Seed warning: ${seedResult.message}`);
+      }
+    } catch (error) {
+      log(`❌ Error seeding data: ${error instanceof Error ? error.message : String(error)}`);
+    }
     
     // Run boot system checks after server has started
     try {
