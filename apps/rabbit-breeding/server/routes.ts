@@ -1,4 +1,4 @@
-import { Express } from 'express';
+import { Express, Request } from 'express';
 import { createServer, type Server } from 'http';
 import { animalBreedingService } from './animal-breeding';
 import { 
@@ -8,6 +8,9 @@ import {
   potentialMatesSchema
 } from '@shared/schema';
 import { ZodError } from 'zod';
+import { stringify } from 'csv-stringify/sync';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { checkHealth } from './health';
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -303,6 +306,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error seeding data:', error);
       res.status(500).json({ error: 'Failed to seed data' });
     }
+  });
+
+  // Helper function to filter breeding events based on query parameters
+  const filterBreedingEvents = async (req: Request) => {
+    // Get filter parameters
+    const animalId = req.query.animalId ? parseInt(req.query.animalId as string) : undefined;
+    const status = req.query.status as string | undefined;
+    const startDate = req.query.startDate as string | undefined;
+    const endDate = req.query.endDate as string | undefined;
+    
+    // Fetch events
+    let events = await animalBreedingService.getBreedingEvents();
+    
+    // Apply filters
+    if (animalId) {
+      events = events.filter(event => 
+        event.maleId === animalId || event.femaleId === animalId
+      );
+    }
+    
+    if (status) {
+      events = events.filter(event => event.status === status);
+    }
+    
+    if (startDate) {
+      const start = new Date(startDate);
+      events = events.filter(event => new Date(event.breedingDate) >= start);
+    }
+    
+    if (endDate) {
+      const end = new Date(endDate);
+      events = events.filter(event => new Date(event.breedingDate) <= end);
+    }
+    
+    // Enhance the data with animal names for better readability
+    if (events.length > 0) {
+      const enhancedEvents = await Promise.all(events.map(async (event) => {
+        const male = await animalBreedingService.getAnimal(event.maleId);
+        const female = await animalBreedingService.getAnimal(event.femaleId);
+        
+        return {
+          ...event,
+          maleName: male?.name || 'Unknown',
+          femaleName: female?.name || 'Unknown',
+        };
+      }));
+      
+      return enhancedEvents;
+    }
+    
+    return [];
+  };
+  
+  // Export breeding events to CSV
+  app.get('/api/breeding/export/csv', async (req, res) => {
+    try {
+      const enhancedEvents = await filterBreedingEvents(req);
+      
+      // If no events match the criteria
+      if (enhancedEvents.length === 0) {
+        return res.status(404).json({ error: 'No breeding events found matching the criteria' });
+      }
+      
+      // Format date for file name
+      const dateStr = new Date().toISOString().split('T')[0];
+      const filename = `breeding-events-export-${dateStr}.csv`;
+      
+      // CSV column configuration
+      const columns = [
+        { key: 'id', header: 'ID' },
+        { key: 'eventId', header: 'Event ID' },
+        { key: 'maleId', header: 'Male ID' },
+        { key: 'maleName', header: 'Male Name' },
+        { key: 'femaleId', header: 'Female ID' },
+        { key: 'femaleName', header: 'Female Name' },
+        { key: 'breedingDate', header: 'Breeding Date' },
+        { key: 'status', header: 'Status' },
+        { key: 'expectedBirthDate', header: 'Expected Birth Date' },
+        { key: 'actualBirthDate', header: 'Actual Birth Date' },
+        { key: 'expectedOffspringCount', header: 'Expected Offspring Count' },
+        { key: 'actualOffspringCount', header: 'Actual Offspring Count' },
+        { key: 'offspringCount', header: 'Surviving Offspring Count' },
+        { key: 'geneticCompatibilityScore', header: 'Genetic Compatibility Score' },
+        { key: 'notes', header: 'Notes' },
+      ];
+      
+      // Generate CSV
+      const csvData = stringify(enhancedEvents, {
+        header: true,
+        columns: columns,
+      });
+      
+      // Set response headers
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      
+      // Send the CSV file
+      res.send(csvData);
+    } catch (error) {
+      console.error('Error exporting breeding events to CSV:', error);
+      res.status(500).json({ error: 'Failed to export breeding events to CSV' });
+    }
+  });
+  
+  // Export breeding events to PDF
+  app.get('/api/breeding/export/pdf', async (req, res) => {
+    try {
+      const enhancedEvents = await filterBreedingEvents(req);
+      
+      // If no events match the criteria
+      if (enhancedEvents.length === 0) {
+        return res.status(404).json({ error: 'No breeding events found matching the criteria' });
+      }
+      
+      // Format date for file name
+      const dateStr = new Date().toISOString().split('T')[0];
+      const filename = `breeding-events-export-${dateStr}.pdf`;
+      
+      // Create PDF document
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text('Breeding Events Report', 14, 22);
+      
+      // Add report generation details
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 14, 30);
+      
+      // Prepare table data
+      const tableColumn = [
+        'ID', 'Event ID', 'Male', 'Female', 'Breeding Date', 
+        'Status', 'Expected Birth', 'Actual Birth', 'Offspring'
+      ];
+      
+      const tableRows = enhancedEvents.map(event => [
+        event.id.toString(),
+        event.eventId,
+        `${event.maleName} (${event.maleId})`,
+        `${event.femaleName} (${event.femaleId})`,
+        new Date(event.breedingDate).toLocaleDateString(),
+        event.status,
+        event.expectedBirthDate ? new Date(event.expectedBirthDate).toLocaleDateString() : 'N/A',
+        event.actualBirthDate ? new Date(event.actualBirthDate).toLocaleDateString() : 'N/A',
+        event.offspringCount?.toString() || '0',
+      ]);
+      
+      // Add table
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 35,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [89, 89, 89] },
+      });
+      
+      // Add summary statistics
+      const totalEvents = enhancedEvents.length;
+      const successfulEvents = enhancedEvents.filter(e => e.status === 'successful').length;
+      const pendingEvents = enhancedEvents.filter(e => e.status === 'pending').length;
+      const totalOffspring = enhancedEvents.reduce((sum, event) => sum + (event.offspringCount || 0), 0);
+      
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      
+      doc.setFontSize(12);
+      doc.text('Summary Statistics', 14, finalY);
+      doc.setFontSize(10);
+      doc.text(`Total Events: ${totalEvents}`, 14, finalY + 7);
+      doc.text(`Successful Events: ${successfulEvents}`, 14, finalY + 14);
+      doc.text(`Pending Events: ${pendingEvents}`, 14, finalY + 21);
+      doc.text(`Total Offspring: ${totalOffspring}`, 14, finalY + 28);
+      
+      // Set response headers
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      
+      // Send the PDF file
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error exporting breeding events to PDF:', error);
+      res.status(500).json({ error: 'Failed to export breeding events to PDF' });
+    }
+  });
+  
+  // Backward compatibility - redirect old export URL to CSV export
+  app.get('/api/breeding/export', (req, res) => {
+    res.redirect(`/api/breeding/export/csv${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`);
   });
 
   const httpServer = createServer(app);

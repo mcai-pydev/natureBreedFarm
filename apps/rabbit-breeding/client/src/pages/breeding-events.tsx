@@ -7,7 +7,11 @@ import {
   Heart, 
   AlertCircle, 
   Info, 
-  Loader2 
+  Loader2,
+  Download,
+  FileText,
+  FileSpreadsheet,
+  ChevronDown
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -296,7 +300,23 @@ function EventTypeBadge({ type }: { type: BreedingEvent['eventType'] }) {
 
 export default function BreedingEventsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Add click outside handler to close export menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (isExportMenuOpen && !target.closest('#exportDropdownButton') && !target.closest('.export-menu')) {
+        setIsExportMenuOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isExportMenuOpen]);
   
   // Fetch animals for the form dropdown
   const { data: animals = [] } = useQuery({ 
@@ -403,13 +423,53 @@ export default function BreedingEventsPage() {
           />
         </div>
         
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="shrink-0 inline-flex items-center gap-1 bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          New Breeding Event
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          {/* Export Dropdown */}
+          <div className="relative">
+            <button
+              id="exportDropdownButton"
+              onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
+              className="shrink-0 inline-flex items-center gap-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Export
+              <ChevronDown className="h-4 w-4 ml-1" />
+            </button>
+            
+            {isExportMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border export-menu">
+                <div className="py-1">
+                  <a 
+                    href="/api/breeding/export/csv" 
+                    download
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsExportMenuOpen(false)}
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Export to CSV
+                  </a>
+                  <a 
+                    href="/api/breeding/export/pdf" 
+                    download
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsExportMenuOpen(false)}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export to PDF
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="shrink-0 inline-flex items-center gap-1 bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            New Breeding Event
+          </button>
+        </div>
       </div>
       
       {/* Event list */}
