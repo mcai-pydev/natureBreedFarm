@@ -2200,6 +2200,7 @@ export class MemStorage implements IStorage {
 import { eq, and, desc, asc, or, sql } from "drizzle-orm";
 import { db } from "./db";
 import connectPg from "connect-pg-simple";
+import pg from "pg";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -2208,13 +2209,21 @@ export class DatabaseStorage implements IStorage {
 
   constructor() {
     // Initialize session store for PostgreSQL
+    const pgPoolConfig = {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    };
+    
+    // Create and configure the PostgreSQL session store
     this.sessionStore = new PostgresSessionStore({
-      conObject: {
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }
-      },
-      createTableIfMissing: true
+      pool: new pg.Pool(pgPoolConfig),
+      tableName: 'session',
+      createTableIfMissing: true,
+      pruneSessionInterval: 60 * 15 // Prune expired sessions every 15 minutes
     });
+    
+    // Log successful session store creation
+    console.log('🔐 PostgreSQL session store initialized');
   }
 
   // User methods

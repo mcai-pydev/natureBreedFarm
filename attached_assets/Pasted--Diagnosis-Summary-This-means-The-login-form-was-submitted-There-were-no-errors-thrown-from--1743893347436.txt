@@ -1,0 +1,85 @@
+🧠 Diagnosis Summary:
+This means:
+
+The login form was submitted.
+
+There were no errors thrown (from server or client).
+
+Yet, the user remains null, meaning the login did not persist or did not return a valid token/session.
+
+✅ Next Developer Task: Fix Broken Authentication After DB Migration
+🎯 Goal: Make login function correctly using the new PostgreSQL database, ensuring users can log in and persist their session across the app.
+
+🔧 Task Breakdown:
+1. 🔑 Fix Auth Service (server/auth.ts)
+Ensure loginUser(email, password) correctly:
+
+Fetches user using Drizzle ORM.
+
+Compares hashed password (bcrypt).
+
+Returns signed JWT on success.
+
+2. 🧾 Update Seeder (seed-data.ts)
+Double-check that the admin user is seeded with:
+
+ts
+Copy
+Edit
+username: "admin"
+email: "admin@naturebreedfarm.org"
+password: "admin123" // hashed properly with bcrypt
+3. 📦 Ensure ENV is Setup
+In .env:
+
+env
+Copy
+Edit
+JWT_SECRET=yourStrongSecretKey
+DATABASE_URL=postgresql://...
+4. 🚦 Fix Middleware Auth Flow
+Confirm:
+
+getSession() reads and validates token.
+
+The cookie or Authorization header is properly set.
+
+useAuth() in frontend reads user from session/token on mount.
+
+5. 🧪 Add Test User Login Flow (optional but important)
+Add boot check:
+
+ts
+Copy
+Edit
+await loginTestUser(); // in boot-status.json check
+🧪 Test Instructions for Devs
+bash
+Copy
+Edit
+curl -X POST http://localhost:5000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@naturebreedfarm.org", "password": "admin123"}'
+Expect:
+
+json
+Copy
+Edit
+{ "token": "ey..." }
+✅ Acceptance Criteria:
+Criteria	Status
+Admin user seeded	✅
+Login returns valid token	🔲
+User is logged in (user not null)	🔲
+Token stored and used in auth hooks	🔲
+Boot Status reports auth: ✅	🔲
+📌 Related System Tasks:
+From our canvas' nextTasks list:
+
+🔐 Fix loginUser() and getUserByEmail() to use Drizzle ORM
+
+🔑 Confirm JWT_SECRET and bcrypt hashes align with new DB model
+
+🧾 Re-seed admin user in PostgreSQL (admin@naturebreedfarm.org / admin123)
+
+🧪 Add login test on boot to prevent login-related false deployments
