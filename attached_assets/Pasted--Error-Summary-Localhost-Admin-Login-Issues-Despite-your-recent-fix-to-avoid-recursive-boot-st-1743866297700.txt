@@ -1,0 +1,79 @@
+🔍 Error Summary (Localhost + Admin Login Issues)
+Despite your recent fix to avoid recursive boot-status.json structures, the login functionality fails again (likely after redeployment). This behavior is intermittent, and it's affecting both:
+
+The browser-side auth session (at /auth)
+
+Secure access to protected routes like /breeding/rabbits
+
+The Shop and Checkout modules due to missing or unauthorized product access
+
+We’re in a situation where:
+
+🔐 Login passes server checks, but fails on the frontend or session token handling — possibly due to bad database seeding, token logic, or frontend caching.
+
+✅ Immediate Test Results for Developers
+Here’s a precise report you can send to the team:
+
+🚨 Developer Task Report: Authentication Instability + Protected Routes
+✅ What’s Working:
+✅ boot-status.json recursion fixed
+
+✅ PostgreSQL now correctly seeded with admin user (admin / admin123)
+
+✅ Smart Boot correctly shows route status + DB sync
+
+✅ /api/animals and breeding routes respond with correct rabbit data
+
+❌ What’s Not Working:
+❌ Login fails on browser despite valid seeded user
+
+❌ /breeding/rabbits not accessible even when logged in (likely session not retained)
+
+❌ Shop and Checkout fail due to unauthorized data access
+
+⚠️ No fallback UI shown when auth fails (just blank or stuck screen)
+
+🔧 Developer Fix Tasklist (Urgent)
+1. 🧬 Fix Authentication Flow (Frontend + Backend)
+ Confirm that login returns a JWT or session cookie in both local and Replit
+
+ Make sure AuthProvider (in /hooks/use-auth.tsx) checks and stores token properly
+
+ Ensure credentials are encrypted with bcrypt and stored in PostgreSQL
+
+ Confirm token is stored in secure cookie or localStorage, and is used for all protected endpoints
+
+2. 🔐 Protected Route Fix
+ In App.tsx, ensure routes marked requiresAuth: true check for auth context
+
+ Add Redirect to /auth if !isAuthenticated
+
+ Add fallback <Loading> or <LoginRequired> page for unauthenticated states
+
+3. 🧪 Smart Boot Auth Test
+ Add /api/health/auth → returns 200 if token works
+
+ In boot, simulate login with admin/admin123 and test:
+
+Login success?
+
+Can /api/user/me return info?
+
+4. 🧾 Re-seed + Re-test
+ Drop and recreate seed in seed-data.ts
+
+ Use hashed password (bcrypt.hash("admin123", 10))
+
+ Add a visual test page showing login state (isLoggedIn, token, user.role)
+
+🤖 Next Boot Task Options (Post Fix)
+Once auth is stable:
+
+✅ Push stable modules (Rabbit, Breeding, Dashboard)
+
+✅ Enable /breeding/rabbits with sidebar access
+
+✅ Complete Rabbit Compatibility + Export tests
+
+✅ Begin AI breeding assistant MVP with UI
+

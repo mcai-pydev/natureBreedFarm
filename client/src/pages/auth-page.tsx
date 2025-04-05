@@ -54,7 +54,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function AuthPage() {
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, isLoading, error, loginMutation, registerMutation } = useAuth();
   const { toast } = useToast();
   
   // Dialog states
@@ -97,18 +97,34 @@ export default function AuthPage() {
   });
 
   const onLoginSubmit = (data: LoginFormValues) => {
+    console.log("Login attempt for user:", data.username);
     loginMutation.mutate({
       username: data.username,
       password: data.password
+    }, {
+      onSuccess: () => {
+        console.log("Login success, redirecting to home page");
+      },
+      onError: (error: Error) => {
+        console.error("Login error:", error);
+      }
     });
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
+    console.log("Registration attempt for user:", data.username);
     registerMutation.mutate({
       username: data.username,
       password: data.password,
       name: data.name,
       role: "User"
+    }, {
+      onSuccess: () => {
+        console.log("Registration success, user created");
+      },
+      onError: (error: Error) => {
+        console.error("Registration error:", error);
+      }
     });
   };
   
@@ -171,13 +187,58 @@ export default function AuthPage() {
     }
   };
 
+  // Debug mode for auth issues
+  const [showDebug, setShowDebug] = useState(false);
+
   // Redirect to dashboard if already logged in
   if (user) {
+    console.log("User is authenticated, redirecting to home page");
     return <Redirect to="/" />;
   }
 
   return (
     <>
+      {/* Debug Panel */}
+      <div className="fixed bottom-0 right-0 p-4 z-50">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowDebug(!showDebug)}
+          className="mb-2"
+        >
+          {showDebug ? "Hide Debug" : "Show Debug"}
+        </Button>
+        
+        {showDebug && (
+          <div className="bg-white border rounded-lg shadow-lg p-4 max-w-md max-h-96 overflow-auto">
+            <h3 className="font-bold mb-2">Auth Debug Info</h3>
+            <div className="text-xs font-mono">
+              <p>Auth Loading: {isLoading ? "true" : "false"}</p>
+              <p>Login Pending: {loginMutation.isPending ? "true" : "false"}</p>
+              <p>Register Pending: {registerMutation.isPending ? "true" : "false"}</p>
+              <p>Auth Error: {error ? (error as Error).message : "none"}</p>
+              <p>User: {user ? JSON.stringify(user, null, 2) : "null"}</p>
+              <hr className="my-2" />
+              <p className="font-bold mt-2">Default Admin Login:</p>
+              <p>Username: admin</p>
+              <p>Password: admin123</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2" 
+                onClick={() => {
+                  loginForm.setValue("username", "admin");
+                  loginForm.setValue("password", "admin123");
+                  console.log("Admin credentials prefilled");
+                }}
+              >
+                Prefill Admin Login
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+      
       <div className="flex min-h-screen">
         <div className="hidden md:block md:w-1/2 lg:w-2/3 bg-cover bg-center bg-[url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')]"></div>
         <div className="w-full md:w-1/2 lg:w-1/3 flex items-center justify-center p-6 bg-white">

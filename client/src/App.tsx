@@ -7,6 +7,7 @@ import { ResponsiveProvider } from '@/contexts/responsive-context';
 import { ToastProvider } from '@/hooks/use-toast';
 import { AuthProvider } from '@/hooks/use-auth';
 import { MobileProvider } from '@/hooks/use-mobile';
+import { ProtectedRoute } from '@/lib/protected-route';
 
 // Pages
 import HomePage from '@/pages/home-page';
@@ -79,21 +80,28 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
+      {/* Public routes */}
       <Route path="/auth" component={AuthPage} />
       <Route path="/shop" component={ShopPage} />
-      <Route path="/products" component={ProductsPage} />
-      <Route path="/transactions" component={TransactionsPage} />
-      <Route path="/reports" component={ReportsPage} />
-      <Route path="/rabbit-breeding" component={RabbitBreedingPage} />
       <Route path="/policies" component={PolicyPage} />
-      <Route path="/ai-assistant" component={AIAssistantPage} />
-      <Route path="/settings" component={SettingsPage} />
-      <Route path="/status" component={StatusPage} />
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/debug-onboarding" component={DebugOnboardingPage} />
+      
+      {/* Protected routes - require login */}
+      <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/products" component={ProductsPage} />
+      <ProtectedRoute path="/transactions" component={TransactionsPage} />
+      <ProtectedRoute path="/reports" component={ReportsPage} />
+      <ProtectedRoute path="/rabbit-breeding" component={RabbitBreedingPage} />
+      <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/status" component={StatusPage} />
+      
+      {/* Already protected using custom components */}
       <ProtectedOrderHistoryPage />
       <ProtectedOrderDetailPage />
+      
+      {/* Fallback for unknown routes */}
       <Route component={NotFoundPage} />
     </Switch>
   );
