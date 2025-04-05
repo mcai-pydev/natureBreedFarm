@@ -1,0 +1,92 @@
+ Tasks for MVP / Testing
+Let’s start with feasible low-to-medium effort tasks while laying foundation for future expansions.
+
+✅ Task Group 1: Micro-UX + Sound Interaction (Low Complexity)
+Goal: Add auditory feedback on key UI interactions.
+
+Tasks:
+
+ Integrate a sound feedback hook useSound() for buttons and form submissions.
+
+ Add sound triggers to:
+
+Submit rabbit form ✅
+
+Checkout confirmation
+
+Error popups (e.g., 401 auth issues)
+
+ Add toggle in user settings: Enable Sound Feedback
+
+✅ Task Group 2: Shareable Infographic Snapshot (Medium)
+Goal: Export farm performance summary as shareable PNG or social card.
+
+Tasks:
+
+ Create FarmPerformanceSummary.tsx component
+
+ Use html-to-image or dom-to-image to export PNG
+
+ Add “📤 Share” button with preset meta and hashtags
+
+ Track clicks and shares in boot analytics
+
+✅ Task Group 3: Mood-Based Color Scheme Switcher (Low)
+Goal: Let users pick a theme based on emotional mood.
+
+Tasks:
+
+ Add new color schemes (calm, energetic, focus, night)
+
+ Use tailwind.config.js with CSS variables per theme
+
+ Add dropdown selector in profile or navbar: Choose Mood
+
+ Persist choice to localStorage or user profile
+
+🔁 Task Group 4: Rabbit Map (Prototype-Ready Stub) (High)
+Goal: Visualize rabbit cages, positions, and breeding events.
+
+Tasks:
+
+ Create new /breeding/rabbits/map
+
+ Show grid layout of cages with:
+
+Gender icon
+
+Status color
+
+Tooltip: name, age, breed
+
+ Fetch from /api/animals?type=rabbit&withLocation=true
+
+ Use basic HTML grid first → upgrade with Leaflet.js or SVG later
+
+🎉 Task Group 5: Farm Progress Animation (Medium)
+Goal: Animate stages of farm development.
+
+Tasks:
+
+ Create FarmMilestones.tsx
+
+ Track:
+
+10 animals added ✅
+
+First checkout ✅
+
+First AI use 🧠
+
+ Trigger confetti / animation when milestone reached
+
+ Add optional celebration sound (tie to sound system)
+
+🔐 Bonus Consideration
+All features should be:
+
+Accessible (screen reader + ARIA labels)
+
+Localizable (i18n-ready)
+
+Respect user’s device capability (disable heavy UI on low-end devices)

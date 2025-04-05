@@ -1,0 +1,80 @@
+Finalized Developer Task
+Title: Split Rabbit Breeding System into Independent Smart Module
+
+🧭 Goal
+Isolate the Rabbit Breeding feature into its own dedicated micro-app (or directory structure), to allow focused development, easier testing, and modular AI integration.
+
+🧱 Tasks Breakdown
+1️⃣ Modular Extraction
+ Move RabbitBreedingPage.tsx + related logic from /pages → apps/rabbit-breeding/
+
+ If preferred, extract into separate repo: natureBreedRabbitApp
+
+ Export animal types/interfaces to @/types/animal.ts or shared lib
+
+2️⃣ Standalone Routing + Page Control
+ Set up routing inside the new app: / → RabbitDashboard
+
+ Setup fallback route: /404 or invalid redirect
+
+ Add a base layout: layouts/RabbitLayout.tsx
+
+3️⃣ Shared API Logic
+ Keep using /api/animals?type=rabbit for now
+
+ Refactor fetching logic into lib/animal-service.ts (shared)
+
+ Abstract getRabbitStats() and getBreedingPairs() to reuse logic
+
+4️⃣ Sidebar/Menu Strategy
+ 🕳️ Temporarily remove rabbit link from main sidebar
+
+ If deployed separately, redirect to rabbit.naturebreedfarm.org
+
+ Mark the nav link as external: true in menu config
+
+5️⃣ Algorithm Sandbox (🐇 AI R&D Area)
+ Create /sandbox/ page with these sub-modules:
+
+ 🧬 Parent pairing validator
+
+ 🔄 Inbreeding risk estimator
+
+ 🌱 Genetic diversity visualizer (future)
+
+ 🧠 Breeding plan assistant (AI support)
+
+6️⃣ Smart Boot Compatibility
+ Integrate smart boot checks for this app (boot.ts)
+
+ Optional: expose /api/health endpoint
+
+ Optional: push boot status to main app via webhook or API
+
+7️⃣ Optional: AI Assistant Beta
+ Integrate openai or local LLM under /sandbox/assistant
+
+ Text + Voice input (with whisper or open source fallback)
+
+ Provide voice/text summary of breeding results for illiterate farmers
+
+🧠 Notes for Developers
+🛠️ This is temporary extraction, meant to keep iteration fast
+
+🪄 When stable, re-integrate into main platform or keep as optional plug-in module
+
+💡 This is our first test of "ecosystem-style modular architecture" — keep it clean, atomic, and document changes well
+
+📚 Deliverables
+ A working, bootable rabbit-breeding app (or module)
+
+ README with:
+
+How to run it
+
+Dev notes on decisions made
+
+Roadmap for AI Assistant
+
+ Documented API contract with /api/animals and /api/breeding
+

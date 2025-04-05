@@ -1,0 +1,95 @@
+Task: Finalize Core Functionality for First Testable Version
+📌 Objective
+Prepare the Rabbit Breeding micro-app for local testability and GitHub push, with basic but functional UI, API, and health status system.
+
+🔧 TASK 1: Connect Frontend to API
+Location: apps/rabbit-breeding/src/pages/DashboardPage.tsx
+
+ Fetch and display rabbits using /api/animals?type=rabbit
+
+ Display: Name, Breed, Gender, Status, Age
+
+ If no rabbits found, show empty-state message
+
+ Include simple loading spinner (<Loader2 />)
+
+ Handle error gracefully
+
+✅ Why?: Confirms that frontend and backend are communicating. This is the first visible proof things are working.
+
+🧠 TASK 2: Add Breeding Logic Preview
+Location: animal-breeding.ts (already implemented)
+
+ Add endpoint /api/breeding/suggestions that returns valid male-female rabbit pairs
+
+ On the dashboard, display a simple list:
+
+nginx
+Copy
+Edit
+Suggested Pair: "Fluffy" 🐇 + "Snow" 🐇
+✅ Why?: This lets testers see that the pairing logic is functional even before full form UI is built.
+
+📊 TASK 3: Add Smart Boot Status
+Location: apps/rabbit-breeding/server/health.ts
+
+ Create /api/health route that checks:
+
+DB connection
+
+Animal count
+
+Breeding event table
+
+ Create /status frontend page that visualizes the above checks with ✅/❌
+
+✅ Why?: Matches the smart boot pattern from the main app and lets us know what’s working.
+
+📦 TASK 4: GitHub Setup and Scripts
+Location: project root of apps/rabbit-breeding/
+
+ Ensure the following scripts work:
+
+json
+Copy
+Edit
+"dev": "tsx server/index.ts",
+"client": "vite",
+"start": "concurrently \"npm run dev\" \"npm run client\""
+ Add .env.example file with:
+
+bash
+Copy
+Edit
+DATABASE_URL=postgresql://user:pass@localhost:5432/rabbit
+ Push repo as natureBreedRabbitApp
+
+✅ Why?: This gets us Git-tracked, reproducible, and open for contribution.
+
+🧪 TASK 5: Prepare for Testing
+ Ensure /api/animals, /api/breeding-events, /api/breeding/suggestions are accessible in browser/Postman
+
+ Ensure /status shows a “pass” on all working features
+
+ Link to this app from the main system dashboard (if rabbit.naturebreedfarm.org subdomain is ready)
+
+✅ Why?: This is where QA can begin testing before advanced features are added.
+
+🧠 Optional (Bonus)
+ Scaffold ai-helper.ts service with fake response from OpenAI: "Try pairing Fluffy and Snow for a diverse litter."
+
+ Add AI helper box in dashboard: “Ask about rabbit care”
+
+✅ Why?: Begins the AI journey, useful for demos or research funders.
+
+📁 Expected Deliverables
+apps/rabbit-breeding/ is self-contained
+
+GET /status works and is green ✅
+
+GET /api/animals returns test rabbit data
+
+Frontend is usable and displays real info
+
+GitHub repo is pushed and structured
+
