@@ -169,8 +169,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Animal management API endpoints
   app.get('/api/animals', async (req, res) => {
     try {
-      const animals = await animalBreedingService.getAnimals();
-      res.json(animals);
+      const typeFilter = req.query.type as string | undefined;
+      
+      // Get animals based on type filter
+      if (typeFilter) {
+        const animals = await animalBreedingService.getAnimalsByType(typeFilter);
+        return res.json(animals);
+      } else {
+        // Get all animals if no type filter
+        const animals = await animalBreedingService.getAnimals();
+        return res.json(animals);
+      }
     } catch (error) {
       console.error('Error fetching animals:', error);
       res.status(500).json({ error: 'Failed to fetch animals' });

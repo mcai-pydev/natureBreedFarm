@@ -39,7 +39,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         
         <nav className="space-y-1">
           <NavItem href="/" icon={BarChart3}>Dashboard</NavItem>
-          <NavItem href="/rabbit-breeding" icon={Rabbit}>Rabbit Breeding</NavItem>
+          <NavItem href="/breeding/rabbits" icon={Rabbit}>Rabbit Breeding</NavItem>
           <NavItem href="/breeding-events" icon={Calendar}>Breeding Events</NavItem>
           <NavItem href="/status" icon={ActivitySquare}>System Status</NavItem>
         </nav>

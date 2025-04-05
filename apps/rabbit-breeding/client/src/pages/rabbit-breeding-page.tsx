@@ -51,13 +51,12 @@ export default function RabbitBreedingPage() {
     isLoading, 
     error 
   } = useQuery<Animal[]>({
-    queryKey: ['/api/animals'],
+    queryKey: ['/api/animals', 'rabbit'],
     queryFn: async () => {
-      const response = await fetch('/api/animals');
+      const response = await fetch('/api/animals?type=rabbit');
       if (!response.ok) throw new Error('Failed to fetch animals');
       return response.json();
-    },
-    select: (data) => data.filter(animal => animal.type === 'rabbit')
+    }
   });
 
   // Filter for rabbit type only
