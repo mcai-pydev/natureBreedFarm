@@ -8,11 +8,24 @@ import {
   potentialMatesSchema
 } from '@shared/schema';
 import { ZodError } from 'zod';
+import { checkHealth } from './health';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'healthy', service: 'rabbit-breeding-micro-app' });
+  app.get('/api/health', async (req, res) => {
+    try {
+      const healthStatus = await checkHealth();
+      res.status(healthStatus.status === 'healthy' ? 200 : 
+                 healthStatus.status === 'warning' ? 200 : 503)
+         .json(healthStatus);
+    } catch (error) {
+      console.error('Error checking health:', error);
+      res.status(500).json({ 
+        status: 'error', 
+        service: 'rabbit-breeding-micro-app',
+        error: error instanceof Error ? error.message : 'Unknown error during health check'
+      });
+    }
   });
 
   // Animal management API endpoints
@@ -119,6 +132,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching potential mates:', error);
       res.status(500).json({ error: 'Failed to fetch potential mates' });
+    }
+  });
+  
+  // Breeding suggestions endpoint for dashboard display
+  app.get('/api/breeding/suggestions', async (req, res) => {
+    try {
+      const animals = await animalBreedingService.getAnimals();
+      
+      // Filter active rabbits by gender
+      const males = animals.filter(a => a.gender === 'male' && a.status === 'active');
+      const females = animals.filter(a => a.gender === 'female' && a.status === 'active');
+      
+      // Find compatible pairs with low inbreeding risk
+      const suggestions = [];
+      
+      for (const male of males) {
+        for (const female of females) {
+          const riskCheck = await animalBreedingService.checkInbreedingRisk(male.id, female.id);
+          
+          // Only suggest pairs with no inbreeding risk
+          if (!riskCheck.isRisky) {
+            suggestions.push({
+              maleId: male.id,
+              maleName: male.name,
+              femaleId: female.id,
+              femaleName: female.name,
+              compatibilityScore: Math.round(Math.random() * 40) + 60, // Temporary placeholder for compatibility score
+            });
+            
+            // Limit to top 5 suggestions
+            if (suggestions.length >= 5) break;
+          }
+        }
+        if (suggestions.length >= 5) break;
+      }
+      
+      res.json(suggestions);
+    } catch (error) {
+      console.error('Error generating breeding suggestions:', error);
+      res.status(500).json({ error: 'Failed to generate breeding suggestions' });
     }
   });
 
