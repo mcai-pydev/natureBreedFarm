@@ -18,7 +18,7 @@ import {
   FileText,
   CheckSquare
 } from 'lucide-react';
-import { formatDate, cn } from '../lib/utils';
+import { formatDate, getAgeString, cn } from '../lib/utils';
 
 export default function RabbitDetailPage() {
   const { id } = useParams();
@@ -112,6 +112,7 @@ export default function RabbitDetailPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <InfoItem icon={<Tag className="h-4 w-4" />} label="ID" value={rabbit.animalId} />
                   <InfoItem icon={<CalendarIcon className="h-4 w-4" />} label="Date of Birth" value={formatDate(rabbit.dateOfBirth)} />
+                  <InfoItem icon={<Calendar className="h-4 w-4" />} label="Age" value={getAgeString(rabbit.dateOfBirth)} />
                   <InfoItem icon={<Home className="h-4 w-4" />} label="Cage" value={rabbit.cageNumber || 'Not assigned'} />
                   <InfoItem icon={<Weight className="h-4 w-4" />} label="Weight" value={rabbit.weight ? `${rabbit.weight} kg` : 'Not recorded'} />
                   <InfoItem icon={<Tag className="h-4 w-4" />} label="Breed" value={rabbit.breed || 'Unknown'} />

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, AlertTriangle, XCircle, RefreshCw, Server, Database, Activity } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { formatDate } from '@/lib/utils';
+import { formatDate } from '../lib/utils';
 
 interface HealthStatus {
   name: string;

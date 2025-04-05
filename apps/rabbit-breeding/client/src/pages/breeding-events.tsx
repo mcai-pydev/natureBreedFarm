@@ -21,7 +21,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
-import { formatDate, cn } from '@/lib/utils';
+import { formatDate, cn } from '../lib/utils';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { CompatibilityChecker } from '@/components/breeding/CompatibilityChecker';

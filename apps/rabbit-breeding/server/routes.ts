@@ -12,6 +12,7 @@ import { stringify } from 'csv-stringify/sync';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { checkHealth } from './health';
+import { getCompatibilityAdvice } from './ai-service';
 import fs from 'fs';
 import path from 'path';
 
@@ -909,6 +910,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error fetching compatibility history:', error);
       res.status(500).json({ 
         error: 'Failed to fetch compatibility history',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // AI-based compatibility advice endpoint
+  app.get('/api/breeding/ai-advice', async (req, res) => {
+    try {
+      const maleId = parseInt(req.query.maleId as string);
+      const femaleId = parseInt(req.query.femaleId as string);
+      
+      if (isNaN(maleId) || isNaN(femaleId)) {
+        return res.status(400).json({ 
+          error: 'Invalid animal IDs'
+        });
+      }
+
+      // Get the full animal objects
+      const male = await animalBreedingService.getAnimal(maleId);
+      const female = await animalBreedingService.getAnimal(femaleId);
+      
+      if (!male || !female) {
+        return res.status(404).json({ 
+          error: 'One or both animals not found'
+        });
+      }
+
+      // Get AI-based advice
+      const advice = await getCompatibilityAdvice(male, female);
+      
+      res.json(advice);
+    } catch (error) {
+      console.error('Error getting AI compatibility advice:', error);
+      res.status(500).json({ 
+        error: 'Failed to get AI compatibility advice',
         message: error instanceof Error ? error.message : 'Unknown error'
       });
     }

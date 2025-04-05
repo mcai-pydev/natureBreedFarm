@@ -75,41 +75,10 @@ export default function RecentCompatibilityChecks() {
   // Fetch recent compatibility checks from the API
   const { data, isLoading, error } = useQuery<CompatibilityCheck[]>({
     queryKey: ['/api/breeding/compatibility-history'],
-    // This endpoint is a placeholder - in a real implementation it would fetch from the server
     queryFn: async () => {
-      // For now, let's use some mock data
-      return [
-        {
-          timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
-          status: 'success',
-          message: 'Compatibility check passed for Buck and Daisy',
-          details: {
-            maleId: 1,
-            maleAnimalId: 'RB-M-001',
-            maleName: 'Buck',
-            femaleId: 2,
-            femaleAnimalId: 'RB-F-002',
-            femaleName: 'Daisy',
-            compatible: true,
-            reason: 'No genetic concerns detected'
-          }
-        },
-        {
-          timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-          status: 'warning',
-          message: 'Compatibility check failed for Thumper and Flower: Shared ancestry detected',
-          details: {
-            maleId: 3,
-            maleAnimalId: 'RB-M-003',
-            maleName: 'Thumper',
-            femaleId: 4,
-            femaleAnimalId: 'RB-F-004',
-            femaleName: 'Flower',
-            compatible: false,
-            reason: 'Shared ancestry detected: RB-M-Ancestor-001. This increases inbreeding risk.'
-          }
-        }
-      ];
+      const response = await fetch('/api/breeding/compatibility-history');
+      if (!response.ok) throw new Error('Failed to fetch compatibility history');
+      return response.json();
     }
   });
   

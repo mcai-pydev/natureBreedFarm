@@ -1,8 +1,10 @@
 import { Rabbit, User, Users, Heart, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Animal } from '@shared/schema';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
-import { formatDate, getAgeString, cn } from '@/lib/utils';
+import { formatDate, getAgeString, cn } from '../lib/utils';
 import RecentCompatibilityChecks from '../components/compatibility/RecentCompatibilityChecks';
 
 // Helper function to get gender-specific color class
@@ -85,9 +87,19 @@ interface BreedingSuggestion {
 }
 
 const BreedingSuggestions = () => {
-  const suggestions = mockBreedingSuggestions;
-  const isLoading = false;
-  const error = null;
+  // Fetch breeding suggestions from API
+  const { 
+    data: suggestions = [],
+    isLoading, 
+    error 
+  } = useQuery<BreedingSuggestion[]>({ 
+    queryKey: ['/api/breeding/suggestions'],
+    queryFn: async () => {
+      const response = await fetch('/api/breeding/suggestions');
+      if (!response.ok) throw new Error('Failed to fetch breeding suggestions');
+      return response.json();
+    }
+  });
 
   if (isLoading) {
     return (
@@ -154,11 +166,22 @@ const BreedingSuggestions = () => {
   );
 };
 
+
+
 export default function RabbitDashboard() {
-  // Get animals data from mock
-  const animals = mockAnimals;
-  const isLoading = false;
-  const error = null;
+  // Fetch animals data from API
+  const { 
+    data: animals = [],
+    isLoading, 
+    error 
+  } = useQuery<Animal[]>({ 
+    queryKey: ['/api/animals'],
+    queryFn: async () => {
+      const response = await fetch('/api/animals');
+      if (!response.ok) throw new Error('Missing queryFn: ["/api/animals"]');
+      return response.json();
+    }
+  });
   
   // If loading, show a loading state
   if (isLoading) {
@@ -182,10 +205,10 @@ export default function RabbitDashboard() {
   
   // Calculate basic stats
   const totalRabbits = animals?.length || 0;
-  const maleRabbits = animals?.filter(a => a.gender === 'male').length || 0;
-  const femaleRabbits = animals?.filter(a => a.gender === 'female').length || 0;
-  const activeRabbits = animals?.filter(a => a.status === 'active').length || 0;
-  const breeds = Array.from(new Set(animals?.map(a => a.breed).filter(Boolean) || []));
+  const maleRabbits = animals?.filter((a: Animal) => a.gender === 'male').length || 0;
+  const femaleRabbits = animals?.filter((a: Animal) => a.gender === 'female').length || 0;
+  const activeRabbits = animals?.filter((a: Animal) => a.status === 'active').length || 0;
+  const breeds = Array.from(new Set(animals?.map((a: Animal) => a.breed).filter(Boolean) || []));
   
   return (
     <div className="space-y-8">
@@ -234,7 +257,7 @@ export default function RabbitDashboard() {
         </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {animals?.map(animal => (
+          {animals?.map((animal: Animal) => (
             <Card key={animal.id} className="overflow-hidden">
               <CardContent className="p-0">
                 <div className="relative p-4">
