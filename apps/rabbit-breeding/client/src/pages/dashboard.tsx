@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
 import { formatDate, getAgeString, cn } from '@/lib/utils';
+import RecentCompatibilityChecks from '../components/compatibility/RecentCompatibilityChecks';
 
 // Helper function to get gender-specific color class
 function getGenderColorClass(gender: string): string {
@@ -288,10 +289,15 @@ export default function RabbitDashboard() {
         </div>
       </div>
       
-      {/* Breeding Suggestions Section */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Breeding Suggestions</h2>
-        <BreedingSuggestions />
+      {/* Breeding Suggestions and Compatibility Section */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Breeding Suggestions</h2>
+          <BreedingSuggestions />
+        </div>
+        <div>
+          <RecentCompatibilityChecks />
+        </div>
       </div>
       
       {/* Gender Distribution Chart would go here */}

@@ -25,6 +25,7 @@ export interface HealthCheckResponse {
       animals: HealthStatus;
       breedingEvents: HealthStatus;
       suggestions: HealthStatus;
+      compatibility: HealthStatus;
     };
   };
 }
@@ -41,6 +42,7 @@ export async function checkHealth(): Promise<HealthCheckResponse> {
       animals: { name: 'Animals API', status: 'error' },
       breedingEvents: { name: 'Breeding Events API', status: 'error' },
       suggestions: { name: 'Breeding Suggestions API', status: 'error' },
+      compatibility: { name: 'Compatibility Check API', status: 'error' },
     },
   };
 
@@ -112,14 +114,32 @@ export async function checkHealth(): Promise<HealthCheckResponse> {
         const riskCheck = await animalBreedingService.checkInbreedingRisk(males[0].id, females[0].id);
         checks.api.suggestions.status = 'healthy';
         checks.api.suggestions.details = `Checked breeding compatibility between ${males.length} males and ${females.length} females`;
+        
+        // Also verify compatibility check API endpoint
+        try {
+          const compatibilityCheck = await animalBreedingService.checkInbreedingRisk(males[0].id, females[0].id);
+          checks.api.compatibility.status = 'healthy';
+          checks.api.compatibility.details = compatibilityCheck.isRisky 
+            ? `Successfully detected ${compatibilityCheck.relationshipType || 'inbreeding'} risk`
+            : 'Successfully verified compatibility';
+        } catch (error) {
+          checks.api.compatibility.status = 'error';
+          checks.api.compatibility.details = error instanceof Error ? error.message : 'Unknown compatibility API error';
+        }
       } else {
         checks.api.suggestions.status = 'warning';
         checks.api.suggestions.details = 'Not enough active rabbits of both genders for breeding suggestions';
+        
+        checks.api.compatibility.status = 'warning';
+        checks.api.compatibility.details = 'Not enough active rabbits to check compatibility';
       }
     }
   } catch (error) {
     checks.api.suggestions.status = 'error';
     checks.api.suggestions.details = error instanceof Error ? error.message : 'Unknown API error';
+    
+    checks.api.compatibility.status = 'error';
+    checks.api.compatibility.details = error instanceof Error ? error.message : 'Unknown API error';
   }
 
   // Calculate overall status
@@ -130,6 +150,7 @@ export async function checkHealth(): Promise<HealthCheckResponse> {
     checks.api.animals.status,
     checks.api.breedingEvents.status,
     checks.api.suggestions.status,
+    checks.api.compatibility.status,
   ];
 
   const overallStatus = statuses.includes('error')

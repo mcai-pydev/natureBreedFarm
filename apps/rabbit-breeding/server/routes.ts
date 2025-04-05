@@ -12,6 +12,140 @@ import { stringify } from 'csv-stringify/sync';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { checkHealth } from './health';
+import fs from 'fs';
+import path from 'path';
+
+// Define interface for compatibility check history
+interface CompatibilityCheck {
+  name: string;
+  status: 'success' | 'warning';
+  message: string;
+  timestamp: string;
+  details: {
+    maleId: number;
+    maleAnimalId: string;
+    maleName: string;
+    femaleId: number;
+    femaleAnimalId: string;
+    femaleName: string;
+    compatible: boolean;
+    reason: string;
+  };
+}
+
+// Store compatibility checks history
+let compatibilityChecksHistory: CompatibilityCheck[] = [];
+
+// Path to compatibility history log file
+const compatibilityHistoryPath = path.resolve(__dirname, '../../../breeding-compatibility-history.json');
+
+// Function to load compatibility history
+function loadCompatibilityHistory() {
+  try {
+    if (fs.existsSync(compatibilityHistoryPath)) {
+      const data = fs.readFileSync(compatibilityHistoryPath, 'utf8');
+      compatibilityChecksHistory = JSON.parse(data);
+    } else {
+      compatibilityChecksHistory = [];
+    }
+  } catch (err) {
+    console.error('Error loading compatibility history:', err);
+    compatibilityChecksHistory = [];
+  }
+}
+
+// Load history on startup
+loadCompatibilityHistory();
+
+// Function to save compatibility history
+function saveCompatibilityHistory() {
+  try {
+    fs.writeFileSync(compatibilityHistoryPath, JSON.stringify(compatibilityChecksHistory, null, 2));
+  } catch (err) {
+    console.error('Error saving compatibility history:', err);
+  }
+}
+
+// Function to log compatibility check failures to boot-status.json and history
+async function logCompatibilityCheck(
+  maleId: number, 
+  femaleId: number, 
+  compatible: boolean, 
+  reason?: string
+) {
+  try {
+    const male = await animalBreedingService.getAnimal(maleId);
+    const female = await animalBreedingService.getAnimal(femaleId);
+    
+    if (!male || !female) {
+      console.error('Cannot log compatibility check: One or both animals not found');
+      return;
+    }
+    
+    // Create a compatibility log entry for boot status
+    const logEntry: CompatibilityCheck = {
+      name: "rabbit-compatibility-check",
+      status: (compatible ? "success" : "warning") as "success" | "warning",
+      message: compatible 
+        ? `Compatibility check passed for ${male.name} and ${female.name}`
+        : `Compatibility check failed for ${male.name} and ${female.name}: ${reason || 'Unknown reason'}`,
+      timestamp: new Date().toISOString(),
+      details: {
+        maleId: maleId,
+        maleAnimalId: male.animalId,
+        maleName: male.name,
+        femaleId: femaleId,
+        femaleAnimalId: female.animalId,
+        femaleName: female.name,
+        compatible: compatible,
+        reason: reason || 'Unknown reason'
+      }
+    };
+    
+    // Add to our compatibility history
+    compatibilityChecksHistory.unshift(logEntry);
+    
+    // Keep only the latest 100 entries to prevent excessive memory usage
+    if (compatibilityChecksHistory.length > 100) {
+      compatibilityChecksHistory = compatibilityChecksHistory.slice(0, 100);
+    }
+    
+    // Save the updated history to file
+    saveCompatibilityHistory();
+    
+    // Read the current boot-status.json file
+    const bootStatusPath = path.join(process.cwd(), '../../boot-status.json');
+    
+    if (fs.existsSync(bootStatusPath)) {
+      try {
+        const bootStatusData = JSON.parse(fs.readFileSync(bootStatusPath, 'utf-8'));
+        
+        // Add our compatibility check to the components array
+        if (!bootStatusData.components) {
+          bootStatusData.components = [];
+        }
+        
+        // Add new log entry at the beginning of the array
+        bootStatusData.components.unshift(logEntry);
+        
+        // Keep only the latest 100 entries to prevent file size growth
+        if (bootStatusData.components.length > 100) {
+          bootStatusData.components = bootStatusData.components.slice(0, 100);
+        }
+        
+        // Write back to the file
+        fs.writeFileSync(bootStatusPath, JSON.stringify(bootStatusData, null, 2));
+        console.log('Compatibility check logged to boot-status.json');
+      } catch (error) {
+        console.error('Error updating boot-status.json:', error);
+      }
+    } else {
+      console.error('boot-status.json not found at path:', bootStatusPath);
+    }
+  } catch (error) {
+    console.error('Error logging compatibility check:', error);
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
@@ -342,14 +476,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const riskCheck = await animalBreedingService.checkInbreedingRisk(maleId, femaleId);
       
       if (riskCheck.isRisky) {
+        const reason = `Inbreeding risk detected: ${riskCheck.relationshipType || 'unknown relationship'}`;
+        
+        // Log the compatibility failure to boot-status.json
+        await logCompatibilityCheck(maleId, femaleId, false, reason);
+        
         return res.status(400).json({ 
           compatible: false,
-          reason: `Inbreeding risk detected: ${riskCheck.relationshipType || 'unknown relationship'}`,
+          reason: reason,
           riskLevel: 'high'
         });
       }
       
-      // Passed all checks
+      // Passed all checks - log the success
+      await logCompatibilityCheck(maleId, femaleId, true);
+      
       res.json({
         compatible: true,
         riskLevel: 'none'
@@ -385,11 +526,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (riskCheck.isRisky) {
+        // Log the compatibility failure to boot-status.json
+        await logCompatibilityCheck(
+          eventData.maleId, 
+          eventData.femaleId, 
+          false, 
+          `Breeding event rejected: ${riskCheck.relationshipType || 'inbreeding risk'}`
+        );
+        
         return res.status(400).json({ 
           error: 'Breeding pairing rejected due to inbreeding risk', 
           details: riskCheck 
         });
       }
+      
+      // Log the successful compatibility check
+      await logCompatibilityCheck(eventData.maleId, eventData.femaleId, true, 'Breeding event created');
       
       // Proceed with creating the breeding event
       const newEvent = await animalBreedingService.createBreedingEvent(eventData);
@@ -644,6 +796,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Backward compatibility - redirect old export URL to CSV export
   app.get('/api/breeding/export', (req, res) => {
     res.redirect(`/api/breeding/export/csv${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`);
+  });
+  
+  // Endpoint to export compatibility history as CSV
+  app.get('/api/breeding/compatibility-history/export', async (req, res) => {
+    try {
+      // Get compatibility history (use the same logic as the regular endpoint)
+      let history: CompatibilityCheck[] = [];
+      
+      if (compatibilityChecksHistory.length > 0) {
+        history = compatibilityChecksHistory;
+      } else {
+        const bootStatusPath = path.join(process.cwd(), '../../boot-status.json');
+        
+        if (fs.existsSync(bootStatusPath)) {
+          const bootStatusData = JSON.parse(fs.readFileSync(bootStatusPath, 'utf-8'));
+          
+          history = bootStatusData.components
+            .filter((comp: any) => comp.name === 'rabbit-compatibility-check')
+            .map((check: any) => ({
+              name: check.name,
+              timestamp: check.timestamp,
+              status: check.status as "success" | "warning",
+              message: check.message,
+              details: check.details
+            }));
+        }
+      }
+      
+      if (history.length === 0) {
+        return res.status(404).json({
+          error: 'No compatibility history available for export',
+        });
+      }
+      
+      // Convert to CSV
+      const csvColumns = [
+        {key: 'timestamp', header: 'Date'},
+        {key: 'male', header: 'Male Rabbit'},
+        {key: 'female', header: 'Female Rabbit'},
+        {key: 'compatible', header: 'Compatible'},
+        {key: 'reason', header: 'Reason'}
+      ];
+      
+      const csvData = history.map((check: any) => ({
+        timestamp: new Date(check.timestamp).toLocaleString(),
+        male: `${check.details.maleName} (${check.details.maleAnimalId})`,
+        female: `${check.details.femaleName} (${check.details.femaleAnimalId})`,
+        compatible: check.details.compatible ? 'Yes' : 'No',
+        reason: check.details.reason
+      }));
+      
+      const csvOutput = stringify(csvData, {
+        header: true,
+        columns: csvColumns
+      });
+      
+      // Set headers for file download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=compatibility-history-${new Date().toISOString().split('T')[0]}.csv`);
+      
+      // Send CSV file
+      res.send(csvOutput);
+    } catch (error) {
+      console.error('Error exporting compatibility history:', error);
+      res.status(500).json({ 
+        error: 'Failed to export compatibility history',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // Endpoint to fetch compatibility check history
+  app.get('/api/breeding/compatibility-history', async (req, res) => {
+    try {
+      // First try to use our local history
+      if (compatibilityChecksHistory.length > 0) {
+        return res.json(compatibilityChecksHistory);
+      }
+      
+      // Fallback to boot-status.json if local history is empty
+      const bootStatusPath = path.join(process.cwd(), '../../boot-status.json');
+      
+      if (!fs.existsSync(bootStatusPath)) {
+        return res.status(404).json({ 
+          error: 'Compatibility history not found',
+          message: 'No compatibility check history available'
+        });
+      }
+      
+      const bootStatusData = JSON.parse(fs.readFileSync(bootStatusPath, 'utf-8'));
+      
+      // Filter components to only get rabbit compatibility checks
+      const compatibilityChecks = bootStatusData.components
+        .filter((comp: any) => comp.name === 'rabbit-compatibility-check')
+        .map((check: any) => ({
+          name: check.name,
+          timestamp: check.timestamp,
+          status: check.status as "success" | "warning",
+          message: check.message,
+          details: check.details
+        }));
+      
+      // If we found any checks in boot-status.json, add them to our local history
+      if (compatibilityChecks.length > 0) {
+        compatibilityChecksHistory = compatibilityChecks;
+        saveCompatibilityHistory();
+      }
+        
+      res.json(compatibilityChecks);
+    } catch (error) {
+      console.error('Error fetching compatibility history:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch compatibility history',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   });
 
   const httpServer = createServer(app);
