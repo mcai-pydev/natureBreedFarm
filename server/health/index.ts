@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import performAuthHealthCheck from './auth-health';
+import { checkRouteHealth } from './route-health';
 
 const healthRouter = Router();
 
@@ -63,6 +64,25 @@ healthRouter.get('/boot', async (req, res) => {
     res.status(500).json({
       status: 'error',
       message: `Failed to check boot status: ${error instanceof Error ? error.message : String(error)}`,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * Routes health check endpoint
+ */
+healthRouter.get('/routes', async (req, res) => {
+  try {
+    const result = await checkRouteHealth();
+    result.timestamp = new Date().toISOString();
+    
+    res.status(result.status === 'success' ? 200 : 500).json(result);
+  } catch (error) {
+    console.error('❌ Error in routes health check:', error);
+    res.status(500).json({
+      status: 'error',
+      message: `Failed to perform routes health check: ${error instanceof Error ? error.message : String(error)}`,
       timestamp: new Date().toISOString(),
     });
   }

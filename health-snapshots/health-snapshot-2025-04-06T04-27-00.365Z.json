@@ -4,16 +4,16 @@
       "name": "database",
       "status": "success",
       "message": "Database connection successful",
-      "timestamp": "2025-04-06T04:28:19.086Z"
+      "timestamp": "2025-04-06T04:26:55.922Z"
     },
     {
       "name": "api-endpoints",
       "status": "success",
       "message": "API endpoints are accessible",
-      "timestamp": "2025-04-06T04:28:19.105Z",
+      "timestamp": "2025-04-06T04:26:55.941Z",
       "details": {
         "status": 200,
-        "timestamp": "2025-04-06T04:28:19.104Z",
+        "timestamp": "2025-04-06T04:26:55.940Z",
         "responseAvailable": true
       }
     },
@@ -21,7 +21,7 @@
       "name": "auth",
       "status": "success",
       "message": "Auth system is fully functional with session persistence",
-      "timestamp": "2025-04-06T04:28:21.726Z",
+      "timestamp": "2025-04-06T04:26:57.911Z",
       "details": {
         "endpoints": {
           "status": "success",
@@ -38,7 +38,7 @@
       "name": "shop",
       "status": "success",
       "message": "Shop API is working with 2 products available",
-      "timestamp": "2025-04-06T04:28:22.473Z",
+      "timestamp": "2025-04-06T04:26:58.529Z",
       "details": {
         "productCount": 2
       }
@@ -47,7 +47,7 @@
       "name": "orders",
       "status": "success",
       "message": "Orders module is functioning correctly with 0 orders in system",
-      "timestamp": "2025-04-06T04:28:22.924Z",
+      "timestamp": "2025-04-06T04:26:59.737Z",
       "details": {
         "isAuthenticated": true,
         "isOrdersEndpointWorking": true,
@@ -70,7 +70,7 @@
       "name": "checkout",
       "status": "success",
       "message": "Checkout flow is operational with 2 products available",
-      "timestamp": "2025-04-06T04:28:23.174Z",
+      "timestamp": "2025-04-06T04:26:59.950Z",
       "details": {
         "isAuthenticated": true,
         "products": {
@@ -94,7 +94,7 @@
       "name": "breeding",
       "status": "success",
       "message": "Breeding system is working properly",
-      "timestamp": "2025-04-06T04:28:23.353Z",
+      "timestamp": "2025-04-06T04:27:00.095Z",
       "details": {
         "animalCount": 6,
         "rabbitCount": 4,
@@ -107,7 +107,7 @@
       "name": "rabbit-breeding",
       "status": "success",
       "message": "Rabbit breeding system operational with 4 rabbits available",
-      "timestamp": "2025-04-06T04:28:23.526Z",
+      "timestamp": "2025-04-06T04:27:00.240Z",
       "details": {
         "animalsCount": 6,
         "rabbitsCount": 4,
@@ -123,7 +123,7 @@
       "name": "pages",
       "status": "success",
       "message": "Pages check passed: 11/11 pages verified",
-      "timestamp": "2025-04-06T04:28:23.657Z",
+      "timestamp": "2025-04-06T04:27:00.359Z",
       "details": {
         "results": [
           {
@@ -220,14 +220,20 @@
       "name": "accessibility",
       "status": "success",
       "message": "2 accessibility issues detected",
-      "timestamp": "2025-04-06T04:28:23.662Z",
+      "timestamp": "2025-04-06T04:27:00.364Z",
       "details": [
         "client/src/components/reports/report-filters.tsx: Form control without label",
         "client/src/components/settings/newsletter-subscriber-list.tsx: Form control without label"
       ]
     }
   ],
-  "lastBootTimestamp": "2025-04-06T04:28:23.662Z",
+  "lastBootTimestamp": "2025-04-06T04:27:00.364Z",
   "overallStatus": "success",
-  "environment": "development"
+  "environment": "development",
+  "snapshot": {
+    "exportedAt": "2025-04-06T04-27-00.365Z",
+    "appVersion": "1.0.0",
+    "environment": "development",
+    "hostname": "ffcf0b7962b0"
+  }
 }

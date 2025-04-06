@@ -108,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api', orderRoutes);
   
   // Register health check routes
-  app.use('/health', healthRouter);
+  app.use('/api/health', healthRouter);
   
   // Export breeding events
   app.get('/api/breeding-events/export', async (req, res) => {

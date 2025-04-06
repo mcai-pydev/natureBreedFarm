@@ -28,6 +28,9 @@ import DebugOnboardingPage from '@/pages/debug-onboarding-page';
 import DashboardPage from '@/pages/dashboard-page';
 import { Loader2 } from 'lucide-react';
 
+// Import UnderConstruction component for placeholder pages
+import UnderConstruction from '@/components/under-construction';
+
 // Main App component
 function App() {
   return (
@@ -92,12 +95,142 @@ function Router() {
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/dashboard" component={DashboardPage} requiredRole={['Admin', 'admin', 'ADMIN', 'Manager', 'manager']} />
       <ProtectedRoute path="/products" component={ProductsPage} />
+      <ProtectedRoute path="/products/new" component={() => (
+        <UnderConstruction 
+          title="Add New Product" 
+          message="The product creation feature is coming soon."
+          returnPath="/products" 
+          returnLabel="Back to Products"
+        />
+      )} />
       <ProtectedRoute path="/transactions" component={TransactionsPage} />
+      <ProtectedRoute path="/transactions/new" component={() => (
+        <UnderConstruction 
+          title="Record New Transaction" 
+          message="The transaction recording feature is coming soon."
+          returnPath="/transactions" 
+          returnLabel="Back to Transactions"
+        />
+      )} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/rabbit-breeding" component={RabbitBreedingPage} />
+      <ProtectedRoute path="/animals/new" component={() => (
+        <UnderConstruction 
+          title="Register New Animal" 
+          message="The animal registration feature is coming soon."
+          returnPath="/rabbit-breeding" 
+          returnLabel="Back to Breeding"
+        />
+      )} />
       <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/status" component={StatusPage} />
+      <ProtectedRoute path="/profile" component={() => (
+        <UnderConstruction 
+          title="User Profile" 
+          message="The user profile page is coming soon."
+          returnPath="/" 
+          returnLabel="Back to Dashboard"
+        />
+      )} />
+      <ProtectedRoute path="/orders" component={() => (
+        <UnderConstruction 
+          title="Orders" 
+          message="The standalone orders page is coming soon. Please use the order history feature."
+          returnPath="/" 
+          returnLabel="Back to Dashboard"
+        />
+      )} />
+      <ProtectedRoute path="/orders/new" component={() => (
+        <UnderConstruction 
+          title="Create New Order" 
+          message="The order creation feature is coming soon."
+          returnPath="/" 
+          returnLabel="Back to Dashboard"
+        />
+      )} />
+      
+      {/* Admin routes */}
+      <ProtectedRoute path="/admin" component={() => (
+        <UnderConstruction 
+          title="Admin Dashboard" 
+          message="The admin dashboard is under development."
+          returnPath="/" 
+          returnLabel="Back to Main Dashboard"
+        />
+      )} requiredRole={['Admin', 'admin', 'ADMIN']} />
+      <ProtectedRoute path="/admin/products" component={() => (
+        <UnderConstruction 
+          title="Admin Products" 
+          message="The admin products management is under development."
+          returnPath="/admin" 
+          returnLabel="Back to Admin Dashboard"
+        />
+      )} requiredRole={['Admin', 'admin', 'ADMIN']} />
+      <ProtectedRoute path="/admin/transactions" component={() => (
+        <UnderConstruction 
+          title="Admin Transactions" 
+          message="The admin transactions management is under development."
+          returnPath="/admin" 
+          returnLabel="Back to Admin Dashboard"
+        />
+      )} requiredRole={['Admin', 'admin', 'ADMIN']} />
+      <ProtectedRoute path="/admin/reports" component={() => (
+        <UnderConstruction 
+          title="Admin Reports" 
+          message="The admin reports section is under development."
+          returnPath="/admin" 
+          returnLabel="Back to Admin Dashboard"
+        />
+      )} requiredRole={['Admin', 'admin', 'ADMIN']} />
+      <ProtectedRoute path="/admin/customers" component={() => (
+        <UnderConstruction 
+          title="Customer Management" 
+          message="The customer management section is under development."
+          returnPath="/admin" 
+          returnLabel="Back to Admin Dashboard"
+        />
+      )} requiredRole={['Admin', 'admin', 'ADMIN']} />
+      <ProtectedRoute path="/admin/breeding" component={() => (
+        <UnderConstruction 
+          title="Admin Breeding Management" 
+          message="The admin breeding management section is under development."
+          returnPath="/admin" 
+          returnLabel="Back to Admin Dashboard"
+        />
+      )} requiredRole={['Admin', 'admin', 'ADMIN']} />
+      <ProtectedRoute path="/admin/messages" component={() => (
+        <UnderConstruction 
+          title="Admin Messages" 
+          message="The admin messages section is under development."
+          returnPath="/admin" 
+          returnLabel="Back to Admin Dashboard"
+        />
+      )} requiredRole={['Admin', 'admin', 'ADMIN']} />
+      <ProtectedRoute path="/admin/settings" component={() => (
+        <UnderConstruction 
+          title="Admin Settings" 
+          message="The admin settings section is under development."
+          returnPath="/admin" 
+          returnLabel="Back to Admin Dashboard"
+        />
+      )} requiredRole={['Admin', 'admin', 'ADMIN']} />
+      <ProtectedRoute path="/admin/logs" component={() => (
+        <UnderConstruction 
+          title="System Logs" 
+          message="The system logs section is under development."
+          returnPath="/admin" 
+          returnLabel="Back to Admin Dashboard"
+        />
+      )} requiredRole={['Admin', 'admin', 'ADMIN']} />
+      <ProtectedRoute path="/admin/users" component={() => (
+        <UnderConstruction 
+          title="User Management" 
+          message="The user management section is under development."
+          returnPath="/admin" 
+          returnLabel="Back to Admin Dashboard"
+        />
+      )} requiredRole={['Admin', 'admin', 'ADMIN']} />
       
       {/* Already protected using custom components */}
       <ProtectedOrderHistoryPage />
