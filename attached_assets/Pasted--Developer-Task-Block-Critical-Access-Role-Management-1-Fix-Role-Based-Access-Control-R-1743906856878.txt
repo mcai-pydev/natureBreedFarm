@@ -1,0 +1,72 @@
+:
+
+🧠 Developer Task Block: Critical Access & Role Management
+🔐 1. Fix Role-Based Access Control (RBAC) System-Wide
+Issue: Users, including admin, are being denied access to protected routes (/orders, /dashboard, /breeding/rabbits), even with correct credentials.
+
+Tasks:
+
+ Audit the useAuth() hook and confirm that user.role is being set correctly after login.
+
+ Patch the route protection logic to allow admin or superuser roles access to /dashboard, /orders, and /breeding/rabbits.
+
+ Ensure the session persists in both development and deployed environments via JWT or cookie (must work after page reload).
+
+ Add debug log to console and browser storage after login showing user info and roles.
+
+🧭 2. Fix Sidebar and Quick Link Navigation (Broken or Inactive)
+Issue: The sidebar buttons and quick links appear in the browser but do nothing or link to blank or broken pages.
+
+Tasks:
+
+ Fix or refactor the Sidebar component’s Link and onClick handlers to use wouter routing consistently.
+
+ Visually audit all navigation items to ensure they are active, not hidden behind conditionals, and correctly displayed per requiresAuth.
+
+ Log missing or invalid paths in browser console (auto-check on boot for broken routes).
+
+ Optional: Add a fallback route (* → NotFoundPage) with clear call to action.
+
+🐇 3. Rabbit Breeding Dashboard - Prepare for Wider Testing
+We must ensure that /breeding/rabbits is: ✅ Displaying animal data
+✅ Compatible with auth system
+✅ Has stable queryFn
+✅ Allows breeding event submission
+✅ Loads without error or infinite spinner
+
+Tasks:
+
+ ✅ Fix queryFn missing issue for useQuery hook (useQuery({ queryKey: [...], queryFn: fetchAnimals }))
+
+ ✅ Ensure the page works with AND without seeded data (graceful empty state)
+
+ 🔁 Automatically retry API connection if server restarts
+
+ 🎛️ Add "Refresh" button to manually re-fetch animal list
+
+ 🐛 Fix duplicate render or delay in rendering Rabbit cards
+
+🧪 4. Testing Checklist
+Add a test script or manual checklist for:
+
+ Login as admin (verify token in localStorage)
+
+ View rabbit dashboard and export PDF/CSV
+
+ Add a rabbit event and see it appear
+
+ Deny access for unauthenticated users
+
+ Confirm sidebar renders correct links for user vs admin
+
+🧭 Final Developer Reminder
+Before pushing:
+
+ Seed database with working admin: admin@naturebreedfarm.org / admin123
+
+ Patch any /auth/login → returns 401 with proper error message (not silent)
+
+ Push updates to GitHub and Replit simultaneously (to prevent drift)
+
+ Confirm .env on Replit is correctly configured (especially DATABASE_URL, JWT_SECRET)
+

@@ -4,7 +4,8 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 // Define administrative roles (all possible variations)
-const ADMIN_ROLES = ['Admin', 'admin', 'ADMIN', 'Manager', 'manager', 'MANAGER', 'Owner', 'owner', 'OWNER'];
+// Important: This must match the ADMIN_ROLES array in server/auth.ts
+const ADMIN_ROLES = ['Admin', 'admin', 'ADMIN', 'administrator', 'Administrator'];
 
 // User type based on schema
 interface User {

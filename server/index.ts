@@ -11,6 +11,30 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Add authentication debugging middleware
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api') && 
+      req.path !== '/api/login' && 
+      req.path !== '/api/register' && 
+      req.path !== '/api/health') {
+      
+    // Wait a tiny bit to ensure auth middleware has run
+    setTimeout(() => {
+      const user = req.user || (req as any).user;
+      console.log('🔍 Auth Debug -', req.path, {
+        isAuthenticated: req.isAuthenticated?.() || false,
+        hasJwtUser: !!(req as any).user,
+        username: user?.username || 'none',
+        role: user?.role || 'none',
+        method: req.isAuthenticated?.() ? 'session' : ((req as any).user ? 'jwt' : 'none'),
+        timestamp: new Date().toISOString()
+      });
+    }, 0);
+  }
+  next();
+});
+
+// Request timing and logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

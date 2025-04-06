@@ -91,13 +91,70 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
   next();
 };
 
-// Middleware to ensure user is admin
+// List of possible admin role strings (case variations)
+export const ADMIN_ROLES = ['Admin', 'admin', 'ADMIN', 'administrator', 'Administrator'];
+
+// Function to standardize role names to ensure consistency
+export const standardizeRoleName = (role: string): string => {
+  // Convert to lowercase for case-insensitive comparison
+  const roleLower = role.toLowerCase();
+  
+  // Check if it's a variant of 'admin'
+  if (ADMIN_ROLES.map(r => r.toLowerCase()).includes(roleLower)) {
+    return 'Admin'; // Always use 'Admin' capitalization 
+  }
+  
+  // Other roles with standard capitalization 
+  const knownRoles: Record<string, string> = {
+    'user': 'User',
+    'customer': 'Customer',
+    'manager': 'Manager',
+    'staff': 'Staff',
+    'moderator': 'Moderator',
+    'employee': 'Employee',
+  };
+  
+  // If it's a known role, return the standardized version
+  if (knownRoles[roleLower]) {
+    return knownRoles[roleLower];
+  }
+  
+  // If it's not a known role, capitalize the first letter
+  return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+};
+
+// Middleware to ensure user is admin - using standardized role checking
 export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   // Check if user is authenticated either via session or JWT
-  if ((!req.isAuthenticated() && !(req as any).user) || 
-      (req.user && req.user.role !== UserRoles.ADMIN)) {
+  const user = req.user || (req as any).user;
+  
+  if (!req.isAuthenticated() && !user) {
+    console.log('❌ Admin check failed: User not authenticated');
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  
+  // Get the role with a default fallback
+  const originalRole = user?.role || '';
+  
+  // Get standardized version of the role
+  const standardizedRole = standardizeRoleName(originalRole);
+  
+  // Enhanced role debugging
+  console.log('🔍 Role Debug:', {
+    username: user?.username,
+    originalRole,
+    standardizedRole,
+    isAdmin: standardizedRole === 'Admin',
+    timestamp: new Date().toISOString()
+  });
+  
+  // Check if the standardized role is 'Admin'
+  if (!user || standardizedRole !== 'Admin') {
+    console.log(`❌ Admin check failed: User has role "${originalRole}" (standardized to "${standardizedRole}") which is not an admin role`);
     return res.status(403).json({ message: "Admin privileges required" });
   }
+  
+  console.log(`✅ Admin check passed: User ${user.username} has admin role: ${standardizedRole}`);
   next();
 };
 
@@ -198,12 +255,20 @@ export function setupAuth(app: Express) {
       console.log('🔒 Hashing password for new user');
       const hashedPassword = await hashPassword(password);
       
-      console.log('👤 Creating new user in database with username:', username);
+      // Ensure role has a default value and standardize it
+      const originalRole = role || "User";
+      const standardizedRole = standardizeRoleName(originalRole);
+      
+      if (standardizedRole !== originalRole) {
+        console.log(`🔄 Standardizing role from "${originalRole}" to "${standardizedRole}"`);
+      }
+      
+      console.log('👤 Creating new user in database with username:', username, 'and role:', standardizedRole);
       const user = await storage.createUser({
         username,
         password: hashedPassword,
         name,
-        role: role || "User",
+        role: standardizedRole,
         avatar
       });
 
@@ -246,7 +311,7 @@ export function setupAuth(app: Express) {
   app.post("/api/login", (req, res, next) => {
     console.log('🔒 Login attempt for username:', req.body.username);
 
-    passport.authenticate("local", (err: Error | null, user: SelectUser | false, info: any) => {
+    passport.authenticate("local", async (err: Error | null, user: SelectUser | false, info: any) => {
       if (err) {
         console.error('❌ Login error:', err);
         return next(err);
@@ -255,6 +320,18 @@ export function setupAuth(app: Express) {
       if (!user) {
         console.log('❌ Login failed: Invalid username or password for:', req.body.username);
         return res.status(401).json({ message: "Invalid username or password" });
+      }
+      
+      // Handle role standardization before login to ensure session has updated role
+      // Default to 'User' if role is null or undefined - should rarely happen but better safe than sorry
+      const originalRole = user.role || 'User';
+      const standardizedRole = standardizeRoleName(originalRole);
+      
+      if (standardizedRole !== originalRole) {
+        console.log(`🔄 Standardizing role from "${originalRole}" to "${standardizedRole}"`);
+        // Update the user role in the database
+        await storage.updateUser(user.id, { role: standardizedRole });
+        user.role = standardizedRole;
       }
       
       req.login(user, (err: Error | null) => {

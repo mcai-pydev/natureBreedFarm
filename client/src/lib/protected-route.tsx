@@ -12,13 +12,26 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ path, component: Component, requiredRole }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   
-  // Helper function to check if user has required role
+  // Define admin role variations to match server-side
+  const ADMIN_ROLES = ['Admin', 'admin', 'ADMIN', 'administrator', 'Administrator'];
+  
+  // Helper function to check if user has required role with case-insensitive support
   const hasRequiredRole = (user: any, requiredRole?: string | string[]) => {
     if (!requiredRole) return true;
     if (!user) return false;
     
-    const userRole = user.role;
+    const userRole = user.role || '';
     
+    // Special case for admin roles - accept any variation of 'admin' from the defined list
+    if (Array.isArray(requiredRole) && requiredRole.some(role => ADMIN_ROLES.includes(role))) {
+      return ADMIN_ROLES.includes(userRole);
+    }
+    
+    if (ADMIN_ROLES.includes(requiredRole as string) && ADMIN_ROLES.includes(userRole)) {
+      return true;
+    }
+    
+    // Regular role check
     if (Array.isArray(requiredRole)) {
       return requiredRole.includes(userRole);
     }
