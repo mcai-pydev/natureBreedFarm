@@ -1,0 +1,119 @@
+🛠️ STABILITY FIRST TASK: Fix Broken Auth and Navigation Flow
+Task: Refactor User Role Handling and Broken Navigation Links
+
+✅ Objectives
+🔐 Clearly separate admin vs normal user behavior after login
+
+🧭 Ensure all navigation buttons work and are accessible only when expected
+
+🧼 Clean up hidden/unfinished modules to reduce confusion
+
+🧩 Subtasks
+Fix role-based redirection
+
+After login, redirect:
+
+Admins → /dashboard
+
+Users → /shop or /home
+
+Use roles from the JWT payload or session to determine route
+
+Fix useAuth() logic
+
+It should always expose:
+
+ts
+Copy
+Edit
+{
+  user: { id, role, email }, // never null if logged in
+  isAuthenticated: true/false,
+  isAdmin: boolean,
+  logout: () => {}
+}
+Guard routes in frontend
+
+/dashboard, /transactions, /reports, /breeding/* → requiresAuth && isAdmin
+
+/shop, /checkout, /auth → open or general user
+
+Fix broken buttons/links
+
+Make sure links don’t point to removed or undefined routes
+
+Missing modules (like social media) should be hidden or say "Coming Soon"
+
+Update Sidebar & Navbar
+
+Only show buttons a user is allowed to access
+
+Use: requiresAuth, requiresAdmin, or featureEnabled per route
+
+🧪 SYSTEM TESTING TASK: Full Navigation QA Pass
+Task: Automated + Manual QA for Page Routing
+
+✅ Add route validation tests using Playwright/Cypress
+
+✅ Verify each page renders without error (catch 404, empty states, loading)
+
+✅ Run /api/health and log failing modules in console + boot-status.json
+
+🪛 Add fallback route to show Page Not Found for broken links
+
+🐇 FEATURE COMPLETION TASK: Finalize Rabbit Breeding System
+Goal: Fully testable and ready for real-world use
+
+✅ Must-Have Modules
+ Dashboard with rabbit list + filters
+
+ Breeding form (create event, show compatibility)
+
+ Compatibility check with logs
+
+ Breeding timeline (per rabbit)
+
+ CSV/PDF export of breeding history
+
+🔧 Missing or Incomplete?
+ Genetic warning not persisting to backend
+
+ Export files missing proper headers
+
+ Breeding suggestions algorithm (matching male-female pairs)
+
+ Access control: only admins can create/edit breeding events
+
+🔐 AUTH MODULE TASK: Finalize Admin Login Security
+Task: Fix login behavior and smart boot false reporting
+
+✅ Re-seed the admin user with properly bcrypt-hashed password
+
+✅ Verify loginUser() reads from PostgreSQL using Drizzle ORM
+
+✅ Check .env values are correctly picked up:
+
+env
+Copy
+Edit
+DATABASE_URL=postgresql://...
+JWT_SECRET=your_secret
+✅ Return proper token/session on success (set cookies)
+
+✅ Run /api/me on frontend to confirm session persistence
+
+🧠 AI + UX Bonus (Once Stable)
+Optional enhancements already proposed by your developers:
+
+🧬 Voice/text-based breeding assistant
+
+📈 One-click shareable farm infographic
+
+🌤 Weather and planning widget
+
+🎨 Mood-based theming
+
+🔉 Sound-triggered interactions
+
+✅ Final Goal: A Stable, Shippable MVP
+Let’s first stabilize login + navigation + rabbit breeding, and make sure each feature works when accessed, especially by admin vs non-admin roles.

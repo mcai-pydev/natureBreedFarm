@@ -4,16 +4,16 @@
       "name": "database",
       "status": "success",
       "message": "Database connection successful",
-      "timestamp": "2025-04-06T00:24:19.916Z"
+      "timestamp": "2025-04-06T01:50:46.459Z"
     },
     {
       "name": "api-endpoints",
       "status": "success",
       "message": "API endpoints are accessible",
-      "timestamp": "2025-04-06T00:24:19.934Z",
+      "timestamp": "2025-04-06T01:50:46.735Z",
       "details": {
         "status": 200,
-        "timestamp": "2025-04-06T00:24:19.934Z",
+        "timestamp": "2025-04-06T01:50:46.735Z",
         "responseAvailable": true
       }
     },
@@ -21,7 +21,7 @@
       "name": "auth",
       "status": "error",
       "message": "Login succeeded but returned unexpected data",
-      "timestamp": "2025-04-06T00:24:20.330Z",
+      "timestamp": "2025-04-06T01:50:47.337Z",
       "details": {
         "endpoints": {
           "status": "success",
@@ -35,18 +35,18 @@
     },
     {
       "name": "shop",
-      "status": "error",
-      "message": "Shop API is working with 0 products available",
-      "timestamp": "2025-04-06T00:24:20.363Z",
+      "status": "success",
+      "message": "Shop API is working with 1 products available",
+      "timestamp": "2025-04-06T01:50:47.377Z",
       "details": {
-        "productCount": 0
+        "productCount": 1
       }
     },
     {
       "name": "orders",
       "status": "success",
       "message": "Orders module is functioning correctly with 0 orders in system",
-      "timestamp": "2025-04-06T00:24:20.550Z",
+      "timestamp": "2025-04-06T01:50:47.574Z",
       "details": {
         "isAuthenticated": true,
         "isOrdersEndpointWorking": true,
@@ -67,19 +67,33 @@
     },
     {
       "name": "checkout",
-      "status": "error",
-      "message": "No products in stock for checkout",
-      "timestamp": "2025-04-06T00:24:21.510Z",
+      "status": "success",
+      "message": "Checkout flow is operational with 1 products available",
+      "timestamp": "2025-04-06T01:50:47.797Z",
       "details": {
-        "totalProducts": 0,
-        "inStockProducts": 0
+        "isAuthenticated": true,
+        "products": {
+          "total": 1,
+          "inStock": 1,
+          "featuredProducts": 1
+        },
+        "orderCreation": {
+          "success": true,
+          "message": "Order creation endpoint correctly requires authentication",
+          "statusCode": 401
+        },
+        "cartTest": {
+          "success": true,
+          "attempted": true,
+          "message": "Cart endpoint is accessible"
+        }
       }
     },
     {
       "name": "breeding",
       "status": "success",
       "message": "Breeding system is working properly",
-      "timestamp": "2025-04-06T00:24:23.548Z",
+      "timestamp": "2025-04-06T01:50:47.972Z",
       "details": {
         "animalCount": 6,
         "rabbitCount": 4,
@@ -92,7 +106,7 @@
       "name": "rabbit-breeding",
       "status": "success",
       "message": "Rabbit breeding system operational with 4 rabbits available",
-      "timestamp": "2025-04-06T00:24:23.889Z",
+      "timestamp": "2025-04-06T01:50:48.133Z",
       "details": {
         "animalsCount": 6,
         "rabbitsCount": 4,
@@ -108,7 +122,7 @@
       "name": "pages",
       "status": "success",
       "message": "Pages check passed: 11/11 pages verified",
-      "timestamp": "2025-04-06T00:24:24.017Z",
+      "timestamp": "2025-04-06T01:50:48.291Z",
       "details": {
         "results": [
           {
@@ -205,14 +219,14 @@
       "name": "accessibility",
       "status": "success",
       "message": "2 accessibility issues detected",
-      "timestamp": "2025-04-06T00:24:24.021Z",
+      "timestamp": "2025-04-06T01:50:48.296Z",
       "details": [
         "client/src/components/reports/report-filters.tsx: Form control without label",
         "client/src/components/settings/newsletter-subscriber-list.tsx: Form control without label"
       ]
     }
   ],
-  "lastBootTimestamp": "2025-04-06T00:24:24.021Z",
+  "lastBootTimestamp": "2025-04-06T01:50:48.296Z",
   "overallStatus": "error",
   "environment": "development"
 }

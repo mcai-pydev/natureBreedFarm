@@ -3,6 +3,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Define administrative roles (all possible variations)
+const ADMIN_ROLES = ['Admin', 'admin', 'ADMIN', 'Manager', 'manager', 'MANAGER', 'Owner', 'owner', 'OWNER'];
+
 // User type based on schema
 interface User {
   id: number;
@@ -25,6 +28,8 @@ type AuthContextType = {
   isLoading: boolean;
   error: Error | null;
   token: string | null;
+  isAuthenticated: boolean;
+  isAdmin: boolean;
   loginMutation: any;
   logoutMutation: any;
   registerMutation: any;
@@ -141,6 +146,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Login successful",
         description: `Welcome back, ${data.user.name}!`,
       });
+      
+      // Redirect based on role
+      if (ADMIN_ROLES.includes(data.user.role)) {
+        console.log('Admin login detected, redirecting to dashboard');
+        window.location.href = '/dashboard';
+      } else {
+        console.log('Regular user login detected, redirecting to shop');
+        window.location.href = '/shop';
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -175,6 +189,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Logged out",
         description: "You have been logged out successfully",
       });
+      
+      // Redirect to auth page after logout
+      window.location.href = '/auth';
     },
     onError: (error: Error) => {
       toast({
@@ -184,6 +201,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       // Still remove user data from cache to ensure logged out state
       queryClient.setQueryData(["/api/me"], null);
+      
+      // Redirect to auth page even after an error
+      window.location.href = '/auth';
     },
   });
 
@@ -211,6 +231,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Registration successful",
         description: `Welcome, ${user.name}!`,
       });
+      
+      // Redirect based on role (though most newly registered users will be regular users)
+      if (ADMIN_ROLES.includes(user.role)) {
+        window.location.href = '/dashboard';
+      } else {
+        window.location.href = '/shop';
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -221,6 +248,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Calculate derived state
+  const isAuthenticated = !!user;
+  const isAdmin = !!user && ADMIN_ROLES.includes(user?.role || '');
+  
   return (
     <AuthContext.Provider
       value={{
@@ -228,6 +259,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         token,
+        isAuthenticated,
+        isAdmin,
         loginMutation,
         logoutMutation,
         registerMutation,

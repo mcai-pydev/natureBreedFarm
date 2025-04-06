@@ -25,6 +25,7 @@ import SettingsPage from '@/pages/settings-page';
 import StatusPage from '@/pages/status-page';
 import OnboardingPage from '@/pages/onboarding-page';
 import DebugOnboardingPage from '@/pages/debug-onboarding-page';
+import DashboardPage from '@/pages/dashboard-page';
 import { Loader2 } from 'lucide-react';
 
 // Main App component
@@ -89,6 +90,7 @@ function Router() {
       
       {/* Protected routes - require login */}
       <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/dashboard" component={DashboardPage} requiredRole={['Admin', 'admin', 'ADMIN', 'Manager', 'manager']} />
       <ProtectedRoute path="/products" component={ProductsPage} />
       <ProtectedRoute path="/transactions" component={TransactionsPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
