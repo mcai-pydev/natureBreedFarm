@@ -87,6 +87,7 @@ import {
 // Import setupAuth from auth.ts after all other imports to prevent circular dependency
 import { setupAuth, requireAuth, requireAdmin } from "./auth";
 import orderRoutes from "./routes/order-routes";
+import healthRouter from "./health";
 import { stringify } from 'csv-stringify/sync';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -95,11 +96,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup static files middleware
   app.use(express.static(path.join(process.cwd(), "client/src/assets")));
   
+  // Prevent favicon.ico 404 errors
+  app.get('/favicon.ico', (req, res) => {
+    res.status(204).end();
+  });
+  
   // Setup authentication routes
   setupAuth(app);
   
   // Register order routes with RBAC protection
   app.use('/api', orderRoutes);
+  
+  // Register health check routes
+  app.use('/health', healthRouter);
   
   // Export breeding events
   app.get('/api/breeding-events/export', async (req, res) => {
@@ -1325,20 +1334,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // System health and diagnostics endpoints
   app.get("/api/health/auth", async (req, res) => {
     try {
-      const authResult = await checkAuthEndpoints();
+      // Use our new comprehensive auth health checker
+      const baseUrl = process.env.NODE_ENV === 'production'
+        ? `https://${req.headers.host}`
+        : `http://${req.headers.host || 'localhost:5000'}`;
       
-      // Only run full auth check if endpoints are available
+      // Import and use the performAuthHealthCheck from our new module
+      const performAuthHealthCheck = require('./health/auth-health').default;
+      const healthResult = await performAuthHealthCheck(baseUrl);
+      
+      // Continue running legacy checks for backwards compatibility
+      const authResult = await checkAuthEndpoints();
       let fullAuthResult = authResult;
       if (authResult.status === 'success') {
         fullAuthResult = await checkAuthSystem();
       }
       
-      res.json({
-        status: fullAuthResult.status,
-        message: fullAuthResult.message,
+      // Merge the results with our new, more detailed check
+      const combinedResult = {
+        status: healthResult.status === 'ok' && fullAuthResult.status === 'success' ? 'ok' : 'error',
+        message: healthResult.message,
         timestamp: new Date().toISOString(),
-        details: fullAuthResult.details || {},
-      });
+        details: {
+          ...healthResult.details,
+          legacyChecks: fullAuthResult.details || {}
+        }
+      };
+      
+      // Return the health check result
+      res.status(combinedResult.status === 'ok' ? 200 : 500).json(combinedResult);
     } catch (error) {
       console.error("Auth health check error:", error);
       res.status(500).json({ 

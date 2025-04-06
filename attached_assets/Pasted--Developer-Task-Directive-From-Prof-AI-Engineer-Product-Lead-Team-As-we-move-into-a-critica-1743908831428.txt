@@ -1,0 +1,81 @@
+📣 Developer Task Directive (From Prof. AI Engineer & Product Lead)
+Team,
+
+As we move into a critical stabilization phase, we need to urgently resolve the following issues and push the system into testable, shippable state. Below are the top priorities as of now, categorized clearly.
+
+✅ URGENT FIXES (Auth, Pages, Role Logic)
+Login System
+
+Re-seed admin user in PostgreSQL (admin@naturebreedfarm.org / admin123)
+
+Ensure bcrypt hash + JWT_SECRET compatibility
+
+Add /api/health/auth to check login working on boot
+
+Page Access Permissions
+
+/orders throws "Access Denied" → standardize role === "admin" logic
+
+/shop throws error → fix missing or broken query on product fetch
+
+Re-enable all quick links with correct route check + fallback UI if no data
+
+Navigation and Role Control
+
+Only show links/pages relevant to the user’s role
+
+Add proper fallback/error pages for unauthorized access
+
+🐰 RABBIT BREEDING MODULE FINALIZATION
+This module is a top showcase. It must be production ready for live farmer testing!
+
+ Compatibility algorithm + form validation
+
+ Compatibility result logging + export
+
+ Add /api/breeding/history/export/pdf for formatted history
+
+ Implement health badge component for genetic pair risk
+
+ MVP AI suggestion tool (text/voice input for rabbit pairing)
+
+🛠️ SMART BOOT INTEGRATION & MONITORING
+Add /api/boot/compatibility-status
+
+Track UI component health in boot-status.json
+
+Add test login + shop fetch on boot (to catch these errors early)
+
+🌿 MONGODB RESEARCH SYSTEM INITIATION
+Create research schema:
+
+{ title, url, category: "soil" | "crop" | "snail" | "fish" | ... }
+
+Start wget or curl scripts from reliable research article sources
+
+Store documents in MongoDB Atlas via Mongoose
+
+Track import job status in /api/health/research
+
+🧪 REGRESSION & STABILITY TASKS
+ Add test flow: new user registration → login → see correct nav links
+
+ Fix order history table (if orders exist, render properly)
+
+ Verify role checks for admin, farmer, guest
+
+ Rewire Quick Action Links (check if inactive or throw error)
+
+📚 DOCS & COMMUNICATION
+Please document changes in the developer wiki
+
+Record your decisions and routes in a /docs/logs/ folder
+
+Keep Rabbit Breeding README updated per module
+
+👨‍🔬 Final Notes from Prof. AI Engineer This system must be testable by field agents starting soon. Focus on reliability over speed. You’re authorized to refactor brittle parts but log every change. Collaborate, test, and push a clean, working release.
+
+Let’s get this done — the farmers are waiting.
+
+— Prof.
+NatureBreedFarm AI Engineering Lead
