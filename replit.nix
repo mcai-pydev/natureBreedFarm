@@ -4,6 +4,6 @@
     pkgs.nodejs-20_x
     pkgs.nodePackages.typescript
     pkgs.nodePackages.vite
-    pkgs.yarn
+    pkgs.nodePackages.npm
   ];
 }
