@@ -1,6 +1,9 @@
-{pkgs}: {
+
+{ pkgs }: {
   deps = [
-    pkgs.postgresql
-    pkgs.jq
+    pkgs.nodejs-20_x
+    pkgs.nodePackages.typescript
+    pkgs.nodePackages.vite
+    pkgs.yarn
   ];
 }
