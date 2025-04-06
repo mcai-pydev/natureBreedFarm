@@ -70,7 +70,7 @@ function updateComponentStatus(
   details?: any
 ): BootStatus {
   const component = status.components.find(c => c.name === name);
-  
+
   if (component) {
     component.status = newStatus;
     component.message = message;
@@ -96,9 +96,9 @@ function updateComponentStatus(
   } else {
     status.overallStatus = 'pending';
   }
-  
+
   status.lastBootTimestamp = new Date().toISOString();
-  
+
   return status;
 }
 
@@ -108,13 +108,13 @@ async function checkModuleStatus(
   checkFn: () => Promise<{ success: boolean; message: string; details?: any }>
 ): Promise<ComponentStatus> {
   console.log(`🔍 Checking ${moduleName} module...`);
-  
+
   try {
     const result = await checkFn();
     const status = result.success ? 'success' : 'error';
-    
+
     console.log(`${status === 'success' ? '✅' : '❌'} ${moduleName}: ${result.message}`);
-    
+
     return {
       name: moduleName,
       status,
@@ -124,7 +124,7 @@ async function checkModuleStatus(
     };
   } catch (error) {
     console.error(`❌ ${moduleName} check failed with error:`, error);
-    
+
     return {
       name: moduleName,
       status: 'error',
@@ -147,29 +147,39 @@ import { checkAuthSystem, checkAuthEndpoints } from './auth-check';
 // Main boot function
 export async function bootSystem(): Promise<BootStatus> {
   console.log('🚀 Booting Nature Breed Farm Application...');
-  
+
   // Get current status
   let status = getCurrentStatus();
-  
+
   // Reset pending statuses
   status.components = status.components.filter(c => c.status !== 'pending');
   status.overallStatus = 'pending';
   updateStatus(status);
-  
+
   // Check database connection
   const dbStatus = await checkModuleStatus('database', async () => {
     try {
       // Test query to check database connection
-      await db.execute(sql`SELECT 1 AS result`);
+      const result = await db.execute(sql`SELECT 1 AS result`);
+      if (!result) {
+        return {
+          success: false,
+          message: 'Database connection test failed - no result'
+        };
+      }
       return {
         success: true,
         message: 'Database connection successful'
       };
     } catch (error) {
-      throw new Error(`Database connection failed: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('Database check error:', error);
+      return {
+        success: false,
+        message: `Database connection failed: ${error instanceof Error ? error.message : String(error)}`
+      };
     }
   });
-  
+
   status = updateComponentStatus(
     status,
     dbStatus.name,
@@ -178,7 +188,7 @@ export async function bootSystem(): Promise<BootStatus> {
     dbStatus.details
   );
   updateStatus(status);
-  
+
   // Check API endpoints health
   const apiStatus = await checkModuleStatus('api-endpoints', async () => {
     try {
@@ -207,7 +217,7 @@ export async function bootSystem(): Promise<BootStatus> {
       }
     }
   });
-  
+
   status = updateComponentStatus(
     status,
     apiStatus.name,
@@ -216,17 +226,17 @@ export async function bootSystem(): Promise<BootStatus> {
     apiStatus.details
   );
   updateStatus(status);
-  
+
   // Check Auth module specifically with comprehensive validation
   const authStatus = await checkModuleStatus('auth', async () => {
     // First check if auth endpoints are accessible
     const endpointsResult = await checkAuthEndpoints();
-    
+
     // Only try the full auth check if endpoints are accessible
     if (endpointsResult.status === 'success') {
       // Use our comprehensive auth check that validates login and session persistence
       const authResult = await checkAuthSystem();
-      
+
       return {
         success: authResult.status === 'success' || authResult.status === 'warning',
         message: authResult.message,
@@ -244,7 +254,7 @@ export async function bootSystem(): Promise<BootStatus> {
       };
     }
   });
-  
+
   status = updateComponentStatus(
     status,
     authStatus.name,
@@ -253,13 +263,13 @@ export async function bootSystem(): Promise<BootStatus> {
     authStatus.details
   );
   updateStatus(status);
-  
+
   // Check Shop module
   const shopStatus = await checkModuleStatus('shop', async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/products');
       const products = response.data;
-      
+
       return {
         success: Array.isArray(products) && products.length > 0,
         message: `Shop API is working with ${products.length} products available`,
@@ -269,7 +279,7 @@ export async function bootSystem(): Promise<BootStatus> {
       throw new Error(`Shop API check failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
-  
+
   status = updateComponentStatus(
     status,
     shopStatus.name,
@@ -278,12 +288,12 @@ export async function bootSystem(): Promise<BootStatus> {
     shopStatus.details
   );
   updateStatus(status);
-  
+
   // Check Orders module
   const ordersStatus = await checkModuleStatus('orders', async () => {
     return await checkOrdersModule();
   });
-  
+
   status = updateComponentStatus(
     status,
     ordersStatus.name,
@@ -292,7 +302,7 @@ export async function bootSystem(): Promise<BootStatus> {
     ordersStatus.details
   );
   updateStatus(status);
-  
+
   // Check Checkout flow
   const checkoutStatus = await checkModuleStatus('checkout', async () => {
     const result = await checkCheckoutFlow();
@@ -302,7 +312,7 @@ export async function bootSystem(): Promise<BootStatus> {
       details: result.details
     };
   });
-  
+
   status = updateComponentStatus(
     status,
     checkoutStatus.name,
@@ -311,7 +321,7 @@ export async function bootSystem(): Promise<BootStatus> {
     checkoutStatus.details
   );
   updateStatus(status);
-  
+
   // Check Animal Breeding module
   const breedingStatus = await checkModuleStatus('breeding', async () => {
     const result = await checkBreedingSystem();
@@ -321,7 +331,7 @@ export async function bootSystem(): Promise<BootStatus> {
       details: result.details
     };
   });
-  
+
   status = updateComponentStatus(
     status,
     breedingStatus.name,
@@ -330,7 +340,7 @@ export async function bootSystem(): Promise<BootStatus> {
     breedingStatus.details
   );
   updateStatus(status);
-  
+
   // Check Rabbit Breeding specifically
   const rabbitStatus = await checkModuleStatus('rabbit-breeding', async () => {
     const result = await checkRabbitBreeding();
@@ -340,7 +350,7 @@ export async function bootSystem(): Promise<BootStatus> {
       details: result.details
     };
   });
-  
+
   status = updateComponentStatus(
     status,
     rabbitStatus.name,
@@ -349,7 +359,7 @@ export async function bootSystem(): Promise<BootStatus> {
     rabbitStatus.details
   );
   updateStatus(status);
-  
+
   // Check Application Pages and their API endpoints
   const pagesStatus = await checkModuleStatus('pages', async () => {
     const result = await checkPages();
@@ -359,7 +369,7 @@ export async function bootSystem(): Promise<BootStatus> {
       details: result.details
     };
   });
-  
+
   status = updateComponentStatus(
     status,
     pagesStatus.name,
@@ -368,7 +378,7 @@ export async function bootSystem(): Promise<BootStatus> {
     pagesStatus.details
   );
   updateStatus(status);
-  
+
   // Check frontend accessibility
   const a11yStatus = await checkModuleStatus('accessibility', async () => {
     const result = await accessibilityCheck.check();
@@ -378,7 +388,7 @@ export async function bootSystem(): Promise<BootStatus> {
       details: result.details
     };
   });
-  
+
   status = updateComponentStatus(
     status,
     a11yStatus.name,
@@ -387,16 +397,16 @@ export async function bootSystem(): Promise<BootStatus> {
     a11yStatus.details
   );
   updateStatus(status);
-  
+
   // Final status report
   console.log('\n📊 Boot Status Report:');
   console.log(`Overall: ${status.overallStatus === 'success' ? '✅' : status.overallStatus === 'warning' ? '⚠️' : '❌'} ${status.overallStatus.toUpperCase()}`);
-  
+
   status.components.forEach(component => {
     const icon = component.status === 'success' ? '✅' : component.status === 'warning' ? '⚠️' : '❌';
     console.log(`${icon} ${component.name}: ${component.message}`);
   });
-  
+
   // If boot is successful, export a health snapshot
   if (status.overallStatus === 'success') {
     const snapshotResult = exportHealthSnapshot(status);
@@ -404,7 +414,7 @@ export async function bootSystem(): Promise<BootStatus> {
       console.log(`📸 Health snapshot exported: ${snapshotResult.timestamp}`);
     }
   }
-  
+
   return status;
 }
 

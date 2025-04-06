@@ -13,7 +13,16 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Important for NeonDB
+  ssl: { rejectUnauthorized: false },
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+// Add connection error handling
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle database client', err);
+  process.exit(-1);
 });
 
 console.log('✅ Database connected to NeonDB');
