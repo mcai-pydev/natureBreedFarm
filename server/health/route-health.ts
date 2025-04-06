@@ -1,4 +1,11 @@
-import { HealthCheckResult } from '../types/health';
+import { 
+  HealthCheckResult, 
+  RouteRenderStatus, 
+  ButtonBindingStatus, 
+  RouteStatus, 
+  ButtonStatus,
+  CoverageDetails 
+} from '../types/health';
 
 /**
  * Route definitions that should be checked for availability
@@ -46,6 +53,90 @@ export const routeDefinitions = {
     '/chat'
   ]
 };
+
+/**
+ * Maps routes to their protection requirements
+ */
+export const routeProtectionMap = {
+  // Public routes (no auth needed)
+  public: [
+    '/',
+    '/auth',
+    '/shop',
+    '/api/products',
+    '/api/products/:id',
+  ],
+  // Routes requiring any authenticated user
+  authenticated: [
+    '/dashboard',
+    '/profile',
+    '/orders',
+    '/cart',
+    '/checkout',
+    '/api/user',
+    '/api/orders',
+    '/api/orders/:id',
+    '/api/logout',
+  ],
+  // Routes requiring admin role
+  admin: [
+    '/admin',
+    '/admin/products',
+    '/admin/animals',
+    '/admin/breeding',
+    '/admin/orders',
+    '/admin/transactions',
+    '/admin/analytics',
+    '/admin/settings',
+    '/api/analytics/dashboard',
+    '/api/newsletters',
+    '/api/newsletters/:id',
+    '/api/contacts',
+    '/api/contacts/:id',
+  ]
+};
+
+// Store rendered route status for live tracking
+
+// In-memory store of route rendering statuses
+const routeRenderStatuses: Record<string, RouteStatus> = {};
+
+// In-memory store of button binding statuses
+const buttonBindingStatuses: Record<string, ButtonStatus> = {};
+
+/**
+ * Updates the render status of a route
+ */
+export function updateRouteRenderStatus(
+  path: string, 
+  status: RouteRenderStatus,
+  role: 'public' | 'authenticated' | 'admin' | 'unknown' = 'unknown'
+): void {
+  routeRenderStatuses[path] = {
+    path,
+    renders: status,
+    role,
+    lastTested: new Date().toISOString()
+  };
+}
+
+/**
+ * Updates the binding status of a button
+ */
+export function updateButtonBindingStatus(
+  id: string,
+  route: string,
+  status: ButtonBindingStatus,
+  handler?: string
+): void {
+  buttonBindingStatuses[id] = {
+    id,
+    route,
+    status,
+    handler,
+    lastTested: new Date().toISOString()
+  };
+}
 
 /**
  * Checks all routes for proper definition in the application.
@@ -102,4 +193,67 @@ export async function checkRouteHealth(): Promise<HealthCheckResult> {
       message: `Failed to check route health: ${error instanceof Error ? error.message : String(error)}`
     };
   }
+}
+
+/**
+ * Returns detailed routing and button coverage information
+ */
+export function getRouteCoverageDetails(): CoverageDetails {
+  // Map each route to its render status (or default to not-tested)
+  const apiRouteStatus = routeDefinitions.api.map(route => {
+    return routeRenderStatuses[route] || {
+      path: route,
+      renders: 'not-tested' as RouteRenderStatus,
+      role: getRouteRole(route),
+      lastTested: undefined
+    };
+  });
+  
+  const clientRouteStatus = routeDefinitions.client.map(route => {
+    return routeRenderStatuses[route] || {
+      path: route,
+      renders: 'not-tested' as RouteRenderStatus,
+      role: getRouteRole(route),
+      lastTested: undefined
+    };
+  });
+  
+  // Get all button statuses
+  const buttonStatuses = Object.values(buttonBindingStatuses);
+  
+  return {
+    routes: {
+      api: apiRouteStatus,
+      client: clientRouteStatus
+    },
+    buttons: buttonStatuses,
+    summary: {
+      routes: {
+        total: routeDefinitions.api.length + routeDefinitions.client.length,
+        tested: Object.keys(routeRenderStatuses).length,
+        successful: Object.values(routeRenderStatuses).filter(r => r.renders === 'success').length,
+        failed: Object.values(routeRenderStatuses).filter(r => r.renders === 'error').length,
+        incomplete: Object.values(routeRenderStatuses).filter(r => r.renders === 'incomplete').length
+      },
+      buttons: {
+        total: buttonStatuses.length,
+        bound: buttonStatuses.filter(b => b.status === 'bound').length,
+        unbound: buttonStatuses.filter(b => b.status === 'unbound').length
+      }
+    }
+  };
+}
+
+/**
+ * Helper to determine role requirement for a route
+ */
+function getRouteRole(route: string): 'public' | 'authenticated' | 'admin' | 'unknown' {
+  if (routeProtectionMap.public.includes(route)) {
+    return 'public';
+  } else if (routeProtectionMap.authenticated.includes(route)) {
+    return 'authenticated';
+  } else if (routeProtectionMap.admin.includes(route)) {
+    return 'admin';
+  }
+  return 'unknown';
 }

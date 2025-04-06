@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import performAuthHealthCheck from './auth-health';
-import { checkRouteHealth } from './route-health';
+import { checkRouteHealth, getRouteCoverageDetails } from './route-health';
 
 const healthRouter = Router();
 
@@ -83,6 +83,31 @@ healthRouter.get('/routes', async (req, res) => {
     res.status(500).json({
       status: 'error',
       message: `Failed to perform routes health check: ${error instanceof Error ? error.message : String(error)}`,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * Detailed route coverage and button binding status
+ * This endpoint is primarily for developer use and internal monitoring
+ */
+healthRouter.get('/coverage', async (req, res) => {
+  try {
+    const coverageDetails = getRouteCoverageDetails();
+    
+    res.json({
+      status: 'success',
+      timestamp: new Date().toISOString(),
+      routes: coverageDetails.routes,
+      buttons: coverageDetails.buttons,
+      summary: coverageDetails.summary
+    });
+  } catch (error) {
+    console.error('❌ Error retrieving coverage details:', error);
+    res.status(500).json({
+      status: 'error',
+      message: `Failed to retrieve coverage details: ${error instanceof Error ? error.message : String(error)}`,
       timestamp: new Date().toISOString(),
     });
   }

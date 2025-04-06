@@ -1,14 +1,4 @@
 /**
- * Health check result interface
- */
-export interface HealthCheckResult {
-  status: 'success' | 'error' | 'warning';
-  message: string;
-  timestamp?: string;
-  details?: Record<string, any>;
-}
-
-/**
  * Route and button status types
  */
 export type RouteRenderStatus = 'success' | 'error' | 'incomplete' | 'not-tested';
@@ -57,6 +47,20 @@ export interface CoverageSummary {
  * Coverage details interface
  */
 export interface CoverageDetails {
+  routes: {
+    api: RouteStatus[];
+    client: RouteStatus[];
+  };
+  buttons: ButtonStatus[];
+  summary: CoverageSummary;
+}
+
+/**
+ * Coverage API response interface
+ */
+export interface CoverageApiResponse {
+  status: string;
+  timestamp: string;
   routes: {
     api: RouteStatus[];
     client: RouteStatus[];

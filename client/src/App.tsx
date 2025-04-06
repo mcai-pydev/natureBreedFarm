@@ -26,6 +26,7 @@ import StatusPage from '@/pages/status-page';
 import OnboardingPage from '@/pages/onboarding-page';
 import DebugOnboardingPage from '@/pages/debug-onboarding-page';
 import DashboardPage from '@/pages/dashboard-page';
+import CoverageDashboard from '@/pages/dev/coverage-dashboard';
 import { Loader2 } from 'lucide-react';
 
 // Import UnderConstruction component for placeholder pages
@@ -231,6 +232,9 @@ function Router() {
           returnLabel="Back to Admin Dashboard"
         />
       )} requiredRole={['Admin', 'admin', 'ADMIN']} />
+      
+      {/* Developer Tools Section */}
+      <ProtectedRoute path="/dev/coverage" component={CoverageDashboard} requiredRole={['Admin', 'admin', 'ADMIN']} />
       
       {/* Already protected using custom components */}
       <ProtectedOrderHistoryPage />
