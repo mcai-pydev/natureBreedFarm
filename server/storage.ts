@@ -16,7 +16,14 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import pg from "pg";
 import { getDefaultPermissionsForRole } from "./types/roles";
+import { eq, and, desc, asc, or, sql } from "drizzle-orm";
+import { db, pool } from "./db";
+
+// Session store setup
+const PostgresSessionStore = connectPg(session);
 
 // Explicitly import and define the memory store constructor
 const MemoryStore = createMemoryStore(session);
@@ -2197,33 +2204,29 @@ export class MemStorage implements IStorage {
 }
 
 // Implement database storage
-import { eq, and, desc, asc, or, sql } from "drizzle-orm";
-import { db } from "./db";
-import connectPg from "connect-pg-simple";
-import pg from "pg";
-
-const PostgresSessionStore = connectPg(session);
 
 export class DatabaseStorage implements IStorage {
   sessionStore: SessionStore;
 
   constructor() {
-    // Initialize session store for PostgreSQL
-    const pgPoolConfig = {
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    };
-    
-    // Create and configure the PostgreSQL session store
-    this.sessionStore = new PostgresSessionStore({
-      pool: new pg.Pool(pgPoolConfig),
-      tableName: 'session',
-      createTableIfMissing: true,
-      pruneSessionInterval: 60 * 15 // Prune expired sessions every 15 minutes
-    });
-    
-    // Log successful session store creation
-    console.log('🔐 PostgreSQL session store initialized');
+    try {
+      // Create and configure the PostgreSQL session store using existing pool from db.ts
+      this.sessionStore = new PostgresSessionStore({
+        pool: pool, // Using the pool instance imported from db.ts
+        tableName: 'session',
+        createTableIfMissing: true,
+        pruneSessionInterval: 60 * 15 // Prune expired sessions every 15 minutes
+      });
+      
+      console.log('✅ PostgreSQL session store initialized');
+    } catch (error) {
+      console.error('❌ Failed to initialize PostgreSQL session store:', error);
+      // Fallback to memory store if PostgreSQL session store fails
+      this.sessionStore = new MemoryStore({
+        checkPeriod: 86400000, // Prune expired entries every 24h
+      });
+      console.log('⚠️ Using in-memory session store as fallback');
+    }
   }
 
   // User methods
