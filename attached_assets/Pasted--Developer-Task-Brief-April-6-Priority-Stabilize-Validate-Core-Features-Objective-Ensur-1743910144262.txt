@@ -1,0 +1,84 @@
+🚧 Developer Task Brief (April 6 – Priority: Stabilize & Validate Core Features)
+🔍 Objective:
+Ensure all critical modules (Auth, Rabbit Breeding, Order History, Shop, Quick Links) are fully working, not duplicated, and follow our Smart, Efficient, Accurate, Ecosystem-based, and Simple development principles (SEAES).
+
+✅ Review & Verification Task
+Each dev must audit their previously completed work and check it meets the following criteria:
+
+1. 📋 Functional Verification
+ Does the page or API route render without errors?
+
+ Does it use real data (not hardcoded or placeholder)?
+
+ Is data returned from the proper backend source (e.g., Drizzle ORM, Postgres)?
+
+ Is role-based access control (RBAC) enforced?
+
+2. 🔁 Duplication & Hallucination Check
+ Ensure no duplicate files/components are imported (e.g., RabbitBreedingPage defined twice)
+
+ Avoid hallucinated props (e.g., using a non-existent field like animalCode)
+
+ Remove experimental fragments that aren’t active in the final system
+
+3. 🧪 Manual Test Cases to Run
+ Login ➝ Navigate to dashboard ➝ Check Rabbit Module visibility ➝ Open it
+
+ Click on Shop ➝ Confirm no error is thrown ➝ Products should load
+
+ Try viewing Order History ➝ Confirm if empty or error ➝ Show fallback if needed
+
+ Use Quick Action Links ➝ Confirm routing to correct pages (e.g., breeding, reports)
+
+ Logout ➝ Try accessing protected pages ➝ Confirm redirect to login
+
+🧠 Next Mandatory Tasks (Immediate Focus)
+🛒 Shop & Products
+ Fix: /shop errors on load due to empty product state
+
+ Add fallback UI if products are not returned
+
+ Add simple seeding logic for test products in the backend
+
+🐇 Rabbit Breeding Dashboard
+ Confirm /api/animals is working and useQuery() has a proper queryFn
+
+ Verify stats (total, male, female) display correct values
+
+ Fix the compatibility check error handler to alert user gracefully
+
+ Test export buttons (CSV/PDF) on dashboard — ensure working with latest structure
+
+📦 Order History
+ Ensure login role is standardized (admin vs user mismatch may block access)
+
+ Render fallback UI when no orders are present
+
+ Protect route /orders behind proper RBAC middleware
+
+🔗 Navigation Quick Links
+ Fix inactive quick links (ensure they map to live, mounted routes)
+
+ Track link state and boot health in boot-status.json
+
+🔐 Authentication & Roles
+ Fix login flow for both admin and newly registered users
+
+ Make sure protected routes only show for users with correct roles
+
+ Confirm JWT + cookie strategy persists after refresh
+
+✅ Task Delivery Rules
+📍 All modules must have:
+
+Proper boot status report entries (/status)
+
+At least one real test case in browser
+
+Error fallback rendering (not white screen or broken view)
+
+🚫 No pushing of partially complete routes or placeholder data unless clearly labeled
+
+📤 After passing local tests, push to GitHub with message:
+feat: [module name] verified and stabilized, ready for testing
+

@@ -138,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: JSON.stringify(credentials),
         credentials: "include", // Include cookies in the request
@@ -149,9 +150,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(errorData.message || "Login failed");
       }
       
-      const data = await response.json() as AuthResponse;
+      const data = await response.json();
+      
+      // Validate response structure
+      if (!data || !data.token) {
+        console.error("Invalid login response: Missing token");
+        throw new Error("Login succeeded but server returned invalid data");
+      }
+      
+      if (!data.user) {
+        console.error("Invalid login response: Missing user data");
+        throw new Error("Login succeeded but server returned invalid user data");
+      }
+      
       console.log("Login successful for:", credentials.username);
-      return data;
+      return data as AuthResponse;
     },
     onSuccess: (data: AuthResponse) => {
       // Store the JWT token
@@ -169,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Success notification
       toast({
         title: "Login successful",
-        description: `Welcome back, ${data.user.name}!`,
+        description: `Welcome back, ${data.user.name || data.user.username}!`,
       });
       
       // Redirect based on role
@@ -180,6 +193,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('Regular user login detected, redirecting to shop');
         window.location.href = '/shop';
       }
+      
+      // Force refresh user data after login
+      setTimeout(() => {
+        refetch();
+      }, 500);
     },
     onError: (error: Error) => {
       console.error("Login mutation error:", error.message);

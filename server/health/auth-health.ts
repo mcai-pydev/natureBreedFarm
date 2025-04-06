@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { storage } from '../storage';
+// Use node-fetch instead of require for compatibility
+import fetch from 'node-fetch';
 
 interface AuthHealthCheckResult {
   status: 'ok' | 'error';
@@ -33,8 +35,10 @@ export async function performAuthHealthCheck(baseUrl: string = 'http://localhost
 
   try {
     // Check 1: Admin user exists
+    // Try all possible admin usernames that could be in the system
     const adminUser = await storage.getUserByUsername('admin@naturebreedfarm.org') || 
-                      await storage.getUserByUsername('admin');
+                      await storage.getUserByUsername('admin') ||
+                      await storage.getUserByUsername('admin@farm.com');
     result.details.adminUserExists = !!adminUser;
     
     if (!adminUser) {
@@ -43,11 +47,14 @@ export async function performAuthHealthCheck(baseUrl: string = 'http://localhost
       result.message = 'Admin user not found in database. Please run the seed-admin.js script.';
       return result;
     }
+    
+    console.log('✅ Found admin user:', adminUser.username);
 
     // Check 2: Login functionality
     try {
+      // Use the actual username we found
       const loginResponse = await axios.post(`${baseUrl}/api/login`, {
-        username: 'admin@naturebreedfarm.org',
+        username: adminUser.username,
         password: 'admin123'
       });
       

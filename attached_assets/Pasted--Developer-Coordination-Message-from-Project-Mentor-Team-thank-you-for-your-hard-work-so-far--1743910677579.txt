@@ -1,0 +1,76 @@
+:
+
+📢 Developer Coordination Message from Project Mentor
+Team, thank you for your hard work so far. But now, it's time for full strategic focus.
+
+Despite providing detailed guidance, clear task breakdowns, and a project vision that emphasizes stability, simplicity, and social impact, we are still encountering:
+
+🚫 Login inconsistencies after PostgreSQL migration
+
+🔄 Incomplete or non-persistent fixes (things work temporarily, then break again)
+
+🧱 Inactive or broken UI components (e.g. Shop, Order History, Quick Links)
+
+⛔️ Lack of clear state visibility and proper health tracking for critical routes
+
+🚨 We need to immediately align around these principles:
+🔒 No feature is marked “done” until it has been:
+
+Verified working on local and Replit
+
+Listed in the /status boot report as ✅
+
+Tested by logging in with a real user (admin + new account)
+
+Viewable in the browser, without console errors
+
+📌 Developer Task: Urgent Core Stabilization
+You are all kindly required to do the following before pushing new features:
+
+✅ Fix authentication fully
+
+Admin login must persist and succeed across refresh
+
+Register ➝ Login ➝ Navigate ➝ Logout ➝ Repeat should all work
+
+Use debug logs in /auth and boot to verify this cycle
+
+🛒 Make the ShopPage load error-free
+
+Return real seeded data or mock fallback
+
+Add clear loading/empty/error UI states
+
+Track in boot status
+
+📦 Fix Order History route
+
+Use correct role check (admin vs user)
+
+Show real order data or fallback notice
+
+Link to boot health
+
+🐇 Verify Rabbit Breeding Page
+
+Compatibility checker works? ✅
+
+Dashboard loads real data? ✅
+
+Export works? ✅
+
+All subcomponents render on refresh? ✅
+
+Route /breeding/rabbits should be visible only to allowed roles
+
+🧪 Test and record with screenshots or logs
+
+Especially around auth and boot health
+
+Post success screenshots to #status-check (or issue comments)
+
+💬 Friendly but Firm Reminder
+If a task has already been assigned and explained, please do not ask “should I work on X?” — just take it, finish it well, and report completion clearly.
+
+We’re building something meaningful for rural farmers and real-world impact. We can’t afford confusion, duplication, or delay at this stage.
+

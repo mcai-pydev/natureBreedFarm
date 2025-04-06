@@ -57,24 +57,47 @@ const extractToken = (req: Request) => {
 // Middleware to authenticate via JWT token
 export const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
   try {
+    // For debugging auth issues
+    const authDebug = {
+      isAuthenticated: req.isAuthenticated(),
+      hasJwtUser: false,
+      username: 'none',
+      role: 'none',
+      method: 'none',
+      timestamp: new Date().toISOString()
+    };
+    
     // First try the session-based auth
     if (req.isAuthenticated()) {
+      authDebug.username = req.user?.username || 'unknown';
+      authDebug.role = req.user?.role || 'none';
+      authDebug.method = 'session';
+      console.log('🔍 Auth Debug -', req.path, authDebug);
       return next();
     }
     
     // Then try JWT token auth
     const token = extractToken(req);
     if (!token) {
+      console.log('🔍 Auth Debug -', req.path, authDebug);
       return res.status(401).json({ message: "Authentication required" });
     }
 
     const decoded = verifyToken(token);
     if (!decoded) {
+      console.log('🔍 Auth Debug -', req.path, authDebug);
       return res.status(401).json({ message: "Invalid or expired token" });
     }
 
     // Set the user on the request object for downstream middleware
     (req as any).user = decoded;
+    
+    // Update debug info for logging
+    authDebug.hasJwtUser = true;
+    authDebug.username = decoded.username || 'unknown';
+    authDebug.role = decoded.role || 'none';
+    authDebug.method = 'jwt';
+    console.log('🔍 Auth Debug -', req.path, authDebug);
     
     next();
   } catch (error) {

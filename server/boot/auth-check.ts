@@ -32,13 +32,32 @@ export async function checkAuthSystem(): Promise<AuthCheckResult> {
       password: 'admin123'
     });
     
-    if (loginResponse.status !== 200 || !loginResponse.data?.id) {
+    // First check that we have a successful response
+    if (loginResponse.status !== 200) {
       return {
         status: 'error',
-        message: 'Login succeeded but returned unexpected data',
+        message: 'Login failed with status code: ' + loginResponse.status,
         details: {
           statusCode: loginResponse.status,
           dataReceived: loginResponse.data ? true : false
+        }
+      };
+    }
+    
+    // Our authentication system returns either:
+    // 1. { id, username, ... } (old format)
+    // 2. { user: { id, username, ... }, token: "..." } (new format) 
+    // Check for both formats
+    const hasUserId = loginResponse.data?.id || (loginResponse.data?.user && loginResponse.data.user.id);
+    
+    if (!hasUserId) {
+      return {
+        status: 'error',
+        message: 'Login succeeded but returned unexpected data structure',
+        details: {
+          statusCode: loginResponse.status,
+          dataReceived: loginResponse.data ? true : false,
+          dataFormat: loginResponse.data?.user ? 'nested user object' : 'unknown format'
         }
       };
     }
@@ -56,13 +75,16 @@ export async function checkAuthSystem(): Promise<AuthCheckResult> {
       });
       
       // If we get here, we successfully accessed a protected endpoint
+      // Check for user data in different possible formats
+      const userData = userResponse.data?.user || userResponse.data;
+      
       return {
         status: 'success',
         message: 'Auth system is fully functional with session persistence',
         details: {
-          userId: userResponse.data?.id,
-          username: userResponse.data?.username,
-          role: userResponse.data?.role
+          userId: userData?.id,
+          username: userData?.username,
+          role: userData?.role
         }
       };
     } catch (userError) {

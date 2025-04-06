@@ -416,10 +416,47 @@ export default function ShopPage() {
                     </CardFooter>
                   </Card>
                 ))
+              ) : isError ? (
+                // Error state
+                <div className="col-span-full">
+                  <div className="bg-white rounded-lg shadow p-8 text-center mx-auto max-w-md">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-500 mb-4">
+                      <X className="h-8 w-8" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load products</h3>
+                    <p className="text-gray-500 mb-4">
+                      We're experiencing some technical difficulties. Please try again later.
+                    </p>
+                    <p className="text-xs text-gray-400 mb-4">
+                      Error: {error instanceof Error ? error.message : 'Unknown error'}
+                    </p>
+                    <Button onClick={() => window.location.reload()}>
+                      Refresh Page
+                    </Button>
+                  </div>
+                </div>
               ) : sortedProducts.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <h3 className="text-lg font-medium text-gray-500 mb-2">No products found</h3>
-                  <p className="text-sm text-gray-400">Try changing your search or filter criteria</p>
+                // Empty state
+                <div className="col-span-full">
+                  <div className="bg-white rounded-lg shadow p-8 text-center mx-auto max-w-md">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-100 text-yellow-500 mb-4">
+                      <Filter className="h-8 w-8" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+                    <p className="text-gray-500 mb-4">
+                      {searchQuery ? 
+                        `No products matching "${searchQuery}"` : 
+                        category !== "all" ? 
+                          `No products available in the "${category}" category` :
+                          "There are no products available at the moment."}
+                    </p>
+                    <Button onClick={() => {
+                      setSearchQuery("");
+                      setCategory("all");
+                    }}>
+                      Clear Filters
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 sortedProducts.map(product => (
