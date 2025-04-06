@@ -80,14 +80,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         
         const response = await fetch("/api/me", {
-          credentials: "include", // Include credentials for session fallback
+          credentials: "include", // Include cookies for session fallback
           headers
         });
         
         console.log("User fetch response status:", response.status);
         
         if (!response.ok) {
-          if (response.status === 401) {
+          if (response.status === 401 || response.status === 403) {
             console.log("User is not authenticated");
             // Clear invalid token if present
             if (token) {
@@ -96,7 +96,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             return null;
           }
-          throw new Error(`Failed to fetch user data: ${response.status}`);
+          
+          // For 502 errors, which could be temporary server issues, just log and return null
+          if (response.status === 502) {
+            console.warn("Server gateway error (502), might be temporary");
+            return null;
+          }
+          
+          // For other errors, try to get error details from response
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Failed to fetch user data: ${response.status}`);
         }
         
         const userData = await response.json();
@@ -104,6 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return userData;
       } catch (error) {
         console.error("Auth error:", error);
+        // If token exists but failed to authenticate, clear it
+        if (token) {
+          console.log("Authentication error with token, clearing it as precaution");
+          removeStoredToken();
+        }
         return null;
       }
     },
@@ -117,31 +131,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {
+      console.log("Attempting login for:", credentials.username);
+      
       const response = await fetch("/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(credentials),
+        credentials: "include", // Include cookies in the request
       });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error("Login failed:", errorData.message || "Unknown error");
         throw new Error(errorData.message || "Login failed");
       }
       
-      return await response.json() as AuthResponse;
+      const data = await response.json() as AuthResponse;
+      console.log("Login successful for:", credentials.username);
+      return data;
     },
     onSuccess: (data: AuthResponse) => {
       // Store the JWT token
       if (data.token) {
-        console.log("Storing authentication token");
+        console.log("Storing authentication token in localStorage");
         storeToken(data.token);
+      } else {
+        console.warn("No token received from server");
       }
       
       // Update user data in cache
+      console.log("Updating user data in cache:", data.user.username);
       queryClient.setQueryData(["/api/me"], data.user);
       
+      // Success notification
       toast({
         title: "Login successful",
         description: `Welcome back, ${data.user.name}!`,
@@ -157,6 +181,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onError: (error: Error) => {
+      console.error("Login mutation error:", error.message);
+      removeStoredToken(); // Clear any existing token on login failure
+      
       toast({
         title: "Login failed",
         description: error.message,
@@ -167,20 +194,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
+      console.log("Logging out user...");
+      
       // First try server-side logout for session
       try {
+        // Prepare headers with JWT token if available
+        const headers: HeadersInit = {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        };
+        
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+          console.log("Including JWT token in logout request");
+        }
+        
         const response = await fetch("/api/logout", {
           method: "POST",
+          headers,
+          credentials: "include" // Include cookies to clear session
         });
         
         if (!response.ok) {
           console.warn("Server logout failed, but continuing with client-side logout");
+        } else {
+          console.log("Server logout successful");
         }
       } catch (error) {
         console.warn("Server logout error, but continuing with client-side logout:", error);
       }
       
       // Always remove the token regardless of server-side logout success
+      console.log("Removing locally stored token");
       removeStoredToken();
     },
     onSuccess: () => {
@@ -209,21 +254,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (userData: any) => {
+      console.log("Registering new user:", userData.username);
+      
       const response = await fetch("/api/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify(userData),
+        credentials: "include" // Include cookies for session creation
       });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error("Registration failed:", errorData.message || "Unknown error");
         throw new Error(errorData.message || "Registration failed");
       }
       
-      const data = await response.json();
-      return data;
+      const data = await response.json() as AuthResponse;
+      
+      // If we receive a token, store it
+      if (data.token) {
+        console.log("Storing registration token");
+        storeToken(data.token);
+      }
+      
+      console.log("Registration successful for:", userData.username);
+      return data.user;
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/me"], user);

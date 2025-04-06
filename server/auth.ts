@@ -272,10 +272,18 @@ export function setupAuth(app: Express) {
         // Remove password from response
         const { password: _, ...userWithoutPassword } = user;
         
+        // Add token to response cookies for an additional layer of security
+        res.cookie('auth_token', token, {
+          httpOnly: true, // Cookie cannot be accessed via JS
+          secure: process.env.NODE_ENV === 'production', // Only sent over HTTPS in production 
+          sameSite: 'lax', // Helps prevent CSRF
+          maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+        
         // Return user data with token
         return res.status(200).json({
           user: userWithoutPassword,
-          token
+          token // Also include token in response body for localStorage
         });
       });
     })(req, res, next);
@@ -303,24 +311,29 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
-    if (!req.isAuthenticated()) {
-      console.log('⚠️ Logout attempted when not logged in');
-      return res.status(200).json({ message: "No active session to logout" });
-    }
-
-    const username = req.user?.username;
+    // Store username before logout for logging
+    const username = req.user?.username || 'unknown';
     
     console.log('🔓 Logout requested for user:', username);
     
-    req.logout((err) => {
-      if (err) {
-        console.error('❌ Logout error:', err);
-        return next(err);
-      }
-      
-      console.log('✅ Logout successful for user:', username);
+    // Clear JWT cookie
+    res.clearCookie('auth_token');
+    
+    // End session if authenticated
+    if (req.isAuthenticated()) {
+      req.logout((err) => {
+        if (err) {
+          console.error('❌ Logout error:', err);
+          return next(err);
+        }
+        
+        console.log('✅ Logout successful for user:', username);
+        res.status(200).json({ message: "Logged out successfully" });
+      });
+    } else {
+      console.log('✅ JWT logout successful for user:', username);
       res.status(200).json({ message: "Logged out successfully" });
-    });
+    }
   });
 
   app.get("/api/user", (req, res, next) => {

@@ -1,0 +1,81 @@
+🩺 SYSTEM STATUS SUMMARY
+✅ Database is connected (via NeonDB)
+⚠️ Admin user was seeded but login fails intermittently
+⚠️ Session token likely not persisting correctly after login
+❌ Role-based permissions are not working as expected
+❌ Auth-protected routes (e.g., /orders) deny access even to admin
+⚠️ Rabbit Breeding module page exists but behavior may be inconsistent
+✅ All frontend routes are defined and mapped properly
+📸 Debug shows user: null, which confirms a JWT/session issue
+
+🚧 NEXT DEVELOPER TASKS
+🔐 1. Fix Authentication & Session Persistence
+ Fix JWT cookie/session persistence after successful login
+
+ Validate token with every refresh using useAuth() hook
+
+ Ensure JWT cookie is set with httpOnly, secure, and SameSite=Lax in production
+
+ Cross-check login response and setUser state in frontend
+
+ Validate AuthProvider properly wraps <Router>
+
+👤 2. Fix Admin User Logic
+ Re-seed the admin user with isAdmin: true in the database
+
+ Fix getUserByEmail() and loginUser() to pull user roles from PostgreSQL using Drizzle ORM
+
+ If admin login fails again, re-check bcrypt hash and JWT_SECRET
+
+🛡️ 3. Correct Route Protection
+ Ensure /orders, /reports, /transactions, /dashboard, /breeding/rabbits check:
+
+ts
+Copy
+Edit
+if (!user || !user.isAdmin) redirectTo('/auth')
+ Add fallback UI for “Access Denied” with helpful message
+
+ Add route tests for protected access with/without login
+
+🐇 4. Rabbit Breeding Module Final Stabilization
+ Verify /breeding/rabbits works end-to-end:
+
+ Shows full rabbit list
+
+ Loads suggestions, compatibility checks
+
+ Timeline and event form works
+
+ Export buttons (CSV, PDF) work with actual data
+
+ Add a "breeding quick start" onboarding tooltip or helper modal
+
+🔁 5. Auth Boot Status Integration
+ Update Smart Boot to track:
+
+json
+Copy
+Edit
+{
+  auth: {
+    status: "ok" | "fail",
+    lastLoginTest: "2025-04-06T...",
+    details: "Admin login passed"
+  }
+}
+✅ OPTIONAL FINAL CHECKLIST
+Task	Status
+Admin login working	⛔️
+Auth token saved in browser	⛔️
+Protected routes redirect properly	⛔️
+Rabbit Breeding UI loads	✅
+Rabbit data from /api/animals	✅
+Compatibility checks	✅
+Export buttons (CSV, PDF)	✅
+🧠 NEXT STRATEGIC GOALS (once login is stable)
+ Refactor all buttons/features to show/hide based on role (admin vs user)
+
+ Separate rabbit.naturebreedfarm.org micro-app when module is stable
+
+ Add test account for farmer role and validate UI restrictions
